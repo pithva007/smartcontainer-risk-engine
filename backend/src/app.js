@@ -33,16 +33,26 @@ const trackingRoutes = require('./routes/trackingRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const workflowRoutes = require('./routes/workflowRoutes');
 
-// Ensure upload directory exists
+// Ensure upload directory exists (use /tmp on Vercel)
 const uploadDir = process.env.UPLOAD_DIR || './data/uploads';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn(`Could not create upload dir ${uploadDir}: ${err.message}`);
 }
 
-// Ensure logs directory exists
-const logsDir = path.join(__dirname, '../logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+// Ensure logs directory exists (skip on serverless - logs go to stdout)
+if (!process.env.VERCEL) {
+  const logsDir = path.join(__dirname, '../logs');
+  try {
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+  } catch (err) {
+    console.warn(`Could not create logs dir: ${err.message}`);
+  }
 }
 
 const app = express();
