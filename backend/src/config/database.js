@@ -6,11 +6,13 @@ const logger = require('../utils/logger');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smartcontainer_db', {
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/smartcontainer_db';
+    const conn = await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    logger.info(`MongoDB connected: ${conn.connection.host}`);
+    logger.info(`MongoDB connected to: ${mongoUri.replace(/:([^:@]{1,})@/, ':****@')}`);
+    logger.info(`MongoDB host: ${conn.connection.host}`);
   } catch (error) {
     logger.error(`MongoDB connection error: ${error.message}`);
     process.exit(1);

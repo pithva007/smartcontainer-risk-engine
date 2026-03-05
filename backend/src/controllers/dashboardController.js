@@ -180,7 +180,7 @@ const getAnomalyStats = async (req, res) => {
  * Returns the most recently processed critical containers.
  */
 const getRecentHighRisk = async (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+  const limit = Math.min(parseInt(req.query.limit) || 500, 1000);
   try {
     const containers = await Container.find({ risk_level: 'Critical' })
       .sort({ processed_at: -1 })
@@ -195,10 +195,48 @@ const getRecentHighRisk = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/dashboard/containers
+ * Returns a paginated/filtered list of all containers.
+ */
+const getContainersList = async (req, res) => {
+  const { page = 1, limit = 50, risk_level, anomaly } = req.query;
+
+  const filter = {};
+  if (risk_level) filter.risk_level = risk_level;
+  if (anomaly === 'true') filter.anomaly_flag = true;
+
+  try {
+    const [total, containers] = await Promise.all([
+      Container.countDocuments(filter),
+      Container.find(filter)
+        .sort({ processed_at: -1, risk_score: -1 })
+        .skip((parseInt(page) - 1) * parseInt(limit))
+        .limit(parseInt(limit))
+        .select(
+          'container_id origin_country destination_country risk_score risk_level anomaly_flag inspection_status assigned_to'
+        )
+        .lean(),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      data: containers,
+    });
+  } catch (error) {
+    logger.error(`Get containers list error: ${error.message}`);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   getSummary,
   getRiskDistribution,
   getTopRiskyRoutes,
   getAnomalyStats,
   getRecentHighRisk,
+  getContainersList,
 };

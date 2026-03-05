@@ -32,3 +32,165 @@
 2026-03-05 19:17:33 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
 2026-03-05 19:18:19 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
 2026-03-05 19:18:31 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 20:43:39 [error]: MongoDB connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+2026-03-05 23:28:09 [error]: Admin seed failed: Cannot find module 'bcrypt'
+Require stack:
+- /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js
+2026-03-05 23:28:09 [error]: Error: Cannot find module 'bcrypt'
+Require stack:
+- /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1420:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1058:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1063:22)
+    at Module._load (node:internal/modules/cjs/loader:1226:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:244:24)
+    at Module.require (node:internal/modules/cjs/loader:1503:12)
+    at require (node:internal/modules/helpers:152:16)
+    at seedAdminUser (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js:38:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async start (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js:70:5)
+2026-03-05 23:28:13 [error]: Admin seed failed: Cannot find module 'bcrypt'
+Require stack:
+- /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js
+2026-03-05 23:28:13 [error]: Error: Cannot find module 'bcrypt'
+Require stack:
+- /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1420:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1058:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1063:22)
+    at Module._load (node:internal/modules/cjs/loader:1226:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:244:24)
+    at Module.require (node:internal/modules/cjs/loader:1503:12)
+    at require (node:internal/modules/helpers:152:16)
+    at seedAdminUser (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js:38:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async start (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js:70:5)
+2026-03-05 23:28:51 [error]: Admin seed failed: Cannot find module 'bcrypt'
+Require stack:
+- /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js
+2026-03-05 23:28:51 [error]: Error: Cannot find module 'bcrypt'
+Require stack:
+- /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1420:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1058:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1063:22)
+    at Module._load (node:internal/modules/cjs/loader:1226:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:244:24)
+    at Module.require (node:internal/modules/cjs/loader:1503:12)
+    at require (node:internal/modules/helpers:152:16)
+    at seedAdminUser (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js:38:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async start (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/server.js:70:5)
+2026-03-06 00:01:37 [error]: Unhandled error [7920f7e5-01db-4055-8431-b69dc0b1f175]: TypeError: Cannot read properties of undefined (reading 'map')
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/utils/validators/index.js:105:38
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:97:3
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-03-06 00:01:43 [error]: Unhandled error [590d8368-60ed-44bd-9e41-d18d9876647d]: TypeError: Cannot read properties of undefined (reading 'map')
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/utils/validators/index.js:105:38
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:97:3
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-03-06 00:01:48 [error]: Unhandled error [0d1011dd-816d-4337-b901-6425707c1778]: TypeError: Cannot read properties of undefined (reading 'map')
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/utils/validators/index.js:105:38
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:97:3
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-03-06 00:01:52 [error]: Unhandled error [0620226a-d7df-4079-a651-4a529cb02d6a]: TypeError: Cannot read properties of undefined (reading 'map')
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/utils/validators/index.js:105:38
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:97:3
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-03-06 00:02:00 [error]: Unhandled error [86f83bac-1f2e-4ebd-9591-ebeecdbf875b]: TypeError: Cannot read properties of undefined (reading 'map')
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/utils/validators/index.js:105:38
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:97:3
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-03-06 00:02:12 [error]: Unhandled error [9a90d154-4b2a-4e40-9260-f05633ab47d3]: TypeError: Cannot read properties of undefined (reading 'map')
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/utils/validators/index.js:105:38
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:97:3
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-03-06 00:04:59 [error]: Unhandled error [e33462b9-8f9a-48ee-8875-872faa72f5cb]: TypeError: Cannot read properties of undefined (reading 'map')
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/utils/validators/index.js:105:38
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:97:3
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-03-06 00:07:09 [error]: Unhandled error [770e6456-69b5-4211-8a6d-fbe4decd053d]: TypeError: Cannot read properties of undefined (reading 'map')
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/utils/validators/index.js:105:38
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:97:3
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-03-06 00:36:29 [error]: Unhandled error [ba1a564d-515c-4592-8e3e-6a3618e4865a]: TypeError: Cannot read properties of undefined (reading 'map')
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/utils/validators/index.js:106:38
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:97:3
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-03-06 00:36:43 [error]: Unhandled error [f7f2a44b-e8f2-4211-ac3b-2e79f0bbca94]: TypeError: Cannot read properties of undefined (reading 'map')
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/utils/validators/index.js:106:38
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at /Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:97:3
+    at newFn (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express-async-errors/index.js:16:20)
+    at Layer.handle [as handle_request] (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)

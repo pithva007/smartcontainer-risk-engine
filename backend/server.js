@@ -21,8 +21,10 @@ const TRACKING_INTERVAL_MINS = parseInt(process.env.TRACKING_UPDATE_MINS) || 10;
 const seedAdminUser = async () => {
   try {
     const User = require('./src/models/userModel');
-    const count = await User.countDocuments();
-    if (count === 0) {
+    const adminUser = await User.findOne({ username: 'admin' });
+
+    if (!adminUser) {
+      logger.info('Admin user not found. Seeding default admin...');
       await User.create({
         username: process.env.ADMIN_USERNAME || 'admin',
         email: process.env.ADMIN_EMAIL || 'admin@smartcontainer.local',
@@ -31,9 +33,12 @@ const seedAdminUser = async () => {
         full_name: 'System Administrator',
       });
       logger.info(`Default admin user created (username: ${process.env.ADMIN_USERNAME || 'admin'})`);
+    } else {
+      logger.info('Admin user already exists. Seeding skipped.');
     }
   } catch (err) {
-    logger.warn(`Admin seed skipped: ${err.message}`);
+    logger.error(`Admin seed failed: ${err.message}`);
+    logger.error(err.stack);
   }
 };
 

@@ -1,63 +1,45 @@
-import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchRecentHighRisk } from '@/api/routes';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { fetchContainersList } from '@/api/routes';
 import {
     flexRender,
     getCoreRowModel,
     getSortedRowModel,
-    getPaginationRowModel,
     getFilteredRowModel,
     useReactTable,
     type SortingState,
     type ColumnDef,
 } from '@tanstack/react-table';
 import {
-    Search, ChevronUp, ChevronDown, ChevronsUpDown,
-    ChevronLeft, ChevronRight, TableIcon,
+    Search, ChevronUp, ChevronDown, ChevronsUpDown, TableIcon,
 } from 'lucide-react';
 import type { RiskLevel } from '@/types/apiTypes';
 import { cn } from '@/lib/utils';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 
 /* ───────── Filters ───────── */
-type FilterLevel = 'All' | 'Critical' | 'High' | 'Medium' | 'Low';
+type FilterLevel = 'All' | 'Critical' | 'Low Risk' | 'Clear';
 
 const filterPills: { label: FilterLevel; color: string; active: string }[] = [
     { label: 'All', color: 'text-foreground/70 border-border hover:bg-foreground/5', active: 'bg-primary text-white border-primary' },
     { label: 'Critical', color: 'text-foreground/70 border-border hover:bg-foreground/5', active: 'bg-red-500/15 text-red-400 border-red-500/30' },
-    { label: 'High', color: 'text-foreground/70 border-border hover:bg-foreground/5', active: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-    { label: 'Medium', color: 'text-foreground/70 border-border hover:bg-foreground/5', active: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
-    { label: 'Low', color: 'text-foreground/70 border-border hover:bg-foreground/5', active: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+    { label: 'Low Risk', color: 'text-foreground/70 border-border hover:bg-foreground/5', active: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+    { label: 'Clear', color: 'text-foreground/70 border-border hover:bg-foreground/5', active: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
 ];
 
 /* ───────── Helpers ───────── */
-const riskLevelDot: Record<string, string> = {
+const riskLevelDot: Record<RiskLevel, string> = {
     Critical: 'bg-red-500',
-    High: 'bg-amber-500',
-    Medium: 'bg-blue-500',
-    Low: 'bg-emerald-500',
     'Low Risk': 'bg-amber-500',
     Clear: 'bg-emerald-500',
 };
 
-const riskLevelText: Record<string, string> = {
+const riskLevelText: Record<RiskLevel, string> = {
     Critical: 'text-red-400',
-    High: 'text-amber-400',
-    Medium: 'text-blue-400',
-    Low: 'text-emerald-400',
     'Low Risk': 'text-amber-400',
     Clear: 'text-emerald-400',
 };
-
-function mapRiskLevel(level: RiskLevel): string {
-    if (level === 'Critical') return 'Critical';
-    if (level === 'Low Risk') return 'High';
-    return 'Medium';
-}
-
-const statusOptions = ['Flagged', 'Hold', 'Inspection', 'Review', 'Processing'];
-const originOptions = ['China', 'UAE', 'Malaysia', 'India', 'Singapore', 'Germany', 'Japan', 'Brazil'];
-const destOptions = ['Los Angeles', 'New York', 'Houston', 'Seattle', 'Miami', 'Long Beach', 'Rotterdam', 'Dubai'];
 
 interface ShipmentRow {
     container_id: string;
@@ -66,7 +48,7 @@ interface ShipmentRow {
     declared_value: number;
     weight_disc: number;
     risk_score: number;
-    risk_level: string;
+    risk_level: RiskLevel;
     status: string;
     arrival: string;
 }
@@ -95,26 +77,61 @@ function ScoreBar({ score }: { score: number }) {
 export default function Tracking() {
     const [sorting, setSorting] = useState<SortingState>([{ id: 'risk_score', desc: true }]);
     const [globalFilter, setGlobalFilter] = useState('');
-    const [riskFilter, setRiskFilter] = useState<FilterLevel>('All');
+    const [searchParams] = useSearchParams();
 
-    const { data: rawData, isLoading, error } = useQuery({
-        queryKey: ['recent-high-risk'],
-        queryFn: fetchRecentHighRisk,
+    // Initialize filter from URL if present, otherwise default to All
+    const [riskFilter, setRiskFilter] = useState<FilterLevel>(() => {
+        const filterParam = searchParams.get('filter') as FilterLevel;
+        return filterParam || 'All';
     });
+
+    // Sync filter state if URL changes externally
+    useEffect(() => {
+        const filterParam = searchParams.get('filter') as FilterLevel;
+        if (filterParam) setRiskFilter(filterParam);
+    }, [searchParams]);
+
+    const { data: rawData, isLoading, error, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
+        queryKey: ['tracking-list', riskFilter],
+        queryFn: ({ pageParam = 1 }) => fetchContainersList({
+            ...(riskFilter === 'All' ? {} : { risk_level: riskFilter }),
+            page: pageParam,
+            limit: 50
+        }),
+        getNextPageParam: (lastPage) => {
+            if (lastPage.page * lastPage.limit < lastPage.total) {
+                return lastPage.page + 1;
+            }
+            return undefined;
+        },
+        initialPageParam: 1,
+    });
+
+    const observer = useRef<IntersectionObserver | null>(null);
+    const lastElementRef = useCallback((node: HTMLTableRowElement | null) => {
+        if (isLoading || isFetchingNextPage) return;
+        if (observer.current) observer.current.disconnect();
+        observer.current = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && hasNextPage) {
+                fetchNextPage();
+            }
+        });
+        if (node) observer.current.observe(node);
+    }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
 
     // Transform API data into extended shipment rows
     const tableData = useMemo<ShipmentRow[]>(() => {
         if (!rawData) return [];
-        return rawData.map((item, i) => ({
+        return rawData.pages.flatMap(p => p.data).map((item, i) => ({
             container_id: item.container_id,
-            origin: originOptions[i % originOptions.length],
-            destination: destOptions[i % destOptions.length],
+            origin: item.origin_country || 'Unknown',
+            destination: item.destination_country || 'Unknown',
             declared_value: Math.floor(50000 + Math.abs(Math.sin(i * 3.14)) * 200000),
             weight_disc: parseFloat((Math.abs(Math.sin(i * 2.7)) * 25 + 3).toFixed(1)),
             risk_score: Math.round(item.risk_score * 100),
-            risk_level: mapRiskLevel(item.risk_level),
-            status: statusOptions[i % statusOptions.length],
-            arrival: new Date(item.processed_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+            risk_level: item.risk_level,
+            status: item.status || 'Processing',
+            arrival: item.queued_at ? new Date(item.queued_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : 'Unknown',
         }));
     }, [rawData]);
 
@@ -162,7 +179,7 @@ export default function Tracking() {
             accessorKey: 'risk_level',
             header: 'Risk Level',
             cell: (info) => {
-                const level = info.getValue<string>();
+                const level = info.getValue<RiskLevel>();
                 return (
                     <div className="flex items-center gap-1.5">
                         <div className={cn('w-2 h-2 rounded-full', riskLevelDot[level])} />
@@ -195,15 +212,10 @@ export default function Tracking() {
         onGlobalFilterChange: setGlobalFilter,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        initialState: { pagination: { pageSize: 8 } },
     });
 
-    const totalRows = filteredData.length;
-    const { pageIndex, pageSize } = table.getState().pagination;
-    const start = pageIndex * pageSize + 1;
-    const end = Math.min(start + pageSize - 1, totalRows);
+    const totalRows = rawData?.pages[0]?.total || 0;
 
     return (
         <div className="space-y-0 pb-8">
@@ -257,10 +269,10 @@ export default function Tracking() {
                     <div className="p-8 text-center text-risk-critical text-sm">Failed to load shipment data. Please check your API connection.</div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="text-foreground/40 text-[11px] uppercase tracking-wider border-b border-border">
+                                    <tr className="text-foreground/40 text-[11px] uppercase tracking-wider border-b border-border sticky top-0 bg-card z-10 shadow-sm">
                                         {table.getHeaderGroups().map((hg) =>
                                             hg.headers.map((h) => (
                                                 <th
@@ -283,18 +295,29 @@ export default function Tracking() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {table.getRowModel().rows.map((row) => (
-                                        <tr
-                                            key={row.id}
-                                            className="border-b border-border/50 hover:bg-foreground/[0.03] transition-colors"
-                                        >
-                                            {row.getVisibleCells().map((cell) => (
-                                                <td key={cell.id} className="px-4 py-3.5">
-                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                </td>
-                                            ))}
+                                    {table.getRowModel().rows.map((row, index) => {
+                                        const isLast = index === table.getRowModel().rows.length - 1;
+                                        return (
+                                            <tr
+                                                key={row.id}
+                                                ref={isLast ? lastElementRef : null}
+                                                className="border-b border-border/50 hover:bg-foreground/[0.03] transition-colors"
+                                            >
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <td key={cell.id} className="px-4 py-3.5">
+                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        );
+                                    })}
+                                    {isFetchingNextPage && (
+                                        <tr>
+                                            <td colSpan={columns.length} className="px-4 py-6 text-center text-foreground/40 text-sm">
+                                                Loading more records...
+                                            </td>
                                         </tr>
-                                    ))}
+                                    )}
                                     {table.getRowModel().rows.length === 0 && (
                                         <tr>
                                             <td colSpan={columns.length} className="px-4 py-12 text-center text-foreground/40 text-sm">
@@ -304,43 +327,6 @@ export default function Tracking() {
                                     )}
                                 </tbody>
                             </table>
-                        </div>
-
-                        {/* Pagination */}
-                        <div className="px-4 py-3 border-t border-border flex items-center justify-between">
-                            <span className="text-xs text-foreground/40">
-                                Showing {start}–{end} of {totalRows}
-                            </span>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={() => table.previousPage()}
-                                    disabled={!table.getCanPreviousPage()}
-                                    className="p-1.5 rounded border border-border text-foreground/50 hover:bg-foreground/5 disabled:opacity-30 transition-colors"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                {Array.from({ length: table.getPageCount() }).map((_, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => table.setPageIndex(i)}
-                                        className={cn(
-                                            'w-8 h-8 rounded text-xs font-semibold transition-colors',
-                                            pageIndex === i
-                                                ? 'bg-primary text-white'
-                                                : 'border border-border text-foreground/50 hover:bg-foreground/5'
-                                        )}
-                                    >
-                                        {i + 1}
-                                    </button>
-                                ))}
-                                <button
-                                    onClick={() => table.nextPage()}
-                                    disabled={!table.getCanNextPage()}
-                                    className="p-1.5 rounded border border-border text-foreground/50 hover:bg-foreground/5 disabled:opacity-30 transition-colors"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
                         </div>
                     </>
                 )}

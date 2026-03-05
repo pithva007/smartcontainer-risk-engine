@@ -17,8 +17,14 @@ export default function Login() {
         try {
             await login(username, password);
             navigate('/');
-        } catch {
-            toast.error('Invalid credentials. Please try again.');
+        } catch (err: any) {
+            console.error('[Login Error]', err);
+            const message = err?.response?.data?.message || err.message || 'Connection failed';
+            if (err?.response?.status === 401) {
+                toast.error('Invalid credentials. Please try again.');
+            } else {
+                toast.error(`System Error: ${message}`);
+            }
         } finally {
             setLoading(false);
         }

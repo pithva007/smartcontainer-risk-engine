@@ -1,9 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
     fetchSummary,
     fetchRiskDistribution,
     fetchRecentHighRisk,
+    fetchContainerById,
 } from '@/api/routes';
+import { useState } from 'react';
+import ShipmentListModal from '@/components/dashboard/ShipmentListModal';
+import ShipmentDetailModal from '@/components/dashboard/ShipmentDetailModal';
 import {
     PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts';
@@ -48,7 +53,7 @@ function ScoreBar({ score }: { score: number }) {
 }
 
 /* ───────── Live Alert Feed ───────── */
-function LiveAlertFeed({ data }: { data: RecentHighRisk[] }) {
+function LiveAlertFeed({ data, readAlerts }: { data: RecentHighRisk[], readAlerts: Set<string> }) {
     const borderColor: Record<RiskLevel, string> = {
         Critical: 'border-l-red-500',
         'Low Risk': 'border-l-amber-500',
@@ -63,7 +68,11 @@ function LiveAlertFeed({ data }: { data: RecentHighRisk[] }) {
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {data.map((item, i) => {
-                    const mins = Math.floor(Math.random() * 60) + 1;
+                    const isSeen = readAlerts.has(item.container_id);
+                    const diffMs = Date.now() - new Date(item.processed_at || Date.now()).getTime();
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const timeStr = diffMins < 60 ? `${Math.max(1, diffMins)} min ago` : `${Math.floor(diffMins / 60)} hr ago`;
+
                     const explanations = [
                         'Extreme value-to-weight anomaly detected',
                         'Shipper flagged in intelligence database',
@@ -77,19 +86,24 @@ function LiveAlertFeed({ data }: { data: RecentHighRisk[] }) {
                     return (
                         <div
                             key={item.container_id + i}
+                            data-container-id={item.container_id}
                             className={cn(
                                 'border-l-4 rounded-lg p-3 bg-foreground/5 hover:bg-foreground/10 transition-colors cursor-pointer',
-                                borderColor[item.risk_level]
+                                isSeen ? 'opacity-50 grayscale' : borderColor[item.risk_level]
                             )}
                         >
                             <div className="flex items-center justify-between mb-1">
                                 <span className="text-xs font-mono font-semibold text-foreground">{item.container_id}</span>
-                                <span className="text-[10px] text-foreground/40 flex items-center gap-1">
-                                    <Clock className="w-3 h-3" /> {mins} min ago
+                                <span className="text-[10px] text-foreground/40 flex items-center gap-1 font-medium">
+                                    {isSeen ? (
+                                        <span className="text-primary tracking-wider uppercase">Seen</span>
+                                    ) : (
+                                        <><Clock className="w-3 h-3" /> {timeStr}</>
+                                    )}
                                 </span>
                             </div>
                             <p className="text-xs text-foreground/60 leading-relaxed">
-                                {explanations[i % explanations.length]}
+                                {item.explanation || explanations[i % explanations.length]}
                             </p>
                         </div>
                     );
@@ -115,25 +129,26 @@ function HighRiskTable({ data }: { data: RecentHighRisk[] }) {
                 <h3 className="text-sm font-semibold text-foreground">High-Risk Containers</h3>
                 <p className="text-[11px] text-foreground/40 mt-0.5">Requiring immediate inspection</p>
             </div>
-            <div className="flex-1 overflow-x-auto">
+            <div className="flex-1 overflow-x-auto overflow-y-auto max-h-[400px]">
                 <table className="w-full text-xs">
-                    <thead>
+                    <thead className="sticky top-0 bg-card z-10">
                         <tr className="text-foreground/40 uppercase text-[10px] tracking-wider border-b border-border">
-                            <th className="px-4 py-2.5 text-left font-medium">Container ID</th>
-                            <th className="px-4 py-2.5 text-left font-medium">Origin</th>
-                            <th className="px-4 py-2.5 text-left font-medium">Risk Score</th>
-                            <th className="px-4 py-2.5 text-left font-medium">Level</th>
-                            <th className="px-4 py-2.5 text-left font-medium">Explanation</th>
+                            <th className="px-4 py-2.5 text-left font-medium bg-card">Container ID</th>
+                            <th className="px-4 py-2.5 text-left font-medium bg-card">Origin</th>
+                            <th className="px-4 py-2.5 text-left font-medium bg-card">Risk Score</th>
+                            <th className="px-4 py-2.5 text-left font-medium bg-card">Level</th>
+                            <th className="px-4 py-2.5 text-left font-medium bg-card">Explanation</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {data.slice(0, 5).map((item, i) => (
+                        {data.map((item, i) => (
                             <tr
                                 key={item.container_id}
-                                className="border-b border-border/50 hover:bg-foreground/5 transition-colors"
+                                data-container-id={item.container_id}
+                                className="border-b border-border/50 hover:bg-foreground/5 transition-colors cursor-pointer"
                             >
-                                <td className="px-4 py-3 font-mono font-medium text-foreground/90">{item.container_id}</td>
-                                <td className="px-4 py-3 text-foreground/60">
+                                <td className="px-4 py-3 font-mono font-medium text-foreground/90 whitespace-nowrap">{item.container_id}</td>
+                                <td className="px-4 py-3 text-foreground/60 whitespace-nowrap">
                                     {['Shanghai, CN', 'Hong Kong, HK', 'Rotterdam, NL', 'Dubai, AE', 'Singapore, SG'][i % 5]}
                                 </td>
                                 <td className="px-4 py-3">
@@ -244,9 +259,36 @@ function RiskDonut({ data }: { data: RiskDistribution[] }) {
    DASHBOARD PAGE
    ═══════════════════════════════════════════════════════════ */
 export default function Dashboard() {
+    const navigate = useNavigate();
+    const [listFilter, setListFilter] = useState<{ label: string; risk_level?: RiskLevel; anomaly?: boolean } | null>(null);
+    const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
+    const [readAlerts, setReadAlertsState] = useState<Set<string>>(() => {
+        try {
+            const stored = localStorage.getItem('smartcontainer-read-alerts');
+            return stored ? new Set(JSON.parse(stored)) : new Set();
+        } catch {
+            return new Set();
+        }
+    });
+
+    const setReadAlerts = (updater: (prev: Set<string>) => Set<string>) => {
+        setReadAlertsState((prev) => {
+            const next = updater(prev);
+            localStorage.setItem('smartcontainer-read-alerts', JSON.stringify(Array.from(next)));
+            return next;
+        });
+    };
+
     const summary = useQuery({ queryKey: ['summary'], queryFn: fetchSummary });
     const risk = useQuery({ queryKey: ['risk-distribution'], queryFn: fetchRiskDistribution });
     const highRisk = useQuery({ queryKey: ['recent-high-risk'], queryFn: fetchRecentHighRisk });
+
+    // Fetch single container details when one is selected
+    const containerDetail = useQuery({
+        queryKey: ['container', selectedContainerId],
+        queryFn: () => fetchContainerById(selectedContainerId!),
+        enabled: !!selectedContainerId
+    });
 
     const kpi = summary.data;
     const isLoading = summary.isLoading || risk.isLoading || highRisk.isLoading;
@@ -269,34 +311,46 @@ export default function Dashboard() {
 
             {/* Summary Cards */}
             {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {stats.map((s) => (
                         <div
                             key={s.label}
-                            className={cn('flex items-center justify-between rounded-xl p-5 border bg-card shadow-sm')}
+                            onClick={() => {
+                                if (s.label === 'Active Shipments') navigate('/tracking?filter=All');
+                                else if (s.label === 'Critical Alerts') navigate('/tracking?filter=Critical');
+                                else if (s.label === 'Cleared Today') navigate('/tracking?filter=Clear');
+                                else if (s.label === 'Pending Review') navigate('/tracking?filter=Low Risk');
+                            }}
+                            className={cn('flex flex-col rounded-xl p-4 border bg-card shadow-sm cursor-pointer hover:border-primary/50 transition-colors')}
                         >
-                            <div className="flex items-center gap-3">
-                                <div className={cn('p-2.5 rounded-lg border', s.bg)}>
-                                    <s.icon className={cn('w-5 h-5', s.color)} />
+                            <div className="flex items-center gap-2.5 mb-2">
+                                <div className={cn('p-2 rounded-lg border', s.bg)}>
+                                    <s.icon className={cn('w-4 h-4', s.color)} />
                                 </div>
-                                <span className="text-sm text-foreground/60 font-medium">{s.label}</span>
+                                <span className="text-xs text-foreground/60 font-medium truncate">{s.label}</span>
                             </div>
-                            <span className="text-2xl font-bold text-foreground">{s.value.toLocaleString()}</span>
+                            <span className="text-xl sm:text-2xl font-bold text-foreground truncate">
+                                {s.value.toLocaleString()}
+                            </span>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* 3-Column Content Area */}
+            {/* Main Content Area */}
             {isLoading ? (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div className="lg:col-span-3"><div className="skeleton h-[480px] rounded-xl" /></div>
-                    <div className="lg:col-span-5"><div className="skeleton h-[480px] rounded-xl" /></div>
-                    <div className="lg:col-span-4"><div className="skeleton h-[480px] rounded-xl" /></div>
+                <div className="flex flex-col gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div className="lg:col-span-6"><div className="skeleton h-[320px] rounded-xl" /></div>
+                        <div className="lg:col-span-6"><div className="skeleton h-[320px] rounded-xl" /></div>
+                    </div>
+                    <div className="w-full">
+                        <div className="skeleton h-[400px] rounded-xl" />
+                    </div>
                 </div>
             ) : hasError ? (
                 <div className="flex items-center gap-3 p-4 bg-risk-critical/10 border border-risk-critical/20 rounded-lg text-risk-critical text-sm">
@@ -304,22 +358,62 @@ export default function Dashboard() {
                     Failed to load dashboard data. Make sure the backend API is running.
                 </div>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Live Alert Feed — left column */}
-                    <div className="lg:col-span-3">
-                        <LiveAlertFeed data={highRisk.data || []} />
+                <div className="flex flex-col gap-6">
+                    {/* Charts & Alerts Row */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        {/* Risk Distribution — left side */}
+                        <div className="lg:col-span-6 h-full">
+                            <RiskDonut data={risk.data || []} />
+                        </div>
+
+                        {/* Live Alert Feed — right side */}
+                        <div className="lg:col-span-6 h-full">
+                            <div className="h-full" onClick={(e) => {
+                                const target = e.target as HTMLElement;
+                                const card = target.closest('[data-container-id]');
+                                if (card) {
+                                    const id = card.getAttribute('data-container-id');
+                                    if (id) {
+                                        setSelectedContainerId(id);
+                                        setReadAlerts(prev => new Set(prev).add(id));
+                                    }
+                                }
+                            }}>
+                                <LiveAlertFeed data={highRisk.data || []} readAlerts={readAlerts} />
+                            </div>
+                        </div>
                     </div>
 
-                    {/* High-Risk Containers — center column */}
-                    <div className="lg:col-span-5">
-                        <HighRiskTable data={highRisk.data || []} />
-                    </div>
-
-                    {/* Risk Distribution — right column */}
-                    <div className="lg:col-span-4">
-                        <RiskDonut data={risk.data || []} />
+                    {/* High-Risk Containers — full width bottom */}
+                    <div className="w-full h-full">
+                        <div className="h-full" onClick={(e) => {
+                            const target = e.target as HTMLElement;
+                            const row = target.closest('tr[data-container-id]');
+                            if (row) setSelectedContainerId(row.getAttribute('data-container-id'));
+                        }}>
+                            <HighRiskTable data={highRisk.data || []} />
+                        </div>
                     </div>
                 </div>
+            )}
+
+            {/* Modals */}
+            {listFilter && (
+                <ShipmentListModal
+                    filter={listFilter}
+                    onClose={() => setListFilter(null)}
+                    onSelectShipment={(id) => {
+                        setListFilter(null);
+                        setSelectedContainerId(id);
+                    }}
+                />
+            )}
+
+            {selectedContainerId && (
+                <ShipmentDetailModal
+                    shipment={containerDetail.data || null}
+                    onClose={() => setSelectedContainerId(null)}
+                />
             )}
         </div>
     );

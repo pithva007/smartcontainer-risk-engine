@@ -57,7 +57,7 @@ app.use(metricsMiddleware);
 app.use(helmet());
 
 // CORS — restrict origins in production via environment variable
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:5173').split(',');
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174').split(',');
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -88,6 +88,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // HTTP request logging
+app.use((req, res, next) => {
+  logger.info(`INCOMING: ${req.method} ${req.url}`);
+  next();
+});
+
 app.use(
   morgan('combined', {
     stream: { write: (message) => logger.info(message.trim()) },
