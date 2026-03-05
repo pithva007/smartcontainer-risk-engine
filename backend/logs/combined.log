@@ -27,3 +27,20 @@
 2026-03-05 15:40:16 [info]: SmartContainer Risk Engine API running on port 3000
 2026-03-05 15:40:16 [info]: Environment: development
 2026-03-05 15:40:16 [info]: Health check: http://localhost:3000/health
+2026-03-05 15:42:55 [info]: ::1 - - [05/Mar/2026:10:12:55 +0000] "GET /api/summary HTTP/1.1" 200 225 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: Processing upload: sample_shipments.csv (batchId: 64dfbc06-86d4-4091-9fcd-c7e2826ff67d)
+2026-03-05 15:46:27 [info]: Upload complete: 30 records processed (batchId: 64dfbc06-86d4-4091-9fcd-c7e2826ff67d)
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "POST /api/upload HTTP/1.1" 200 154 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "GET /api/summary HTTP/1.1" 200 227 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "GET /api/dashboard/risk-distribution HTTP/1.1" 200 26 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "GET /api/dashboard/top-risky-routes?limit=5 HTTP/1.1" 200 26 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "GET /api/dashboard/anomaly-stats HTTP/1.1" 200 90 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "GET /api/dashboard/recent-high-risk?limit=5 HTTP/1.1" 200 26 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "POST /api/predict HTTP/1.1" 200 576 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: Batch prediction started (batchId: 3d044a75-d0af-46a5-8acb-ec80eb94dc7f): sample_shipments.csv
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "POST /api/predict-batch HTTP/1.1" 200 5949 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "GET /api/container-route/C10001 HTTP/1.1" 200 720 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "GET /api/map/all-routes?limit=10 HTTP/1.1" 200 369 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "GET /api/upload/batches HTTP/1.1" 200 139 "-" "curl/8.7.1"
+2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "POST /api/predict HTTP/1.1" 400 118 "-" "curl/8.7.1"
+2026-03-05 15:46:28 [info]: ::1 - - [05/Mar/2026:10:16:28 +0000] "GET /api/container-route/NONEXISTENT_XYZ_999 HTTP/1.1" 404 70 "-" "curl/8.7.1"
