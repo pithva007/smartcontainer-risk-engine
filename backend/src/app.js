@@ -2,6 +2,7 @@
  * Express Application Factory
  * Sets up middleware stack, mounts all routes, and configures error handling.
  */
+require('express-async-errors');
 require('dotenv').config();
 
 const express = require('express');
@@ -12,14 +13,25 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
+const swaggerUi = require('swagger-ui-express');
 
 const logger = require('./utils/logger');
+const { metricsMiddleware, metricsHandler } = require('./services/metricsService');
+const requestId = require('./middleware/requestId');
+const swaggerSpec = require('./config/swagger');
 
-// Route modules
+// Route modules — original
 const uploadRoutes = require('./routes/uploadRoutes');
 const predictionRoutes = require('./routes/predictionRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const mapRoutes = require('./routes/mapRoutes');
+
+// Route modules — v2
+const authRoutes = require('./routes/authRoutes');
+const jobRoutes = require('./routes/jobRoutes');
+const trackingRoutes = require('./routes/trackingRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const workflowRoutes = require('./routes/workflowRoutes');
 
 // Ensure upload directory exists
 const uploadDir = process.env.UPLOAD_DIR || './data/uploads';
@@ -34,6 +46,12 @@ if (!fs.existsSync(logsDir)) {
 }
 
 const app = express();
+
+// ── Request ID (must be first) ─────────────────────────────────────────────────
+app.use(requestId);
+
+// ── Prometheus metrics middleware ──────────────────────────────────────────────
+app.use(metricsMiddleware);
 
 // ── Security Middleware ────────────────────────────────────────────────────────
 app.use(helmet());
@@ -78,20 +96,47 @@ app.use(
 );
 
 // ── Health Check ───────────────────────────────────────────────────────────────
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
+  const mongoose = require('mongoose');
+  const dbState = ['disconnected', 'connected', 'connecting', 'disconnecting'];
   res.status(200).json({
     status: 'ok',
     service: 'smartcontainer-risk-engine',
+    version: '2.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
+    database: dbState[mongoose.connection.readyState] || 'unknown',
+    request_id: req.requestId,
   });
 });
 
+// ── Prometheus Metrics ──────────────────────────────────────────────────────────
+app.get('/metrics', metricsHandler);
+
+// ── Swagger UI ─────────────────────────────────────────────────────────────────
+app.use(
+  '/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'SmartContainer Risk Engine API',
+    swaggerOptions: { persistAuthorization: true },
+  })
+);
+app.get('/docs.json', (req, res) => res.json(swaggerSpec));
+
 // ── API Routes ─────────────────────────────────────────────────────────────────
+// v1 — original
 app.use('/api', uploadRoutes);
 app.use('/api', predictionRoutes);
 app.use('/api', dashboardRoutes);
 app.use('/api', mapRoutes);
+
+// v2 — new
+app.use('/api', authRoutes);
+app.use('/api', jobRoutes);
+app.use('/api', trackingRoutes);
+app.use('/api', reportRoutes);
+app.use('/api', workflowRoutes);
 
 // ── 404 Handler ────────────────────────────────────────────────────────────────
 app.use((req, res) => {
@@ -109,18 +154,25 @@ app.use((err, req, res, next) => {
     return res.status(413).json({
       success: false,
       message: `File too large. Maximum allowed size is ${process.env.MAX_FILE_SIZE_MB || 50}MB.`,
+      request_id: req.requestId,
     });
   }
 
   // CORS error
   if (err.message && err.message.startsWith('CORS policy')) {
-    return res.status(403).json({ success: false, message: err.message });
+    return res.status(403).json({ success: false, message: err.message, request_id: req.requestId });
   }
 
-  logger.error(`Unhandled error: ${err.stack || err.message}`);
+  // JWT / auth errors
+  if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+    return res.status(401).json({ success: false, message: 'Invalid or expired token.', request_id: req.requestId });
+  }
+
+  logger.error(`Unhandled error [${req.requestId}]: ${err.stack || err.message}`);
   return res.status(500).json({
     success: false,
     message: process.env.NODE_ENV === 'production' ? 'Internal server error.' : err.message,
+    request_id: req.requestId,
   });
 });
 

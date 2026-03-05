@@ -44,3 +44,151 @@
 2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "GET /api/upload/batches HTTP/1.1" 200 139 "-" "curl/8.7.1"
 2026-03-05 15:46:27 [info]: ::1 - - [05/Mar/2026:10:16:27 +0000] "POST /api/predict HTTP/1.1" 400 118 "-" "curl/8.7.1"
 2026-03-05 15:46:28 [info]: ::1 - - [05/Mar/2026:10:16:28 +0000] "GET /api/container-route/NONEXISTENT_XYZ_999 HTTP/1.1" 404 70 "-" "curl/8.7.1"
+2026-03-05 16:23:38 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:24:20 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:25:22 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:26:28 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:28:16 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:29:12 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:30:05 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:46:46 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:47:13 [info]: ::1 - - [05/Mar/2026:11:17:13 +0000] "GET /docs.json HTTP/1.1" 404 61 "-" "curl/8.7.1"
+2026-03-05 16:49:42 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:49:48 [info]: MongoDB connected: localhost
+2026-03-05 16:49:48 [warn]: Redis error:  - running without cache
+2026-03-05 16:49:48 [warn]: Redis error:  - running without cache
+2026-03-05 16:49:48 [warn]: Redis error:  - running without cache
+2026-03-05 16:49:49 [warn]: Redis error:  - running without cache
+2026-03-05 16:49:49 [warn]: Redis unavailable - caching disabled
+2026-03-05 16:49:49 [warn]: Redis error:  - running without cache
+2026-03-05 16:49:49 [warn]: Redis connection failed:  - caching disabled
+2026-03-05 16:51:54 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:51:55 [info]: MongoDB connected: localhost
+2026-03-05 16:51:55 [warn]: Redis error:  - running without cache
+2026-03-05 16:51:55 [warn]: Redis error:  - running without cache
+2026-03-05 16:51:55 [warn]: Redis error:  - running without cache
+2026-03-05 16:51:55 [warn]: Redis error:  - running without cache
+2026-03-05 16:51:55 [warn]: Redis unavailable - caching disabled
+2026-03-05 16:51:55 [warn]: Redis error:  - running without cache
+2026-03-05 16:51:55 [warn]: Redis connection failed:  - caching disabled
+2026-03-05 16:51:56 [warn]: BullMQ/Redis unavailable (Connection is closed.) — using in-process queue fallback
+2026-03-05 16:51:56 [info]: Job processors registered: UPLOAD_DATASET
+2026-03-05 16:51:56 [info]: Default admin user created (username: admin)
+2026-03-05 16:51:56 [info]: Tracking refresh cron started (every 10 min)
+2026-03-05 16:51:56 [info]: SmartContainer Risk Engine API v2 running on port 3000
+2026-03-05 16:51:56 [info]: Environment: development
+2026-03-05 16:51:56 [info]: Health check:  http://localhost:3000/health
+2026-03-05 16:51:56 [info]: Swagger docs:  http://localhost:3000/docs
+2026-03-05 16:51:56 [info]: Metrics:       http://localhost:3000/metrics
+2026-03-05 16:52:46 [info]: ::1 - - [05/Mar/2026:11:22:46 +0000] "GET /docs.json HTTP/1.1" 200 8043 "-" "curl/8.7.1"
+2026-03-05 16:52:46 [info]: ::1 - - [05/Mar/2026:11:22:46 +0000] "GET /metrics HTTP/1.1" 200 - "-" "curl/8.7.1"
+2026-03-05 16:53:00 [info]: ::1 - - [05/Mar/2026:11:23:00 +0000] "POST /api/auth/login HTTP/1.1" 404 67 "-" "curl/8.7.1"
+2026-03-05 16:53:10 [info]: ::1 - - [05/Mar/2026:11:23:10 +0000] "POST /api/auth/login HTTP/1.1" 404 67 "-" "curl/8.7.1"
+2026-03-05 16:53:58 [info]: SIGTERM received — shutting down gracefully
+2026-03-05 16:53:58 [info]: MongoDB disconnected
+2026-03-05 16:54:10 [info]: MongoDB connected: localhost
+2026-03-05 16:54:10 [warn]: Redis error:  - running without cache
+2026-03-05 16:54:10 [warn]: Redis error:  - running without cache
+2026-03-05 16:54:10 [warn]: Redis error:  - running without cache
+2026-03-05 16:54:10 [warn]: Redis error:  - running without cache
+2026-03-05 16:54:10 [warn]: Redis unavailable - caching disabled
+2026-03-05 16:54:10 [warn]: Redis error:  - running without cache
+2026-03-05 16:54:10 [warn]: Redis connection failed:  - caching disabled
+2026-03-05 16:54:10 [warn]: BullMQ/Redis unavailable (Connection is closed.) — using in-process queue fallback
+2026-03-05 16:54:10 [info]: Job processors registered: UPLOAD_DATASET
+2026-03-05 16:54:10 [info]: Tracking refresh cron started (every 10 min)
+2026-03-05 16:54:10 [info]: SmartContainer Risk Engine API v2 running on port 3000
+2026-03-05 16:54:10 [info]: Environment: development
+2026-03-05 16:54:10 [info]: Health check:  http://localhost:3000/health
+2026-03-05 16:54:10 [info]: Swagger docs:  http://localhost:3000/docs
+2026-03-05 16:54:10 [info]: Metrics:       http://localhost:3000/metrics
+2026-03-05 16:54:23 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:54:40 [info]: ::1 - - [05/Mar/2026:11:24:40 +0000] "POST /api/auth/login HTTP/1.1" 200 487 "-" "curl/8.7.1"
+2026-03-05 16:54:53 [info]: ::1 - - [05/Mar/2026:11:24:53 +0000] "POST /api/auth/login HTTP/1.1" 200 527 "-" "curl/8.7.1"
+2026-03-05 16:54:53 [info]: ::1 - - [05/Mar/2026:11:24:53 +0000] "GET /api/auth/me HTTP/1.1" 200 307 "-" "curl/8.7.1"
+2026-03-05 16:54:53 [info]: ::1 - - [05/Mar/2026:11:24:53 +0000] "GET /api/map/track/C10001 HTTP/1.1" 200 1602 "-" "curl/8.7.1"
+2026-03-05 16:54:53 [info]: ::1 - - [05/Mar/2026:11:24:53 +0000] "GET /api/queue HTTP/1.1" 200 57 "-" "curl/8.7.1"
+2026-03-05 16:54:53 [info]: ::1 - - [05/Mar/2026:11:24:53 +0000] "GET /api/jobs HTTP/1.1" 200 56 "-" "curl/8.7.1"
+2026-03-05 16:55:04 [info]: ::1 - - [05/Mar/2026:11:25:04 +0000] "POST /api/auth/login HTTP/1.1" 200 527 "-" "curl/8.7.1"
+2026-03-05 16:55:04 [info]: ::1 - - [05/Mar/2026:11:25:04 +0000] "GET /api/map/track/C10001 HTTP/1.1" 200 1602 "-" "curl/8.7.1"
+2026-03-05 16:57:29 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:58:14 [info]: SIGTERM received — shutting down gracefully
+2026-03-05 16:58:23 [info]: MongoDB connected: localhost
+2026-03-05 16:58:23 [warn]: Redis error:  - running without cache
+2026-03-05 16:58:23 [warn]: Redis error:  - running without cache
+2026-03-05 16:58:24 [warn]: Redis error:  - running without cache
+2026-03-05 16:58:24 [warn]: Redis error:  - running without cache
+2026-03-05 16:58:24 [warn]: Redis unavailable - caching disabled
+2026-03-05 16:58:24 [warn]: Redis error:  - running without cache
+2026-03-05 16:58:24 [warn]: Redis connection failed:  - caching disabled
+2026-03-05 16:58:24 [warn]: BullMQ/Redis unavailable (Connection is closed.) — using in-process queue fallback
+2026-03-05 16:58:24 [info]: Job processors registered: UPLOAD_DATASET
+2026-03-05 16:58:24 [info]: Tracking refresh cron started (every 10 min)
+2026-03-05 16:58:24 [info]: SmartContainer Risk Engine API v2 running on port 3000
+2026-03-05 16:58:24 [info]: Environment: development
+2026-03-05 16:58:24 [info]: Health check:  http://localhost:3000/health
+2026-03-05 16:58:24 [info]: Swagger docs:  http://localhost:3000/docs
+2026-03-05 16:58:24 [info]: Metrics:       http://localhost:3000/metrics
+2026-03-05 16:58:39 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 16:59:23 [info]: ::1 - - [05/Mar/2026:11:29:23 +0000] "POST /api/auth/login HTTP/1.1" 200 527 "-" "curl/8.7.1"
+2026-03-05 16:59:23 [info]: ::1 - - [05/Mar/2026:11:29:23 +0000] "GET /api/map/track/C10001 HTTP/1.1" 200 1602 "-" "curl/8.7.1"
+2026-03-05 16:59:54 [info]: ::1 - - [05/Mar/2026:11:29:54 +0000] "POST /api/auth/login HTTP/1.1" 200 527 "-" "curl/8.7.1"
+2026-03-05 17:01:15 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
+2026-03-05 17:03:09 [info]: ::1 - - [05/Mar/2026:11:33:09 +0000] "POST /api/auth/login HTTP/1.1" 200 527 "-" "curl/8.7.1"
+2026-03-05 17:04:32 [info]: ::1 - - [05/Mar/2026:11:34:32 +0000] "POST /api/tracking/refresh/C10001 HTTP/1.1" 200 114 "-" "curl/8.7.1"
+2026-03-05 17:04:32 [info]: ::1 - - [05/Mar/2026:11:34:32 +0000] "GET /api/map/track/C10001 HTTP/1.1" 200 1762 "-" "curl/8.7.1"
+2026-03-05 17:05:42 [error]: MongoDB connection error: bad auth : Authentication failed.
+2026-03-05 17:05:46 [info]: SIGTERM received — shutting down gracefully
+2026-03-05 17:05:46 [info]: MongoDB disconnected
+2026-03-05 17:05:58 [info]: MongoDB connected: localhost
+2026-03-05 17:05:58 [warn]: Redis error:  - running without cache
+2026-03-05 17:05:58 [warn]: Redis error:  - running without cache
+2026-03-05 17:05:58 [warn]: Redis error:  - running without cache
+2026-03-05 17:05:58 [warn]: Redis error:  - running without cache
+2026-03-05 17:05:58 [warn]: Redis unavailable - caching disabled
+2026-03-05 17:05:58 [warn]: Redis error:  - running without cache
+2026-03-05 17:05:58 [warn]: Redis connection failed:  - caching disabled
+2026-03-05 17:05:58 [warn]: BullMQ/Redis unavailable (Connection is closed.) — using in-process queue fallback
+2026-03-05 17:05:58 [info]: Job processors registered: UPLOAD_DATASET
+2026-03-05 17:05:58 [info]: Tracking refresh cron started (every 10 min)
+2026-03-05 17:05:58 [info]: SmartContainer Risk Engine API v2 running on port 3000
+2026-03-05 17:05:58 [info]: Environment: development
+2026-03-05 17:05:58 [info]: Health check:  http://localhost:3000/health
+2026-03-05 17:05:58 [info]: Swagger docs:  http://localhost:3000/docs
+2026-03-05 17:05:58 [info]: Metrics:       http://localhost:3000/metrics
+2026-03-05 17:06:38 [info]: ::1 - - [05/Mar/2026:11:36:38 +0000] "POST /api/auth/login HTTP/1.1" 200 527 "-" "curl/8.7.1"
+2026-03-05 17:06:38 [info]: ::1 - - [05/Mar/2026:11:36:38 +0000] "POST /api/tracking/refresh/C10001 HTTP/1.1" 200 114 "-" "curl/8.7.1"
+2026-03-05 17:06:38 [info]: ::1 - - [05/Mar/2026:11:36:38 +0000] "GET /api/map/track/C10001 HTTP/1.1" 200 1922 "-" "curl/8.7.1"
+2026-03-05 17:07:09 [info]: SIGTERM received — shutting down gracefully
+2026-03-05 17:07:09 [info]: MongoDB disconnected
+2026-03-05 17:07:10 [error]: MongoDB connection error: bad auth : Authentication failed.
+2026-03-05 17:07:18 [info]: MongoDB connected: localhost
+2026-03-05 17:07:18 [warn]: Redis error:  - running without cache
+2026-03-05 17:07:18 [warn]: Redis error:  - running without cache
+2026-03-05 17:07:18 [warn]: Redis error:  - running without cache
+2026-03-05 17:07:18 [warn]: Redis error:  - running without cache
+2026-03-05 17:07:18 [warn]: Redis unavailable - caching disabled
+2026-03-05 17:07:18 [warn]: Redis error:  - running without cache
+2026-03-05 17:07:18 [warn]: Redis connection failed:  - caching disabled
+2026-03-05 17:07:18 [warn]: BullMQ/Redis unavailable (Connection is closed.) — using in-process queue fallback
+2026-03-05 17:07:18 [info]: Job processors registered: UPLOAD_DATASET
+2026-03-05 17:07:18 [info]: Tracking refresh cron started (every 10 min)
+2026-03-05 17:07:18 [info]: SmartContainer Risk Engine API v2 running on port 3000
+2026-03-05 17:07:18 [info]: Environment: development
+2026-03-05 17:07:18 [info]: Health check:  http://localhost:3000/health
+2026-03-05 17:07:18 [info]: Swagger docs:  http://localhost:3000/docs
+2026-03-05 17:07:18 [info]: Metrics:       http://localhost:3000/metrics
+2026-03-05 17:07:52 [info]: ::1 - - [05/Mar/2026:11:37:52 +0000] "POST /api/auth/login HTTP/1.1" 200 527 "-" "curl/8.7.1"
+2026-03-05 17:07:52 [info]: ::1 - - [05/Mar/2026:11:37:52 +0000] "POST /api/tracking/refresh/C10001 HTTP/1.1" 200 114 "-" "curl/8.7.1"
+2026-03-05 17:07:52 [info]: ::1 - - [05/Mar/2026:11:37:52 +0000] "GET /api/map/track/C10001 HTTP/1.1" 200 1629 "-" "curl/8.7.1"
+2026-03-05 17:08:08 [error]: MongoDB connection error: bad auth : Authentication failed.
+2026-03-05 17:08:19 [info]: ::1 - - [05/Mar/2026:11:38:19 +0000] "POST /api/auth/login HTTP/1.1" 200 527 "-" "curl/8.7.1"
+2026-03-05 17:08:20 [info]: ::1 - - [05/Mar/2026:11:38:20 +0000] "GET /docs.json HTTP/1.1" 200 8043 "-" "curl/8.7.1"
+2026-03-05 17:08:20 [info]: ::1 - - [05/Mar/2026:11:38:20 +0000] "GET /metrics HTTP/1.1" 200 - "-" "curl/8.7.1"
+2026-03-05 17:08:20 [info]: ::1 - - [05/Mar/2026:11:38:20 +0000] "GET /api/auth/me HTTP/1.1" 200 307 "-" "curl/8.7.1"
+2026-03-05 17:08:20 [info]: ::1 - - [05/Mar/2026:11:38:20 +0000] "GET /api/map/track/C10001curl HTTP/1.1" 404 128 "-" "curl/8.7.1"
+2026-03-05 17:08:20 [info]: ::1 - - [05/Mar/2026:11:38:20 +0000] "GET /api/map/track/C10001curl HTTP/1.1" 404 128 "-" "curl/8.7.1"
+2026-03-05 17:08:20 [info]: ::1 - - [05/Mar/2026:11:38:20 +0000] "GET /api/map/track/C10001curl HTTP/1.1" 404 128 "-" "curl/8.7.1"
+2026-03-05 17:08:20 [info]: ::1 - - [05/Mar/2026:11:38:20 +0000] "GET /api/map/track/C10001curl HTTP/1.1" 404 128 "-" "curl/8.7.1"
+2026-03-05 17:08:20 [info]: ::1 - - [05/Mar/2026:11:38:20 +0000] "GET /api/map/track/C10001curl HTTP/1.1" 404 128 "-" "curl/8.7.1"
+2026-03-05 17:08:33 [info]: ::1 - - [05/Mar/2026:11:38:33 +0000] "GET /metrics HTTP/1.1" 200 - "-" "curl/8.7.1"

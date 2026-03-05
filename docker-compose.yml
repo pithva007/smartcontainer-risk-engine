@@ -87,6 +87,9 @@ services:
       LOG_LEVEL: info
       # Set actual secrets via .env or Docker secrets in production
       JWT_SECRET: ${JWT_SECRET:-change_this_secret_in_production}
+      JWT_EXPIRY: ${JWT_EXPIRY:-8h}
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD:-Admin@12345}
+      TRACKING_UPDATE_MINS: ${TRACKING_UPDATE_MINS:-10}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
     volumes:
       - upload_data:/app/data/uploads

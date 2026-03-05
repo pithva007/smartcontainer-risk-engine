@@ -1,87 +1,71 @@
 /**
  * Upload Controller
- * Handles CSV/Excel file ingestion, parses records, stores raw data in MongoDB.
+ * Handles CSV/Excel file ingestion — enqueues an async background job and
+ * returns a job_id immediately so the caller can poll /api/jobs/:job_id.
  */
 const path = require('path');
 const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
-const { parseFile } = require('../utils/fileParser');
 const Container = require('../models/containerModel');
-const { deleteCache } = require('../config/redis');
+const { enqueueJob } = require('../services/jobQueueService');
+const { audit } = require('../services/auditService');
 const logger = require('../utils/logger');
 
 /**
  * POST /api/upload
  * Upload a CSV or Excel shipment dataset.
- * Validates file, parses records, bulk-inserts into MongoDB.
+ * Returns 202 Accepted with a job_id for progress polling.
  */
 const uploadDataset = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({
       success: false,
       message: 'No file uploaded. Please attach a CSV or Excel file.',
+      request_id: req.requestId,
     });
   }
 
   const filePath = req.file.path;
-  const batchId = uuidv4();
+  const originalFilename = req.file.originalname;
 
   try {
-    logger.info(`Processing upload: ${req.file.originalname} (batchId: ${batchId})`);
+    logger.info(`Queuing upload job for: ${originalFilename}`);
 
-    const records = await parseFile(filePath);
-
-    if (!records || records.length === 0) {
-      return res.status(422).json({
-        success: false,
-        message: 'File parsed but contains no valid records.',
-      });
-    }
-
-    // Attach batch ID to each record
-    const stamped = records.map((r) => ({
-      ...r,
-      upload_batch_id: batchId,
-      declaration_date: r.declaration_date ? new Date(r.declaration_date) : undefined,
-    }));
-
-    // Bulk insert — upsert by container_id to prevent duplicates
-    const bulkOps = stamped.map((record) => ({
-      updateOne: {
-        filter: { container_id: record.container_id },
-        update: { $set: record },
-        upsert: true,
+    const jobId = await enqueueJob(
+      'UPLOAD_DATASET',
+      {
+        file_path: filePath,
+        metadata: {
+          filename: path.basename(filePath),
+          original_filename: originalFilename,
+        },
       },
-    }));
+      req.user ? req.user._id : null
+    );
 
-    const bulkResult = await Container.bulkWrite(bulkOps, { ordered: false });
+    await audit({
+      user: req.user,
+      action: 'UPLOAD_DATASET',
+      entityType: 'Job',
+      entityId: jobId,
+      req,
+      metadata: { filename: originalFilename },
+    });
 
-    // Invalidate dashboard cache
-    await deleteCache('dashboard:summary');
-
-    logger.info(`Upload complete: ${records.length} records processed (batchId: ${batchId})`);
-
-    return res.status(200).json({
+    return res.status(202).json({
       success: true,
-      message: 'Dataset uploaded successfully.',
-      batch_id: batchId,
-      total_records: records.length,
-      inserted: bulkResult.upsertedCount,
-      updated: bulkResult.modifiedCount,
+      message: 'File accepted. Processing started in background.',
+      job_id: jobId,
+      poll_url: `/api/jobs/${jobId}`,
     });
   } catch (error) {
-    logger.error(`Upload error: ${error.message}`);
+    logger.error(`Upload enqueue error: ${error.message}`);
+    // Clean up on enqueue failure
+    try { fs.unlinkSync(filePath); } catch { /* ignore */ }
     return res.status(500).json({
       success: false,
       message: `Upload failed: ${error.message}`,
+      request_id: req.requestId,
     });
-  } finally {
-    // Clean up temp file
-    try {
-      fs.unlinkSync(filePath);
-    } catch {
-      // ignore cleanup failures
-    }
   }
 };
 

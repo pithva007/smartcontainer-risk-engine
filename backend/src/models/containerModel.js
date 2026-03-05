@@ -135,6 +135,34 @@ const containerSchema = new mongoose.Schema(
     processed_at: {
       type: Date,
     },
+
+    // --- Customs Workflow ---
+    inspection_status: {
+      type: String,
+      enum: ['NEW', 'ASSIGNED', 'IN_REVIEW', 'CLEARED', 'HOLD', 'DETENTION'],
+      default: 'NEW',
+      index: true,
+    },
+    assigned_to: {
+      type: String, // username of assigned officer
+      trim: true,
+      index: true,
+    },
+    notes: [
+      {
+        text: { type: String, required: true },
+        added_by: { type: String },
+        timestamp: { type: Date, default: Date.now },
+        _id: false,
+      },
+    ],
+    risk_explanation: {
+      type: [String],
+      default: [],
+    },
+    updated_at: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -146,5 +174,7 @@ const containerSchema = new mongoose.Schema(
 containerSchema.index({ risk_level: 1, anomaly_flag: 1 });
 containerSchema.index({ origin_country: 1, destination_country: 1 });
 containerSchema.index({ upload_batch_id: 1, risk_level: 1 });
+containerSchema.index({ inspection_status: 1, risk_score: -1 });
+containerSchema.index({ assigned_to: 1, inspection_status: 1 });
 
 module.exports = mongoose.model('Container', containerSchema);

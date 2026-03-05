@@ -595,4 +595,107 @@ All 16 end-to-end tests in `backend/test_api.sh` passed:
 
 ---
 
-*Generated: 5 March 2026 · SmartContainer Risk Engine · Hackamined*
+## 18. v2 Production Upgrade
+
+### 18.1 New Packages Installed
+
+| Package | Purpose |
+|---|---|
+| `jsonwebtoken` | JWT signing/verification |
+| `bcryptjs` | Password hashing (bcrypt rounds = 12) |
+| `zod` | Runtime input validation + typed schemas |
+| `bullmq` | Background job queue (Redis-backed, with in-process fallback) |
+| `pdfkit` | Server-side PDF report generation |
+| `prom-client` | Prometheus metrics (`/metrics` endpoint) |
+| `swagger-ui-express` | Swagger UI served at `/docs` |
+| `swagger-jsdoc` | OpenAPI 3.0 spec auto-generated from JSDoc |
+| `express-async-errors` | Propagates async rejections to Express error handler |
+
+### 18.2 New Models
+
+| Model file | Purpose |
+|---|---|
+| `models/userModel.js` | User accounts with bcrypt-hashed passwords, roles: admin / officer / viewer |
+| `models/jobModel.js` | Background job tracking with progress, logs, and 7-day TTL auto-cleanup |
+| `models/auditLogModel.js` | Compliance audit trail — every write action logged; 1-year TTL |
+| `models/geoCacheModel.js` | MongoDB-persisted geocode cache |
+| `models/shipmentTrackModel.js` | Full ship tracking schema: position history, stops, events, route GeoJSON |
+
+`containerModel.js` was updated with workflow fields: `inspection_status`, `assigned_to`, `notes[]`, `risk_explanation[]`, `updated_at`.
+
+### 18.3 New Middleware
+
+| File | Purpose |
+|---|---|
+| `middleware/auth.js` | `requireAuth` (JWT → DB lookup), `requireRole(minRole)` with hierarchy |
+| `middleware/requestId.js` | UUID correlation ID on every request (`X-Request-Id` header) |
+
+### 18.4 New Services
+
+| Service | What it does |
+|---|---|
+| `jobQueueService.js` | BullMQ + Redis when available; in-process `setImmediate` fallback; `enqueueJob`, `registerProcessor`, `appendLog`, `shutdown` |
+| `trackingService.js` | Full simulated ship tracking provider; geocoding chain (Redis → MongoDB → static → partial match); 50+ built-in coordinates; transit hub routing; GeoJSON FeatureCollection output |
+| `auditService.js` | `audit()` helper — creates AuditLog record, never throws on failure |
+| `reportService.js` | `generateCSV` (json2csv + BOM), `generatePDF` (pdfkit — branded header, bar charts, tables, multi-page) |
+| `metricsService.js` | prom-client; custom counters/histograms/gauges with `sce_` prefix; `metricsMiddleware`, `metricsHandler` |
+| `uploadJobProcessor.js` | UPLOAD_DATASET job handler: parse → ML predict → upsert containers → create tracks → result CSV |
+
+### 18.5 New Controllers & Routes
+
+**Auth** (`/api/auth/*`)
+- `POST /login` — returns JWT; `POST /logout`; `GET /me`
+- `POST /register` (admin only); `GET /users` (admin); `PATCH /users/:id/active` (admin)
+
+**Jobs** (`/api/jobs/*`)
+- `GET /jobs` — list jobs; `GET /jobs/:id` — status + progress; `GET /jobs/:id/logs`; `GET /jobs/:id/result`
+
+**Workflow** (`/api/queue`, `/api/containers/:id/*`)
+- `GET /queue` — sorted inspection queue (risk DESC + anomaly + dwell_time)
+- `POST /containers/:id/assign` — assign officer
+- `POST /containers/:id/status` — update inspection status
+- `POST /containers/:id/notes` — add note (officer/admin)
+
+**Tracking** (`/api/map/*`, `/api/tracking/*`)
+- `GET /map/track/:container_id` — full track with position + GeoJSON
+- `GET /map/tracks` — all active tracks as GeoJSON FeatureCollection (map-ready)
+- `GET /map/heatmap` — risk heatmap point array
+- `POST /tracking/link-vessel` — link vessel IMO to container
+- `POST /tracking/refresh/:container_id` — force position recalculation
+
+**Reports** (`/api/report/*`)
+- `GET /report/summary.csv` — downloadable CSV report
+- `GET /report/summary.pdf` — downloadable PDF report
+
+### 18.6 New Infrastructure Endpoints
+
+| URL | What it serves |
+|---|---|
+| `GET /docs` | Swagger UI (full interactive API browser) |
+| `GET /docs.json` | Raw OpenAPI 3.0 JSON spec |
+| `GET /metrics` | Prometheus metrics text format |
+| `GET /health` | Enhanced health check (DB state, version, request_id) |
+
+### 18.7 Upload Change
+
+`POST /api/upload` now returns **202 Accepted** with `{ job_id, poll_url }` immediately.
+Processing happens in the background (BullMQ or in-process). Poll `GET /api/jobs/:job_id` for progress.
+
+### 18.8 Default Admin User
+
+On first start with an empty `users` collection, the server seeds:
+- **Username**: `admin`  **Password**: value of `ADMIN_DEFAULT_PASSWORD` env var (default: `Admin@12345`)
+- Change immediately in production.
+
+### 18.9 Environment Variables Added
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `JWT_SECRET` | (required) | Signs/verifies JWT tokens |
+| `JWT_EXPIRY` | `8h` | Token lifetime |
+| `ADMIN_DEFAULT_PASSWORD` | `Admin@12345` | First-run admin seeding |
+| `TRACKING_UPDATE_MINS` | `10` | Interval for background position refresh |
+
+---
+
+*Generated: 5 March 2026 · SmartContainer Risk Engine v2 · Hackamined*

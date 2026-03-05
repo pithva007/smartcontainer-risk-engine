@@ -57,8 +57,8 @@ if [[ ! -f "$SAMPLE_CSV" ]]; then
 else
   R=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/upload" \
     -F "dataset=@$SAMPLE_CSV")
-  check "Upload sample CSV" "200" "$R" "batch_id"
-  BATCH_ID=$(echo "$R" | head -1 | python3 -c "import sys,json; print(json.load(sys.stdin).get('batch_id',''))" 2>/dev/null)
+  check "Upload sample CSV (202 Accepted + job_id)" "202" "$R" "job_id"
+  JOB_ID=$(echo "$R" | head -1 | python3 -c "import sys,json; print(json.load(sys.stdin).get('job_id',''))" 2>/dev/null)
 fi
 
 # ── 3. Dashboard Summary ─────────────────────────────────────────────────────
@@ -174,6 +174,131 @@ R=$(curl -s -w "\n%{http_code}" -X POST "$ML_URL/predict" \
 check "ML single predict" "200" "$R" "risk_score"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
+# ══ v2 Endpoints ═════════════════════════════════════════════════════════════
+
+# ── A. Auth ───────────────────────────────────────────────────────────────────
+section "Auth (POST /api/auth/login)"
+
+R=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"Admin@12345"}')
+check "Login as admin" "200" "$R" "token"
+AUTH_TOKEN=$(echo "$R" | head -1 | python3 -c "import sys,json; print(json.load(sys.stdin).get('token',''))" 2>/dev/null)
+
+if [[ -n "$AUTH_TOKEN" ]]; then
+  echo "    Token: ${AUTH_TOKEN:0:40}..."
+fi
+
+R=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"wrong_password"}')
+check "Reject wrong password" "401" "$R"
+
+R=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username":""}')
+check "Auth validation error (422)" "422" "$R"
+
+# ── B. Auth /me ────────────────────────────────────────────────────────────────
+section "Auth /me (GET /api/auth/me)"
+
+if [[ -n "$AUTH_TOKEN" ]]; then
+  R=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/auth/me" \
+    -H "Authorization: Bearer $AUTH_TOKEN")
+  check "GET /auth/me with valid token" "200" "$R" "admin"
+fi
+
+R=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/auth/me")
+check "GET /auth/me without token (401)" "401" "$R"
+
+# ── C. Jobs ────────────────────────────────────────────────────────────────────
+section "Jobs (GET /api/jobs)"
+
+if [[ -n "$AUTH_TOKEN" ]]; then
+  R=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/jobs" \
+    -H "Authorization: Bearer $AUTH_TOKEN")
+  check "List jobs (authenticated)" "200" "$R" "jobs"
+
+  if [[ -n "$JOB_ID" ]]; then
+    R=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/jobs/$JOB_ID" \
+      -H "Authorization: Bearer $AUTH_TOKEN")
+    check "GET job status by ID" "200" "$R" "job_id"
+
+    R=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/jobs/$JOB_ID/logs" \
+      -H "Authorization: Bearer $AUTH_TOKEN")
+    check "GET job logs" "200" "$R" "logs"
+    echo "    Waiting 3s for job to advance..."
+    sleep 3
+    R=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/jobs/$JOB_ID" \
+      -H "Authorization: Bearer $AUTH_TOKEN")
+    STATUS_VAL=$(echo "$R" | head -1 | python3 -c "import sys,json; print(json.load(sys.stdin).get('job',{}).get('status',''))" 2>/dev/null)
+    echo "    Job status after 3s: $STATUS_VAL"
+  fi
+fi
+
+# ── D. Ship Tracking ───────────────────────────────────────────────────────────
+section "Ship Tracking (GET /api/map/track/:id)"
+
+if [[ -n "$AUTH_TOKEN" ]]; then
+  R=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/map/track/C10001" \
+    -H "Authorization: Bearer $AUTH_TOKEN")
+  check "GET track for C10001" "200" "$R" "container_id"
+
+  R=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/map/tracks?limit=5" \
+    -H "Authorization: Bearer $AUTH_TOKEN")
+  check "GET all tracks GeoJSON (FeatureCollection)" "200" "$R" "FeatureCollection"
+
+  R=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/map/heatmap" \
+    -H "Authorization: Bearer $AUTH_TOKEN")
+  check "GET risk heatmap" "200" "$R" "points"
+fi
+
+# ── E. Workflow ────────────────────────────────────────────────────────────────
+section "Workflow (GET /api/queue)"
+
+if [[ -n "$AUTH_TOKEN" ]]; then
+  R=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/queue" \
+    -H "Authorization: Bearer $AUTH_TOKEN")
+  check "GET inspection queue" "200" "$R" "containers"
+fi
+
+# ── F. Reports ────────────────────────────────────────────────────────────────
+section "Reports (GET /api/report/summary.csv)"
+
+if [[ -n "$AUTH_TOKEN" ]]; then
+  HTTP_STATUS=$(curl -s -o /tmp/test_report.csv -w "%{http_code}" \
+    "$BASE_URL/api/report/summary.csv" \
+    -H "Authorization: Bearer $AUTH_TOKEN")
+  if [[ "$HTTP_STATUS" == "200" ]] && [[ -s /tmp/test_report.csv ]]; then
+    LINES=$(wc -l < /tmp/test_report.csv | tr -d ' ')
+    pass "CSV report downloaded ($LINES lines)"
+  else
+    fail "CSV report (status $HTTP_STATUS)"
+  fi
+
+  HTTP_STATUS=$(curl -s -o /tmp/test_report.pdf -w "%{http_code}" \
+    "$BASE_URL/api/report/summary.pdf" \
+    -H "Authorization: Bearer $AUTH_TOKEN")
+  if [[ "$HTTP_STATUS" == "200" ]] && [[ -s /tmp/test_report.pdf ]]; then
+    pass "PDF report downloaded"
+  else
+    fail "PDF report (status $HTTP_STATUS)"
+  fi
+fi
+
+# ── G. Prometheus Metrics ─────────────────────────────────────────────────────
+section "Metrics (GET /metrics)"
+
+R=$(curl -s -w "\n%{http_code}" "$BASE_URL/metrics")
+check "Prometheus /metrics endpoint" "200" "$R" "sce_http_requests_total"
+
+# ── H. Swagger Docs ───────────────────────────────────────────────────────────
+section "Swagger Docs (GET /docs.json)"
+
+R=$(curl -s -w "\n%{http_code}" "$BASE_URL/docs.json")
+check "OpenAPI spec available" "200" "$R" "SmartContainer"
+
+# ─────────────────────────────────────────────────────────────────────────────
 TOTAL=$((PASS+FAIL))
 echo -e "\n══════════════════════════════════════════"
 echo -e "  Results: ${GREEN}${PASS} passed${NC} / ${RED}${FAIL} failed${NC} / ${TOTAL} total"
