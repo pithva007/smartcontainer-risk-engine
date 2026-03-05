@@ -10,33 +10,74 @@ const { connectDB } = require('./src/config/database');
 const { connectRedis } = require('./src/config/redis');
 
 let initPromise = null;
+let initError = null;
 
 const init = () => {
+  if (initError) {
+    return Promise.reject(initError);
+  }
   if (!initPromise) {
     initPromise = (async () => {
-      await connectDB();
-      await connectRedis();
+      console.log('Starting initialization...');
+      console.log('MONGODB_URI set:', !!process.env.MONGODB_URI);
+      console.log('NODE_ENV:', process.env.NODE_ENV);
+      
+      try {
+        await connectDB();
+        console.log('MongoDB connected successfully');
+      } catch (dbErr) {
+        console.error('MongoDB connection failed:', dbErr.message);
+        throw dbErr;
+      }
+      
+      try {
+        await connectRedis();
+        console.log('Redis connected (or skipped)');
+      } catch (redisErr) {
+        console.warn('Redis connection failed (non-fatal):', redisErr.message);
+      }
 
       // Seed default admin on first boot
-      const User = require('./src/models/userModel');
-      const count = await User.countDocuments();
-      if (count === 0) {
-        await User.create({
-          username: process.env.ADMIN_USERNAME || 'admin',
-          email: process.env.ADMIN_EMAIL || 'admin@smartcontainer.local',
-          password_hash: process.env.ADMIN_PASSWORD || 'Admin@12345',
-          role: 'admin',
-          full_name: 'System Administrator',
-        });
-        console.log('Default admin user seeded');
+      try {
+        const User = require('./src/models/userModel');
+        const count = await User.countDocuments();
+        if (count === 0) {
+          await User.create({
+            username: process.env.ADMIN_USERNAME || 'admin',
+            email: process.env.ADMIN_EMAIL || 'admin@smartcontainer.local',
+            password_hash: process.env.ADMIN_PASSWORD || 'Admin@12345',
+            role: 'admin',
+            full_name: 'System Administrator',
+          });
+          console.log('Default admin user seeded');
+        } else {
+          console.log(`Found ${count} existing users, skipping seed`);
+        }
+      } catch (seedErr) {
+        console.warn('Admin seed error (non-fatal):', seedErr.message);
       }
-    })();
+      
+      console.log('Initialization complete');
+    })().catch(err => {
+      initError = err;
+      initPromise = null;
+      throw err;
+    });
   }
   return initPromise;
 };
 
 // Vercel calls this handler for every request
 module.exports = async (req, res) => {
-  await init();
-  return app(req, res);
+  try {
+    await init();
+    return app(req, res);
+  } catch (err) {
+    console.error('Init error:', err.message);
+    res.status(500).json({
+      error: 'Server initialization failed',
+      message: err.message,
+      hint: 'Check MONGODB_URI environment variable in Vercel dashboard'
+    });
+  }
 };
