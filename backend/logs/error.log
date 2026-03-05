@@ -1,0 +1,7 @@
+2026-03-05 15:38:42 [error]: MongoDB connection error: 80B0260502000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:916:SSL alert number 80
+
+2026-03-05 15:39:10 [error]: MongoDB connection error: bad auth : Authentication failed.
+2026-03-05 15:39:25 [error]: MongoDB connection error: 80B0260502000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:916:SSL alert number 80
+
+2026-03-05 15:39:43 [error]: MongoDB connection error: bad auth : Authentication failed.
+2026-03-05 15:39:46 [error]: MongoDB connection error: bad auth : Authentication failed.

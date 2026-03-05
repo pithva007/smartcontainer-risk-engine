@@ -1,0 +1,29 @@
+2026-03-05 15:35:09 [info]: MongoDB connected: localhost
+2026-03-05 15:35:09 [warn]: Redis error:  - running without cache
+2026-03-05 15:35:09 [warn]: Redis error:  - running without cache
+2026-03-05 15:35:09 [warn]: Redis error:  - running without cache
+2026-03-05 15:35:10 [warn]: Redis error:  - running without cache
+2026-03-05 15:35:10 [warn]: Redis unavailable - caching disabled
+2026-03-05 15:35:10 [warn]: Redis error:  - running without cache
+2026-03-05 15:35:10 [warn]: Redis connection failed:  - caching disabled
+2026-03-05 15:35:10 [info]: SmartContainer Risk Engine API running on port 3000
+2026-03-05 15:35:10 [info]: Environment: development
+2026-03-05 15:35:10 [info]: Health check: http://localhost:3000/health
+2026-03-05 15:38:42 [error]: MongoDB connection error: 80B0260502000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:916:SSL alert number 80
+
+2026-03-05 15:39:10 [error]: MongoDB connection error: bad auth : Authentication failed.
+2026-03-05 15:39:25 [error]: MongoDB connection error: 80B0260502000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:916:SSL alert number 80
+
+2026-03-05 15:39:43 [error]: MongoDB connection error: bad auth : Authentication failed.
+2026-03-05 15:39:46 [error]: MongoDB connection error: bad auth : Authentication failed.
+2026-03-05 15:40:15 [info]: MongoDB connected: localhost
+2026-03-05 15:40:15 [warn]: Redis error:  - running without cache
+2026-03-05 15:40:15 [warn]: Redis error:  - running without cache
+2026-03-05 15:40:15 [warn]: Redis error:  - running without cache
+2026-03-05 15:40:16 [warn]: Redis error:  - running without cache
+2026-03-05 15:40:16 [warn]: Redis unavailable - caching disabled
+2026-03-05 15:40:16 [warn]: Redis error:  - running without cache
+2026-03-05 15:40:16 [warn]: Redis connection failed:  - caching disabled
+2026-03-05 15:40:16 [info]: SmartContainer Risk Engine API running on port 3000
+2026-03-05 15:40:16 [info]: Environment: development
+2026-03-05 15:40:16 [info]: Health check: http://localhost:3000/health
