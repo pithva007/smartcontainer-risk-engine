@@ -192,3 +192,8 @@
 2026-03-05 17:08:20 [info]: ::1 - - [05/Mar/2026:11:38:20 +0000] "GET /api/map/track/C10001curl HTTP/1.1" 404 128 "-" "curl/8.7.1"
 2026-03-05 17:08:20 [info]: ::1 - - [05/Mar/2026:11:38:20 +0000] "GET /api/map/track/C10001curl HTTP/1.1" 404 128 "-" "curl/8.7.1"
 2026-03-05 17:08:33 [info]: ::1 - - [05/Mar/2026:11:38:33 +0000] "GET /metrics HTTP/1.1" 200 - "-" "curl/8.7.1"
+2026-03-05 17:16:26 [error]: MongoDB connection error: 80B0260502000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:ssl/record/rec_layer_s3.c:916:SSL alert number 80
+
+2026-03-05 17:17:18 [info]: [Tracking] Refreshing 0 active tracks
+2026-03-05 17:27:18 [info]: [Tracking] Refreshing 0 active tracks
+2026-03-05 17:28:31 [error]: MongoDB connection error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/
