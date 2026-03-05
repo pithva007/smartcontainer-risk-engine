@@ -311,3 +311,33 @@
 2026-03-05 19:32:40 [info]: ::1 - - [05/Mar/2026:14:02:40 +0000] "GET /api/summary HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
 2026-03-05 19:32:41 [info]: ::1 - - [05/Mar/2026:14:02:41 +0000] "GET /api/dashboard/recent-high-risk HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
 2026-03-05 19:32:41 [info]: ::1 - - [05/Mar/2026:14:02:41 +0000] "GET /api/dashboard/risk-distribution HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 19:41:12 [info]: [Tracking] Refreshing 0 active tracks
+2026-03-05 19:51:12 [info]: [Tracking] Refreshing 0 active tracks
+2026-03-05 20:01:12 [info]: [Tracking] Refreshing 0 active tracks
+2026-03-05 20:02:51 [info]: ::1 - - [05/Mar/2026:14:32:51 +0000] "GET /api/auth/me HTTP/1.1" 200 307 "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:51 [info]: ::1 - - [05/Mar/2026:14:32:51 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:51 [info]: ::1 - - [05/Mar/2026:14:32:51 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:51 [info]: ::1 - - [05/Mar/2026:14:32:51 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:52 [info]: ::1 - - [05/Mar/2026:14:32:52 +0000] "GET /api/dashboard/recent-high-risk HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:52 [info]: ::1 - - [05/Mar/2026:14:32:52 +0000] "GET /api/summary HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:52 [info]: ::1 - - [05/Mar/2026:14:32:52 +0000] "GET /api/dashboard/risk-distribution HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:59 [info]: ::1 - - [05/Mar/2026:14:32:59 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:59 [info]: ::1 - - [05/Mar/2026:14:32:59 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:59 [info]: ::1 - - [05/Mar/2026:14:32:59 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:59 [info]: ::1 - - [05/Mar/2026:14:32:59 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:59 [info]: ::1 - - [05/Mar/2026:14:32:59 +0000] "GET /api/dashboard/risk-distribution HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:59 [info]: ::1 - - [05/Mar/2026:14:32:59 +0000] "GET /api/summary HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:02:59 [info]: ::1 - - [05/Mar/2026:14:32:59 +0000] "GET /api/dashboard/recent-high-risk HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:03:04 [info]: ::1 - - [05/Mar/2026:14:33:04 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:03:04 [info]: ::1 - - [05/Mar/2026:14:33:04 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:03:04 [info]: ::1 - - [05/Mar/2026:14:33:04 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:03:04 [info]: ::1 - - [05/Mar/2026:14:33:04 +0000] "GET /api/auth/me HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:03:04 [info]: ::1 - - [05/Mar/2026:14:33:04 +0000] "GET /api/summary HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:03:04 [info]: ::1 - - [05/Mar/2026:14:33:04 +0000] "GET /api/dashboard/recent-high-risk HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:03:04 [info]: ::1 - - [05/Mar/2026:14:33:04 +0000] "GET /api/dashboard/risk-distribution HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+2026-03-05 20:12:52 [info]: [Tracking] Refreshing 0 active tracks
+2026-03-05 20:23:28 [info]: [Tracking] Refreshing 0 active tracks
+2026-03-05 20:44:05 [info]: [Tracking] Refreshing 0 active tracks
+2026-03-05 20:55:15 [info]: [Tracking] Refreshing 0 active tracks
+2026-03-05 21:11:06 [info]: [Tracking] Refreshing 0 active tracks
+2026-03-05 21:21:05 [info]: [Tracking] Refreshing 0 active tracks
