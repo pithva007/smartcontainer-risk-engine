@@ -1,6 +1,19 @@
 // ─── Risk Levels ───────────────────────────────────────────
 export type RiskLevel = 'Critical' | 'Low Risk' | 'Clear';
 
+// ─── Auth ──────────────────────────────────────────────────
+export interface AuthUser {
+    username: string;
+    role: string;
+    email?: string;
+}
+
+export interface LoginResponse {
+    token: string;
+    expires_in: string;
+    user: AuthUser;
+}
+
 // ─── Dashboard ─────────────────────────────────────────────
 export interface SummaryData {
     total_containers: number;
@@ -34,6 +47,13 @@ export interface RecentHighRisk {
 }
 
 // ─── Upload ────────────────────────────────────────────────
+export interface UploadJobResponse {
+    success: boolean;
+    job_id: string;
+    poll_url: string;
+}
+
+/** @deprecated — legacy shape kept for reference */
 export interface UploadResponse {
     batch_id: string;
     total_records: number;
@@ -44,6 +64,36 @@ export interface BatchRecord {
     batch_id: string;
     total_records: number;
     created_at: string;
+}
+
+// ─── Jobs ──────────────────────────────────────────────────
+export type JobStatus = 'waiting' | 'active' | 'completed' | 'failed' | 'delayed';
+
+export interface JobRecord {
+    job_id: string;
+    type: string;
+    status: JobStatus;
+    progress: number;
+    created_at: string;
+    finished_at?: string;
+    metadata?: Record<string, unknown>;
+    result?: {
+        batch_id?: string;
+        total_records?: number;
+        processed_records?: number;
+        result_csv?: string;
+    };
+}
+
+// ─── Workflow Queue ────────────────────────────────────────
+export interface QueueItem {
+    container_id: string;
+    risk_score: number;
+    risk_level: RiskLevel;
+    status: string;
+    assigned_to?: string;
+    notes?: string;
+    queued_at: string;
 }
 
 // ─── Prediction ────────────────────────────────────────────

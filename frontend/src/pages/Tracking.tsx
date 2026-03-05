@@ -15,7 +15,7 @@ import {
     Search, ChevronUp, ChevronDown, ChevronsUpDown,
     ChevronLeft, ChevronRight, TableIcon,
 } from 'lucide-react';
-import type { RecentHighRisk, RiskLevel } from '@/types/apiTypes';
+import type { RiskLevel } from '@/types/apiTypes';
 import { cn } from '@/lib/utils';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 

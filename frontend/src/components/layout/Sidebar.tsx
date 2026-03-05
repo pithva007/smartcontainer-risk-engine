@@ -5,8 +5,10 @@ import {
     Crosshair,
     Map,
     Route,
+    LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
 const links = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -17,6 +19,8 @@ const links = [
 ];
 
 export default function Sidebar() {
+    const { user, logout } = useAuth();
+
     return (
         <aside className="w-64 shrink-0 bg-sidebar border-r border-border flex flex-col h-screen sticky top-0 z-20">
             {/* Logo */}
@@ -50,8 +54,23 @@ export default function Sidebar() {
             </nav>
 
             {/* Footer */}
-            <div className="p-4 border-t border-border">
-                <p className="text-xs text-muted text-center">Risk Engine v1.0</p>
+            <div className="p-4 border-t border-border space-y-3">
+                {user && (
+                    <div className="flex items-center justify-between">
+                        <div className="min-w-0">
+                            <p className="text-xs font-medium text-foreground truncate">{user.username}</p>
+                            <p className="text-xs text-foreground/40 capitalize">{user.role}</p>
+                        </div>
+                        <button
+                            onClick={logout}
+                            title="Sign out"
+                            className="p-1.5 rounded-md text-foreground/40 hover:text-foreground hover:bg-foreground/5 transition-colors"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
+                <p className="text-xs text-muted text-center">Risk Engine v2.0</p>
             </div>
         </aside>
     );

@@ -24,13 +24,13 @@ const seedAdminUser = async () => {
     const count = await User.countDocuments();
     if (count === 0) {
       await User.create({
-        username: 'admin',
-        email: 'admin@smartcontainer.local',
-        password_hash: process.env.ADMIN_DEFAULT_PASSWORD || 'Admin@12345',
+        username: process.env.ADMIN_USERNAME || 'admin',
+        email: process.env.ADMIN_EMAIL || 'admin@smartcontainer.local',
+        password_hash: process.env.ADMIN_PASSWORD || 'Admin@12345',
         role: 'admin',
         full_name: 'System Administrator',
       });
-      logger.info('Default admin user created (username: admin)');
+      logger.info(`Default admin user created (username: ${process.env.ADMIN_USERNAME || 'admin'})`);
     }
   } catch (err) {
     logger.warn(`Admin seed skipped: ${err.message}`);
