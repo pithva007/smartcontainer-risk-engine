@@ -14,7 +14,7 @@ const logger = require('../utils/logger');
 // ── Assign Container ───────────────────────────────────────────────────────────
 const assignContainer = async (req, res) => {
   const { id } = req.params;
-  const { assigned_to } = req.body;
+  const { assigned_to, notes } = req.body;
 
   const container = await Container.findOne({ container_id: id });
   if (!container) {
@@ -28,6 +28,11 @@ const assignContainer = async (req, res) => {
     container.inspection_status = 'ASSIGNED';
   }
   container.updated_at = new Date();
+
+  if (notes && notes.trim().length > 0) {
+    container.notes.push({ text: notes.trim(), added_by: req.user?.username || 'system', timestamp: new Date() });
+  }
+
   await container.save();
 
   await audit({
@@ -36,7 +41,7 @@ const assignContainer = async (req, res) => {
     entityType: 'Container',
     entityId: id,
     req,
-    metadata: { assigned_to },
+    metadata: { assigned_to, notes },
   });
 
   return res.status(200).json({ success: true, container_id: id, inspection_status: container.inspection_status, assigned_to });
@@ -55,6 +60,9 @@ const updateStatus = async (req, res) => {
   }
 
   container.inspection_status = inspection_status;
+  if (inspection_status === 'CLEARED') {
+    container.risk_level = 'Clear';
+  }
   container.updated_at = new Date();
   if (notes) {
     container.notes.push({ text: notes, added_by: req.user?.username || 'system', timestamp: new Date() });
@@ -146,4 +154,16 @@ const getQueue = async (req, res) => {
   });
 };
 
-module.exports = { assignContainer, updateStatus, addNote, getQueue };
+// ── Get Single Container ───────────────────────────────────────────────────────
+const getContainer = async (req, res) => {
+  const { id } = req.params;
+  const container = await Container.findOne({ container_id: id }).lean();
+  if (!container) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: `Container '${id}' not found.`, request_id: req.requestId },
+    });
+  }
+  return res.status(200).json({ success: true, data: container });
+};
+
+module.exports = { assignContainer, updateStatus, addNote, getQueue, getContainer };

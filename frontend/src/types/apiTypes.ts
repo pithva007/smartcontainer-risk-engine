@@ -44,6 +44,7 @@ export interface RecentHighRisk {
     risk_score: number;
     risk_level: RiskLevel;
     processed_at: string;
+    explanation?: string;
 }
 
 // ─── Upload ────────────────────────────────────────────────
@@ -88,12 +89,46 @@ export interface JobRecord {
 // ─── Workflow Queue ────────────────────────────────────────
 export interface QueueItem {
     container_id: string;
+    origin_country: string;
+    destination_country: string;
     risk_score: number;
     risk_level: RiskLevel;
+    anomaly_flag: boolean;
     status: string;
     assigned_to?: string;
     notes?: string;
     queued_at: string;
+}
+
+// ─── Shipment Details ──────────────────────────────────────
+export interface ShipmentDetail {
+    _id: string;
+    container_id: string;
+    declaration_date: string;
+    declaration_time: string;
+    trade_regime: string;
+    origin_country: string;
+    destination_country: string;
+    destination_port: string;
+    hs_code: string;
+    importer_id: string;
+    exporter_id: string;
+    declared_value: number;
+    declared_weight: number;
+    measured_weight: number;
+    shipping_line: string;
+    dwell_time_hours: number;
+    clearance_status: string;
+    risk_score: number;
+    risk_level: RiskLevel;
+    anomaly_flag: boolean;
+    explanation?: string;
+    inspection_status: string;
+    assigned_to?: string;
+    notes: Array<{ text: string; added_by: string; timestamp: string }>;
+    risk_explanation: string[];
+    createdAt: string;
+    updatedAt: string;
 }
 
 // ─── Prediction ────────────────────────────────────────────

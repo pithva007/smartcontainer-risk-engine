@@ -8,7 +8,7 @@
 const router = require('express').Router();
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { validate, schemas } = require('../utils/validators');
-const { assignContainer, updateStatus, addNote, getQueue } = require('../controllers/workflowController');
+const { assignContainer, updateStatus, addNote, getQueue, getContainer } = require('../controllers/workflowController');
 
 /**
  * @swagger
@@ -32,6 +32,16 @@ const { assignContainer, updateStatus, addNote, getQueue } = require('../control
  *         schema: { type: integer, default: 50 }
  */
 router.get('/queue', requireAuth, requireRole('officer'), getQueue);
+
+/**
+ * @swagger
+ * /api/containers/{id}:
+ *   get:
+ *     tags: [Workflow]
+ *     summary: Get full details for a single container
+ *     security: [{ bearerAuth: [] }]
+ */
+router.get('/containers/:id', requireAuth, getContainer);
 
 /**
  * @swagger

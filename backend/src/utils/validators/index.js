@@ -46,6 +46,7 @@ const predictSingleSchema = z.object({
 const assignContainerSchema = z.object({
   body: z.object({
     assigned_to: z.string().min(1, 'assigned_to user ID is required'),
+    notes: z.string().optional(),
   }),
 });
 

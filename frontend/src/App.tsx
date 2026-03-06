@@ -11,6 +11,7 @@ import Predict from '@/pages/Predict';
 import MapPage from '@/pages/Map';
 import Tracking from '@/pages/Tracking';
 import Login from '@/pages/Login';
+import Profile from '@/pages/Profile';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,6 +49,7 @@ export default function App() {
               <Route path="/predict" element={<Predict />} />
               <Route path="/map" element={<MapPage />} />
               <Route path="/tracking" element={<Tracking />} />
+              <Route path="/profile" element={<Profile />} />
             </Route>
           </Routes>
         </BrowserRouter>
@@ -57,10 +59,10 @@ export default function App() {
             style: {
               background: 'var(--card)',
               color: 'var(--foreground)',
-            border: '1px solid var(--border)',
-          },
-        }}
-      />
+              border: '1px solid var(--border)',
+            },
+          }}
+        />
       </AuthProvider>
     </QueryClientProvider>
   );

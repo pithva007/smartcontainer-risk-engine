@@ -13,6 +13,7 @@ const {
   getTopRiskyRoutes,
   getAnomalyStats,
   getRecentHighRisk,
+  getContainersList,
 } = require('../controllers/dashboardController');
 
 router.get('/summary', getSummary);
@@ -20,5 +21,6 @@ router.get('/dashboard/risk-distribution', getRiskDistribution);
 router.get('/dashboard/top-risky-routes', getTopRiskyRoutes);
 router.get('/dashboard/anomaly-stats', getAnomalyStats);
 router.get('/dashboard/recent-high-risk', getRecentHighRisk);
+router.get('/dashboard/containers', getContainersList);
 
 module.exports = router;

@@ -25,7 +25,7 @@ export const getMe = () =>
     apiClient.get<AuthUser>('/auth/me').then(r => r.data);
 
 export const logout = () =>
-    apiClient.post('/auth/logout').catch(() => {/* ignore errors on logout */});
+    apiClient.post('/auth/logout').catch(() => {/* ignore errors on logout */ });
 
 // ─── Dashboard ─────────────────────────────────────────────
 export const fetchSummary = () =>
@@ -53,6 +53,18 @@ export const fetchTopRoutes = () =>
 export const fetchRecentHighRisk = () =>
     apiClient.get<{ success: boolean; data: RecentHighRisk[] }>('/dashboard/recent-high-risk')
         .then(r => r.data.data ?? []);
+
+interface ContainersResponse {
+    success: boolean;
+    data: QueueItem[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
+export const fetchContainersList = (params?: { risk_level?: string; anomaly?: boolean; page?: number; limit?: number }) =>
+    apiClient.get<ContainersResponse>('/dashboard/containers', { params })
+        .then(r => r.data);
 
 // ─── Upload ────────────────────────────────────────────────
 export const uploadDataset = (formData: FormData, onProgress?: (pct: number) => void) =>
@@ -101,11 +113,14 @@ export const fetchHeatmap = () =>
 export const fetchQueue = () =>
     apiClient.get<QueueItem[]>('/queue').then(r => r.data);
 
-export const assignContainer = (id: string, inspector: string) =>
-    apiClient.post(`/containers/${id}/assign`, { inspector }).then(r => r.data);
+export const assignContainer = (id: string, inspector: string, notes?: string) =>
+    apiClient.post(`/containers/${id}/assign`, { assigned_to: inspector, notes }).then(r => r.data);
 
 export const updateContainerStatus = (id: string, status: string, notes?: string) =>
-    apiClient.post(`/containers/${id}/status`, { status, notes }).then(r => r.data);
+    apiClient.post(`/containers/${id}/status`, { inspection_status: status, notes }).then(r => r.data);
+
+export const fetchContainerById = (id: string) =>
+    apiClient.get<{ success: boolean; data: any }>(`/containers/${id}`).then(r => r.data.data);
 
 // ─── Reports ───────────────────────────────────────────────
 export const downloadCSV = () =>
