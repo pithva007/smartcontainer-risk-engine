@@ -194,4 +194,52 @@ Require stack:
     at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
     at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+<<<<<<< HEAD
+2026-03-06 09:12:54 [error]: MongoDB connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+2026-03-06 12:42:14 [error]: Unhandled error [26e85b86-f8c3-420f-9177-1b802ba16937]: TypeError: Cannot read properties of undefined (reading 'map')
+    at C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\utils\validators\index.js:106:38
+    at newFn (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express-async-errors\index.js:16:20)
+    at Layer.handle [as handle_request] (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\route.js:149:13)
+    at C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\middleware\auth.js:97:3
+    at newFn (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express-async-errors\index.js:16:20)
+    at Layer.handle [as handle_request] (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\route.js:149:13)
+    at requireAuth (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\middleware\auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+2026-03-06 12:42:17 [error]: Unhandled error [1f2aa41f-fac4-4f78-b8a5-f5970fae796a]: TypeError: Cannot read properties of undefined (reading 'map')
+    at C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\utils\validators\index.js:106:38
+    at newFn (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express-async-errors\index.js:16:20)
+    at Layer.handle [as handle_request] (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\route.js:149:13)
+    at C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\middleware\auth.js:97:3
+    at newFn (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express-async-errors\index.js:16:20)
+    at Layer.handle [as handle_request] (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\route.js:149:13)
+    at requireAuth (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\middleware\auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+2026-03-06 12:43:41 [error]: Unhandled error [c43dd1a1-6c4b-4f48-9161-474737efa572]: TypeError: Cannot read properties of undefined (reading 'map')
+    at C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\utils\validators\index.js:106:38
+    at newFn (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express-async-errors\index.js:16:20)
+    at Layer.handle [as handle_request] (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\route.js:149:13)
+    at C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\middleware\auth.js:97:3
+    at newFn (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express-async-errors\index.js:16:20)
+    at Layer.handle [as handle_request] (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\route.js:149:13)
+    at requireAuth (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\middleware\auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+2026-03-06 12:43:42 [error]: Unhandled error [f641b5eb-d031-4f21-bb0a-975058ea5281]: TypeError: Cannot read properties of undefined (reading 'map')
+    at C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\utils\validators\index.js:106:38
+    at newFn (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express-async-errors\index.js:16:20)
+    at Layer.handle [as handle_request] (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\route.js:149:13)
+    at C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\middleware\auth.js:97:3
+    at newFn (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express-async-errors\index.js:16:20)
+    at Layer.handle [as handle_request] (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\route.js:149:13)
+    at requireAuth (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\middleware\auth.js:58:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+=======
 2026-03-06 08:50:41 [error]: MongoDB connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+>>>>>>> 6338aedbdebcc0de22d786c0b89493890c8f670b
