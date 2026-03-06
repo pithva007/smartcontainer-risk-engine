@@ -95,12 +95,22 @@ app.use(
 // Rate limiting — prevents brute-force and DoS
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests. Please retry later.' },
 });
 app.use('/api/', limiter);
+
+// Stricter limit for auth endpoints to prevent credential brute-force
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts. Please wait 15 minutes.' },
+});
+app.use('/api/auth/', authLimiter);
 
 // ── General Middleware ─────────────────────────────────────────────────────────
 app.use(compression());
