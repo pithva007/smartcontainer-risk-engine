@@ -9,6 +9,7 @@ const { Parser } = require('json2csv');
 const { predictSingle, predictBatch, triggerTraining } = require('../services/predictionService');
 const { reprocessAll, getProgress } = require('../services/mlBulkService');
 const { parseFile } = require('../utils/fileParser');
+const { generatePredictionCSV, buildPredictionSummary } = require('../services/reportService');
 const logger = require('../utils/logger');
 
 /**
@@ -71,7 +72,7 @@ const predictBatchFromFile = async (req, res) => {
 
     const predictions = await predictBatch(records, batchId);
 
-    // Merge input data with predictions for output CSV
+    // Build merged output rows (original fields + prediction columns)
     const outputRows = records.map((r, i) => ({
       Container_ID: r.container_id || '',
       Origin_Country: r.origin_country || '',
@@ -86,14 +87,26 @@ const predictBatchFromFile = async (req, res) => {
       Explanation: predictions[i]?.explanation ?? '',
     }));
 
-    const parser = new Parser({
-      fields: Object.keys(outputRows[0]),
-    });
+    // Build focused prediction rows (Container_ID, Risk_Score, Risk_Level, Explanation_Summary)
+    const predictionRows = predictions.map((p, i) => ({
+      container_id: records[i]?.container_id || '',
+      risk_score: p.risk_score,
+      risk_level: p.risk_level,
+      explanation: p.explanation,
+    }));
+    const summary = buildPredictionSummary(predictionRows);
+
+    const parser = new Parser({ fields: Object.keys(outputRows[0]) });
     const csv = parser.parse(outputRows);
 
     // Stream CSV to client as download
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="predictions_${batchId}.csv"`);
+    // Include summary in custom headers so clients can read it
+    res.setHeader('X-Prediction-Total',    String(summary.total));
+    res.setHeader('X-Prediction-Critical', String(summary.critical));
+    res.setHeader('X-Prediction-LowRisk',  String(summary.low_risk));
+    res.setHeader('X-Prediction-Clear',    String(summary.clear));
     return res.status(200).send(csv);
   } catch (error) {
     logger.error(`Batch prediction error: ${error.message}`);

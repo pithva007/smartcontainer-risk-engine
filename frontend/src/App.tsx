@@ -16,6 +16,7 @@ import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
 import AccountSettings from '@/pages/AccountSettings';
 import SystemAccess from '@/pages/SystemAccess';
+import Dossier from '@/pages/Dossier';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +62,7 @@ export default function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/account-settings" element={<AccountSettings />} />
                 <Route path="/system-access" element={<SystemAccess />} />
+                <Route path="/dossier/:id" element={<Dossier />} />
               </Route>
             </Routes>
           </BrowserRouter>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { streamUploadDataset, listJobs, deleteJob, clearAllData } from '@/api/routes';
+import { streamUploadDataset, listJobs, deleteJob, clearAllData, exportLivePredictionsCSV, exportPredictionsCSV } from '@/api/routes';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { useLivePredictions } from '@/hooks/useLivePredictions';
@@ -67,6 +67,7 @@ export default function Upload() {
     const [file, setFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [activeJobId, setActiveJobId] = useState<string | null>(null);
+    const [lastBatchId, setLastBatchId] = useState<string | null>(null);
     const [completedSummary, setCompletedSummary] = useState<{ total: number; processed: number; failed: number } | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
     const qc = useQueryClient();
@@ -77,6 +78,7 @@ export default function Upload() {
     /* When stream finishes, refresh all relevant queries */
     useEffect(() => {
         if (done) {
+            setLastBatchId(done.batch_id ?? null);
             setCompletedSummary({ total: done.total, processed: done.processed, failed: done.failed });
             setActiveJobId(null);
             qc.invalidateQueries({ queryKey: ['jobs'] });
@@ -125,6 +127,7 @@ export default function Upload() {
         },
         onSuccess: (data) => {
             setActiveJobId(data.job_id);
+            setLastBatchId(data.batch_id ?? null);
             clearRows();
             qc.invalidateQueries({ queryKey: ['jobs'] });
             toast.success('File received — streaming predictions live');
@@ -311,17 +314,30 @@ export default function Upload() {
                     <svg className="w-6 h-6 text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <div className="space-y-1 text-sm">
+                    <div className="space-y-1 text-sm flex-1">
                         <p className="font-semibold text-foreground">Stream Complete</p>
                         <p className="text-foreground/70">
                             {completedSummary.processed.toLocaleString()} rows processed
                             {completedSummary.failed > 0 && <span className="text-red-400 ml-1">({completedSummary.failed} failed)</span>}
                             {' '}— Dashboard stats updated.
                         </p>
-                        <div className="flex gap-3 mt-1 text-xs font-semibold">
-                            <span className="text-red-400">{liveCounts.critical} Critical</span>
-                            <span className="text-amber-400">{liveCounts.lowRisk} Low Risk</span>
-                            <span className="text-emerald-400">{liveCounts.clear} Clear</span>
+                        <div className="flex items-center gap-4 mt-2">
+                            <div className="flex gap-3 text-xs font-semibold">
+                                <span className="text-red-400">{liveCounts.critical} Critical</span>
+                                <span className="text-amber-400">{liveCounts.lowRisk} Low Risk</span>
+                                <span className="text-emerald-400">{liveCounts.clear} Clear</span>
+                            </div>
+                            <button
+                                onClick={() => liveRows.length > 0
+                                    ? exportLivePredictionsCSV(liveRows)
+                                    : exportPredictionsCSV({ batch_id: lastBatchId ?? undefined })}
+                                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 text-xs font-semibold transition-colors"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Export CSV
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -59,7 +59,7 @@ const getReportData = async (filters = {}) => {
   return { containers, riskDist, topRoutes, stats };
 };
 
-// ── CSV Export ─────────────────────────────────────────────────────────────────
+// ── CSV Export (full report) ───────────────────────────────────────────────────
 
 const generateCSV = async (filters = {}) => {
   const { containers } = await getReportData(filters);
@@ -94,6 +94,70 @@ const generateCSV = async (filters = {}) => {
 
   const parser = new Parser({ fields, withBOM: true });
   return parser.parse(data);
+};
+
+// ── Prediction CSV Export ──────────────────────────────────────────────────────
+// Generates a focused 4-column CSV ("risk_predictions.csv" format):
+//   Container_ID, Risk_Score, Risk_Level, Explanation_Summary
+// Used by POST /api/report/predictions.csv and the frontend Export button.
+
+/**
+ * Convert an array of prediction result objects into a 4-column CSV string.
+ * Works with both live-stream rows and DB-persisted container documents.
+ *
+ * @param {Array<{container_id:string, risk_score:number, risk_level:string, explanation?:string, risk_explanation?:string[]}>} predictions
+ * @returns {string} CSV string (UTF-8 BOM + header + rows)
+ */
+const generatePredictionCSV = (predictions) => {
+  const fields = ['Container_ID', 'Risk_Score', 'Risk_Level', 'Explanation_Summary'];
+
+  const rows = predictions.map((p) => {
+    const explanation =
+      Array.isArray(p.risk_explanation) && p.risk_explanation.length
+        ? p.risk_explanation.join('. ')
+        : (p.explanation || 'No explanation available.');
+
+    // Normalize risk_level: "Clear" containers are labelled "Low" per spec
+    const level = p.risk_level === 'Critical' ? 'Critical' : 'Low';
+
+    return {
+      Container_ID: p.container_id || '',
+      Risk_Score: typeof p.risk_score === 'number' ? p.risk_score.toFixed(4) : '',
+      Risk_Level: level,
+      Explanation_Summary: explanation,
+    };
+  });
+
+  const parser = new Parser({ fields, withBOM: true });
+  return parser.parse(rows);
+};
+
+/**
+ * Build summary stats from prediction results.
+ * Returns total + per-level counts.
+ *
+ * @param {Array} predictions
+ * @returns {{ total: number, critical: number, low_risk: number, clear: number }}
+ */
+const buildPredictionSummary = (predictions) => {
+  const total    = predictions.length;
+  const critical = predictions.filter((p) => p.risk_level === 'Critical').length;
+  const low_risk = predictions.filter((p) => p.risk_level === 'Low Risk').length;
+  const clear    = predictions.filter((p) => p.risk_level === 'Clear').length;
+  return { total, critical, low_risk, clear };
+};
+
+/**
+ * Fetch predictions from DB (optionally filtered) and return CSV + summary.
+ *
+ * @param {Object} filters  – batch_id, risk_level, from_date, to_date, limit
+ * @returns {Promise<{ csv: string, summary: Object }>}
+ */
+const generatePredictionCSVFromDB = async (filters = {}) => {
+  const { containers } = await getReportData({ ...filters, limit: filters.limit || 10000 });
+  const csv     = generatePredictionCSV(containers);
+  const summary = buildPredictionSummary(containers);
+  return { csv, summary };
 };
 
 // ── PDF Export ─────────────────────────────────────────────────────────────────
@@ -255,4 +319,4 @@ const _drawTable = (doc, headers, rows, width) => {
   doc.y = y + 10;
 };
 
-module.exports = { generateCSV, generatePDF };
+module.exports = { generateCSV, generatePDF, generatePredictionCSV, buildPredictionSummary, generatePredictionCSVFromDB };

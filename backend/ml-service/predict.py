@@ -351,8 +351,8 @@ def _ensemble_predict_single(record: Dict[str, Any]) -> Dict[str, Any]:
         score_100 = _run_ensemble(
             X,
             _artifacts["if_features"],
-            _artifacts["train_if_raw_min"],
-            _artifacts["train_if_raw_max"],
+            _artifacts.get("train_if_raw_p1", _artifacts.get("train_if_raw_min", 0.0)),
+            _artifacts.get("train_if_raw_p99", _artifacts.get("train_if_raw_max", 1.0)),
             _artifacts["weights"],
         )[0]
         return {"risk_score": round(float(score_100) / 100, 4)}
@@ -377,8 +377,8 @@ def _ensemble_predict_batch(records: List[Dict[str, Any]]) -> List[Dict[str, Any
         scores_100 = _run_ensemble(
             X,
             _artifacts["if_features"],
-            _artifacts["train_if_raw_min"],
-            _artifacts["train_if_raw_max"],
+            _artifacts.get("train_if_raw_p1", _artifacts.get("train_if_raw_min", 0.0)),
+            _artifacts.get("train_if_raw_p99", _artifacts.get("train_if_raw_max", 1.0)),
             _artifacts["weights"],
         )
         return [{"risk_score": round(float(s) / 100, 4)} for s in scores_100]

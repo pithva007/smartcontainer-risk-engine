@@ -203,7 +203,67 @@ export const sendChatMessage = (payload: { conversation_id: string; message_text
     apiClient.post('/chat/message', payload).then(r => r.data);
 
 export const updateChatStatus = (conversation_id: string, status: ConversationStatus) =>
-    apiClient.patch(`/chat/status/${conversation_id}`, { status }).then(r => r.data);
+    apiClient.post('/chat/status', { conversation_id, status }).then(r => r.data);
+
+// ─── Reports / CSV Export ──────────────────────────────────
+/**
+ * Download the focused 4-column prediction CSV (risk_predictions.csv).
+ * Triggers a browser file download — no return value needed.
+ *
+ * @param filters  Optional batch_id / risk_level query params
+ */
+export const exportPredictionsCSV = (filters?: { batch_id?: string; risk_level?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.batch_id)   params.set('batch_id',   filters.batch_id);
+    if (filters?.risk_level) params.set('risk_level', filters.risk_level);
+    const qs = params.toString();
+    const date = new Date().toISOString().split('T')[0];
+    const filename = filters?.batch_id
+        ? `risk_predictions_${filters.batch_id}_${date}.csv`
+        : `risk_predictions_${date}.csv`;
+
+    // Use apiClient so the auth header is applied, then trigger download
+    return apiClient
+        .get<string>(`/report/predictions.csv${qs ? `?${qs}` : ''}`, {
+            responseType: 'blob',
+        })
+        .then((res) => {
+            const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+            const a   = document.createElement('a');
+            a.href     = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+};
+
+/**
+ * Client-side helper: convert an array of live PredictionRow objects into a
+ * CSV blob and trigger an immediate browser download.  No server round-trip.
+ */
+export const exportLivePredictionsCSV = (rows: import('@/types/apiTypes').PredictionRow[], filename = 'risk_predictions.csv') => {
+    const header = 'Container_ID,Risk_Score,Risk_Level,Explanation_Summary';
+    const escapeCSV = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
+    const lines = rows.map((r) =>
+        [
+            escapeCSV(r.container_id),
+            r.risk_score.toFixed(4),
+            escapeCSV(r.risk_level === 'Critical' ? 'Critical' : 'Low'),
+            escapeCSV(r.explanation || 'No explanation available.'),
+        ].join(',')
+    );
+    const csv  = '\uFEFF' + [header, ...lines].join('\r\n');
+    const url  = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
 
 export const uploadChatAttachment = (file: File, onProgress?: (pct: number) => void) => {
     const formData = new FormData();

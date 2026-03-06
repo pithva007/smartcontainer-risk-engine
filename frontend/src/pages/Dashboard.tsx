@@ -6,6 +6,7 @@ import {
     fetchRiskDistribution,
     fetchRecentHighRisk,
     fetchContainerById,
+    exportPredictionsCSV,
 } from '@/api/routes';
 import { useLivePredictions } from '@/hooks/useLivePredictions';
 import { useSocket } from '@/context/SocketContext';
@@ -408,9 +409,20 @@ export default function Dashboard() {
                     <h1 className="text-2xl font-bold text-foreground">Risk Operations Dashboard</h1>
                     <p className="text-sm text-foreground/50 mt-1">Real-time prediction monitoring and high-risk container detection</p>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-foreground/40 mt-1 shrink-0">
-                    <span className={cn('w-1.5 h-1.5 rounded-full', connected ? 'bg-emerald-400' : 'bg-red-400')} />
-                    {connected ? 'Live' : 'Reconnecting...'}
+                <div className="flex items-center gap-3 mt-1 shrink-0">
+                    <button
+                        onClick={() => exportPredictionsCSV()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 text-xs font-semibold transition-colors"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Export CSV
+                    </button>
+                    <div className="flex items-center gap-1.5 text-xs text-foreground/40">
+                        <span className={cn('w-1.5 h-1.5 rounded-full', connected ? 'bg-emerald-400' : 'bg-red-400')} />
+                        {connected ? 'Live' : 'Reconnecting...'}
+                    </div>
                 </div>
             </div>
 
