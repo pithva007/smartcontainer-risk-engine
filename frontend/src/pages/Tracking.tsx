@@ -11,7 +11,7 @@ import {
     type SortingState,
     type ColumnDef,
 } from '@tanstack/react-table';
-import { ArrowUpRight, Search, Table as TableIcon, ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
+import { Search, Table as TableIcon, ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import type { RiskLevel } from '@/types/apiTypes';
 import ShipmentDetailModal from '@/components/dashboard/ShipmentDetailModal';
 import { cn } from '@/lib/utils';

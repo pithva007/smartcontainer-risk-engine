@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MessageSquare, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { fetchChatConversations, fetchChatMessages, startChatConversation, updateChatStatus, uploadChatAttachment } from '@/api/routes';
@@ -54,10 +54,6 @@ export default function ChatWidget() {
     refetchInterval: open ? 15000 : 30000,
   });
 
-  const unreadTotal = useMemo(() => {
-    const list = conversations.data?.data || [];
-    return list.reduce((acc, c) => acc + (c.unread_count || 0), 0);
-  }, [conversations.data]);
 
   const typingName = useMemo(() => {
     if (!socket.typing || !selected) return null;
@@ -181,20 +177,6 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Floating button */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-[60] w-12 h-12 rounded-full bg-primary/20 border border-primary/30 hover:bg-primary/25 shadow-lg flex items-center justify-center"
-        title="Chat"
-      >
-        <MessageSquare className="w-5 h-5 text-primary" />
-        {open ? null : unreadTotal > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-            {unreadTotal > 99 ? '99+' : unreadTotal}
-          </span>
-        )}
-      </button>
 
       {/* Panel */}
       {open && (
