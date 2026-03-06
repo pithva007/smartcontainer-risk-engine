@@ -7,6 +7,57 @@ export interface AuthUser {
     username: string;
     role: string;
     email?: string;
+    full_name?: string;
+    department?: string;
+    settings?: {
+        notifications: {
+            highRisk: boolean;
+            anomaly: boolean;
+            weeklySummary: boolean;
+        }
+    };
+}
+
+export interface ProfileResp {
+    success: boolean;
+    profile: {
+        full_name: string;
+        official_email: string;
+        department: string;
+        system_role: string;
+        phone_number?: string;
+        profile_photo?: string;
+        account_created_date?: string;
+        last_login_time?: string;
+        active_sessions: number;
+        settings: {
+            notifications: {
+                highRisk: boolean;
+                anomaly: boolean;
+                weeklySummary: boolean;
+            }
+        };
+    };
+}
+
+export interface SessionsResp {
+    success: boolean;
+    sessions: Array<{
+        _id: string;
+        login_time: string;
+        device?: string;
+        ip?: string;
+    }>;
+}
+
+export interface ActivityResp {
+    success: boolean;
+    logs: Array<{
+        _id: string;
+        action: string;
+        timestamp: string;
+        metadata?: any;
+    }>;
 }
 
 export interface LoginResponse {

@@ -5,6 +5,7 @@ import {
     Shield,
     Clock,
     CheckCircle2,
+    LogOut,
     Building2,
     Calendar,
     Activity
@@ -14,10 +15,13 @@ import { cn } from '@/lib/utils';
 /**
  * Enhanced Profile Page
  * Displays comprehensive user details, system permissions, and activity metadata.
- * Suitable for professional logistics/government monitoring dashboard.
  */
 export default function Profile() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+
+    const handleLogout = () => {
+        logout();
+    };
 
     if (!user) return null;
 
@@ -50,29 +54,48 @@ export default function Profile() {
                             <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 mb-4 shadow-inner">
                                 <User className="w-10 h-10" />
                             </div>
-                            <h2 className="text-xl font-bold text-foreground">{user.username}</h2>
+                            <h2 className="text-xl font-bold text-foreground">{user.full_name || user.username}</h2>
                             <div className="mt-2 text-center">
                                 <span className="px-2.5 py-0.5 bg-primary/10 text-primary rounded-md text-[11px] font-bold uppercase tracking-wider border border-primary/20 block mb-1">
                                     {user.role}
                                 </span>
                                 <span className="text-[10px] text-foreground/40 font-semibold uppercase tracking-widest">
-                                    Container Security Division
+                                    {user.department || 'Container Security Division'}
                                 </span>
                             </div>
                         </div>
 
-                        <div className="mt-8 space-y-4 pt-6 border-t border-border">
-                            <div className="flex items-center gap-3 text-sm">
-                                <Mail className="w-4 h-4 text-foreground/30" />
-                                <span className="text-foreground/70">{user.email || 'admin@smartcontainer.local'}</span>
+                        <div className="mt-8 space-y-4 pt-6 border-t border-border w-full">
+                            <div className="flex items-center gap-3 text-sm min-w-0">
+                                <Mail className="w-4 h-4 text-foreground/30 shrink-0" />
+                                <span className="text-foreground/70 truncate flex-1" title={user.email || 'officer@smartcontainer.local'}>
+                                    {user.email || 'officer@smartcontainer.local'}
+                                </span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <Building2 className="w-4 h-4 text-foreground/30" />
-                                <span className="text-foreground/70">Risk Intelligence Unit</span>
+                                <span className="text-foreground/70">{user.department || 'Risk Intelligence Unit'}</span>
                             </div>
                         </div>
                     </div>
 
+                    {/* Quick Actions */}
+                    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+                        <h3 className="text-xs font-bold text-foreground/40 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            Account Actions
+                        </h3>
+                        <div className="space-y-3">
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-risk-critical/20 bg-risk-critical/5 hover:bg-risk-critical/10 transition-all group"
+                            >
+                                <div className="flex items-center gap-3 text-left">
+                                    <LogOut className="w-4 h-4 text-risk-critical" />
+                                    <span className="text-sm font-medium text-risk-critical">Logout from System</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* RIGHT COLUMN: Permissions & Activity */}
@@ -80,8 +103,6 @@ export default function Profile() {
 
                     {/* section: User Information */}
                     <section className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-                        {/* comment: Displays basic user identity information retrieved from the authentication service */}
-                        {/* comment: This section helps identify the currently logged-in user */}
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
                                 <Activity className="w-5 h-5" />
@@ -92,27 +113,25 @@ export default function Profile() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
                             <div className="space-y-1.5">
                                 <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Full Name</p>
-                                <p className="text-md font-semibold text-foreground">Umang Rabadiya</p>
+                                <p className="text-md font-semibold text-foreground">{user.full_name || 'Not specified'}</p>
                             </div>
                             <div className="space-y-1.5">
                                 <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Official Email</p>
-                                <p className="text-md font-semibold text-foreground">{user.email || 'umang@example.com'}</p>
+                                <p className="text-md font-semibold text-foreground">{user.email || 'Not specified'}</p>
                             </div>
                             <div className="space-y-1.5">
                                 <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">System Role</p>
-                                <p className="text-md font-semibold text-foreground">Risk Analyst</p>
+                                <p className="text-md font-semibold text-foreground italic capitalize">{user.role}</p>
                             </div>
                             <div className="space-y-1.5">
                                 <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Assigned Department</p>
-                                <p className="text-md font-semibold text-foreground">Container Intelligence Unit</p>
+                                <p className="text-md font-semibold text-foreground">{user.department || 'Not assigned'}</p>
                             </div>
                         </div>
                     </section>
 
                     {/* section: System Role & Permissions */}
                     <section className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-                        {/* comment: Shows which modules the user is authorized to access */}
-                        {/* comment: Permissions should be controlled by backend role-based access control */}
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
                                 <Shield className="w-5 h-5" />
@@ -140,7 +159,6 @@ export default function Profile() {
 
                     {/* section: Activity Information */}
                     <section className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-                        {/* comment: Displays user activity metadata to help with security auditing */}
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500">
                                 <Clock className="w-5 h-5" />
@@ -161,7 +179,7 @@ export default function Profile() {
                                     <Activity className="w-3.5 h-3.5" />
                                     <span className="text-[10px] font-bold uppercase tracking-widest">Last Login</span>
                                 </div>
-                                <p className="text-sm font-semibold">2026-03-05 14:20</p>
+                                <p className="text-sm font-semibold">Today</p>
                             </div>
                             <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-2 text-foreground/40 mb-1">
@@ -178,3 +196,4 @@ export default function Profile() {
         </div>
     );
 }
+

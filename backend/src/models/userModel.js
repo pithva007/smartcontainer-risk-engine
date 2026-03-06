@@ -60,6 +60,13 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
+    settings: {
+      notifications: {
+        highRisk: { type: Boolean, default: true },
+        anomaly: { type: Boolean, default: false },
+        weeklySummary: { type: Boolean, default: true },
+      },
+    },
   },
   { timestamps: true }
 );

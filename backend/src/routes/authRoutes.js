@@ -17,6 +17,8 @@ const {
   me,
   listUsers,
   toggleActive,
+  updateProfile,
+  changePassword,
 } = require('../controllers/authController');
 
 /**
@@ -62,6 +64,26 @@ router.post('/auth/register', requireAuth, requireRole('admin'), validate(schema
  *     security: [{ bearerAuth: [] }]
  */
 router.get('/auth/me', requireAuth, me);
+
+/**
+ * @swagger
+ * /api/auth/me/profile:
+ *   patch:
+ *     tags: [Auth]
+ *     summary: Update current user profile
+ *     security: [{ bearerAuth: [] }]
+ */
+router.patch('/auth/me/profile', requireAuth, validate(schemas.updateProfile), updateProfile);
+
+/**
+ * @swagger
+ * /api/auth/me/password:
+ *   put:
+ *     tags: [Auth]
+ *     summary: Change current user password
+ *     security: [{ bearerAuth: [] }]
+ */
+router.put('/auth/me/password', requireAuth, validate(schemas.changePassword), changePassword);
 
 /**
  * @swagger

@@ -17,6 +17,9 @@ import type {
     AuthUser,
     ContainerLocation,
     StreamUploadResponse,
+    ProfileResp,
+    SessionsResp,
+    ActivityResp,
 } from '@/types/apiTypes';
 import type { ConversationListItem, StartConversationResponse, ChatMessage, ConversationStatus } from '@/types/chatTypes';
 
@@ -26,6 +29,28 @@ export const login = (username: string, password: string) =>
 
 export const getMe = () =>
     apiClient.get<{ success: boolean; user: AuthUser }>('/auth/me').then(r => r.data.user);
+
+export const updateProfile = (data: { full_name?: string; email?: string; phone_number?: string; department?: string; profile_photo?: string }) =>
+    apiClient.patch<{ success: boolean; user: AuthUser }>('/auth/me/profile', data).then(r => r.data.user);
+
+export const changePassword = (data: { current_password?: string; new_password?: string }) =>
+    apiClient.put<{ success: boolean; message: string }>('/auth/me/password', data).then(r => r.data);
+
+// ─── User Settings & Activity ─────────────────────────────
+export const getExtendedProfile = () =>
+    apiClient.get<ProfileResp>('/user/profile').then(r => r.data);
+
+export const updateExtendedProfile = (data: Partial<ProfileResp['profile']>) =>
+    apiClient.put<{ success: boolean; user: AuthUser }>('/user/update-profile', data).then(r => r.data);
+
+export const getActiveSessions = () =>
+    apiClient.get<SessionsResp>('/user/active-sessions').then(r => r.data);
+
+export const logoutAllSessions = () =>
+    apiClient.post<{ success: boolean; message: string }>('/user/logout-all').then(r => r.data);
+
+export const getActivityLogs = () =>
+    apiClient.get<ActivityResp>('/user/activity-logs').then(r => r.data);
 
 export const logout = () =>
     apiClient.post('/auth/logout').catch(() => {/* ignore errors on logout */ });

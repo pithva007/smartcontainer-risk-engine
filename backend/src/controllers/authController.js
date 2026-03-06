@@ -107,11 +107,55 @@ const logout = async (req, res) => {
   // remove current session if sid available
   const Session = require('../models/sessionModel');
   if (req.tokenSid) {
-    await Session.deleteOne({ _id: req.tokenSid, user_id: req.user._id }).catch(() => {});
+    await Session.deleteOne({ _id: req.tokenSid, user_id: req.user._id }).catch(() => { });
   }
 
   await audit({ user: req.user, action: 'LOGOUT', req });
   return res.status(200).json({ success: true, message: 'Logged out.' });
+};
+
+// ── Update Profile ─────────────────────────────────────────────────────────────
+const updateProfile = async (req, res) => {
+  const { full_name, phone_number, department, profile_photo, email } = req.body;
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found.' } });
+  }
+
+  if (email && email.toLowerCase() !== user.email.toLowerCase()) {
+    if (await User.exists({ email: email.toLowerCase() })) {
+      return res.status(409).json({ error: { code: 'EMAIL_EXISTS', message: 'Email already in use.' } });
+    }
+    user.email = email;
+  }
+
+  if (full_name !== undefined) user.full_name = full_name;
+  if (phone_number !== undefined) user.phone_number = phone_number;
+  if (department !== undefined) user.department = department;
+  if (profile_photo !== undefined) user.profile_photo = profile_photo;
+
+  await user.save();
+  await audit({ user: req.user, action: 'UPDATE_PROFILE', req });
+
+  return res.status(200).json({ success: true, user: user.toSafeObject() });
+};
+
+// ── Change Password ────────────────────────────────────────────────────────────
+const changePassword = async (req, res) => {
+  const { current_password, new_password } = req.body;
+  const user = await User.findById(req.user._id).select('+password_hash');
+
+  const valid = await user.comparePassword(current_password);
+  if (!valid) {
+    return res.status(401).json({ error: { code: 'INVALID_CREDENTIALS', message: 'Current password incorrect.' } });
+  }
+
+  user.password_hash = new_password; // hook hashes it
+  await user.save();
+  await audit({ user: req.user, action: 'CHANGE_PASSWORD', req });
+
+  return res.status(200).json({ success: true, message: 'Password updated successfully.' });
 };
 
 // ── Me ─────────────────────────────────────────────────────────────────────────
@@ -153,4 +197,4 @@ const toggleActive = async (req, res) => {
   return res.status(200).json({ success: true, user: user.toSafeObject() });
 };
 
-module.exports = { register, login, logout, me, listUsers, toggleActive };
+module.exports = { register, login, logout, me, listUsers, toggleActive, updateProfile, changePassword };

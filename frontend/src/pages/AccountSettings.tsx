@@ -1,511 +1,357 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/api/apiClient';
 import toast from 'react-hot-toast';
 import {
     User,
     Mail,
-    Key,
     Shield,
     Bell,
     Lock,
-    Activity,
+    Smartphone,
+    History,
+    ChevronRight,
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
+import {
+    getExtendedProfile,
+    updateExtendedProfile,
+    getActiveSessions,
+    logoutAllSessions,
+    getActivityLogs
+} from '@/api/routes';
+import ChangePasswordModal from '@/components/profile/ChangePasswordModal';
 
-/**
- * Account settings page. Uses the same dark-card layout as `Profile.tsx`.
- * Sections: profile info, security, notifications, privacy/sessions, activity log.
- */
 export default function AccountSettings() {
     const queryClient = useQueryClient();
+    const { updateUser } = useAuth();
 
-    // type definitions for API responses
-    interface ProfileResp {
-        profile: {
-            full_name: string;
-            official_email: string;
-            department: string;
-            phone_number?: string;
-            profile_photo?: string;
-            account_created_date?: string;
-            last_login_time?: string;
-            active_sessions: number;
-        };
-    }
-    interface SessionsResp {
-        sessions: Array<{ login_time: string; device?: string; ip?: string }>;
-    }
-    interface ActivityResp {
-        logs: Array<{ action: string; timestamp: string }>;
-    }
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-    const [notifications, setNotifications] = useState({
+    // Profile Data
+    const {
+        data: profileData,
+        isLoading: profileLoading,
+        isError: profileError
+    } = useQuery({
+        queryKey: ['extended-profile'],
+        queryFn: getExtendedProfile,
+    });
+
+    // Active Sessions
+    const { data: sessionsData } = useQuery({
+        queryKey: ['active-sessions'],
+        queryFn: getActiveSessions,
+    });
+
+    // Activity Logs
+    const { data: activityData } = useQuery({
+        queryKey: ['activity-logs'],
+        queryFn: getActivityLogs,
+    });
+
+    // Mutations
+    const updateMutation = useMutation({
+        mutationFn: updateExtendedProfile,
+        onSuccess: (updatedUser) => {
+            toast.success('Settings updated successfully');
+            queryClient.invalidateQueries({ queryKey: ['extended-profile'] });
+            if (updatedUser?.user) {
+                updateUser(updatedUser.user);
+            }
+        },
+        onError: () => toast.error('Failed to update settings'),
+    });
+
+    const logoutAllMutation = useMutation({
+        mutationFn: logoutAllSessions,
+        onSuccess: () => {
+            toast.success('Logged out from all other devices');
+            queryClient.invalidateQueries({ queryKey: ['active-sessions'] });
+        },
+        onError: () => toast.error('Failed to logout from other devices'),
+    });
+
+    // Local state for immediate UI feedback on toggles
+    const [notifState, setNotifState] = useState({
         highRisk: true,
         anomaly: false,
         weeklySummary: true,
     });
 
-    // toggle function will be defined later once notificationMutation exists
-
-    const navigate = useNavigate();
-    const { logout, setUser } = useAuth();
-
-    const { data: profileData, isLoading: profileLoading, isError: profileError, error } = useQuery<ProfileResp>({
-        queryKey: ['profile'],
-        queryFn: async () => {
-            const res = await apiClient.get<ProfileResp>('/user/profile');
-            return res.data;
-        },
-        staleTime: 1000 * 60 * 5,
-    });
-
-    // logout when we get unauthorized
-    if (profileError) {
-        const msg = (error as Error)?.message || '';
-        if (msg.toLowerCase().includes('401')) {
-            logout();
-            navigate('/login');
-        }
-    }
-
-    const { data: sessionsData } = useQuery<SessionsResp>({
-        queryKey: ['sessions'],
-        queryFn: () => apiClient.get('/user/active-sessions').then((r) => r.data),
-        enabled: !!profileData,
-    });
-
-    const { data: activityData } = useQuery<ActivityResp>({
-        queryKey: ['activities'],
-        queryFn: () => apiClient.get('/user/activity-logs').then((r) => r.data),
-        enabled: !!profileData,
-    });
-
-    // mutations will be declared after state hooks below
-
-    const [sessions, setSessions] = useState<SessionsResp['sessions']>([]);
-    const [activities, setActivities] = useState<Array<{ time: string; action: string }>>([]);
-
-    // form state for profile editing
-    const [profileForm, setProfileForm] = useState<Partial<ProfileResp['profile']>>({
-        full_name: '',
-        official_email: '',
-        department: '',
-        phone_number: '',
-        profile_photo: '',
-    });
-    const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [passwordForm, setPasswordForm] = useState({
-        current: '',
-        new: '',
-        confirm: '',
-    });
-
-    // notification query & mutation
-    interface NotificationResp {
-        settings: { highRisk: boolean; anomaly: boolean; weeklySummary: boolean };
-    }
-    const { data: notifData } = useQuery<NotificationResp>({
-        queryKey: ['notifications'],
-        queryFn: () => apiClient.get('/user/notification-settings').then((r) => r.data),
-        enabled: !!profileData,
-    });
-
-    const notificationMutation = useMutation<any, unknown, Partial<NotificationResp['settings']>>({
-        mutationFn: (vals) => apiClient.put('/user/notification-settings', vals).then((r) => r.data),
-        onSuccess: (data) => {
-            queryClient.setQueryData(['notifications'], data);
-            toast.success('Notification preferences updated');
-            queryClient.invalidateQueries({ queryKey: ['activities'] });
-        },
-        onError: (err: any) => {
-            toast.error(err?.response?.data?.error?.message || 'Failed to update notifications');
-        },
-    });
-
-    // now that notificationMutation exists, define toggle helper
-    const toggle = (key: keyof typeof notifications) => {
-        const newVal = !notifications[key];
-        setNotifications(prev => ({ ...prev, [key]: newVal }));
-        notificationMutation.mutate({ [key]: newVal });
-    };
-
-    // other mutations that depend on state hooks
-    const updateMutation = useMutation<any, unknown, Partial<ProfileResp['profile']>>({
-        mutationFn: (vals) =>
-            apiClient.put('/user/update-profile', vals).then((r) => r.data),
-        onSuccess: (data) => {
-            toast.success('Profile updated');
-            queryClient.invalidateQueries({ queryKey: ['profile'] });
-            queryClient.invalidateQueries({ queryKey: ['activities'] });
-            if (data?.user) setUser(data.user);
-        },
-        onError: (err: any) => {
-            console.error('Profile update error', err);
-            const msg = err?.response?.data?.error?.message || err?.message || 'Failed to update profile';
-            toast.error(msg);
-        },
-    });
-
-    const logoutAllMutation = useMutation<any>({
-        mutationFn: () => apiClient.post('/user/logout-all').then((r) => r.data),
-        onSuccess: () => {
-            toast.success('Logged out from all devices');
-            queryClient.invalidateQueries({ queryKey: ['sessions'] });
-            queryClient.invalidateQueries({ queryKey: ['activities'] });
-        },
-    });
-
-    const changePasswordMutation = useMutation<any, unknown, { current_password: string; new_password: string }>({
-        mutationFn: (vals) => apiClient.post('/user/change-password', vals).then((r) => r.data),
-        onSuccess: () => {
-            toast.success('Password changed');
-            setShowPasswordModal(false);
-            setPasswordForm({ current: '', new: '', confirm: '' });
-            queryClient.invalidateQueries({ queryKey: ['activities'] });
-        },
-        onError: (err: any) => {
-            toast.error(err?.response?.data?.error?.message || 'Failed to change password');
-        },
-    });
-
-    // populate when queries return, using effects to avoid infinite rerenders
     useEffect(() => {
-        if (sessionsData?.sessions) {
-            setSessions(sessionsData.sessions);
-        }
-    }, [sessionsData]);
-
-    useEffect(() => {
-        if (activityData?.logs) {
-            setActivities(
-                activityData.logs.map((l) => ({ time: new Date(l.timestamp).toLocaleString(), action: l.action }))
-            );
-        }
-    }, [activityData]);
-
-    useEffect(() => {
-        if (profileData?.profile) {
-            setProfileForm({
-                full_name: profileData.profile.full_name,
-                official_email: profileData.profile.official_email,
-                department: profileData.profile.department,
-                phone_number: profileData.profile.phone_number || '',
-                profile_photo: profileData.profile.profile_photo || '',
-            });
+        if (profileData?.profile?.settings?.notifications) {
+            setNotifState(profileData.profile.settings.notifications);
         }
     }, [profileData]);
 
-    useEffect(() => {
-        if (notifData?.settings) {
-            setNotifications(notifData.settings);
-        }
-    }, [notifData]);
+    const handleToggleNotification = (key: keyof typeof notifState) => {
+        const nextState = { ...notifState, [key]: !notifState[key] };
+        setNotifState(nextState);
+        updateMutation.mutate({
+            settings: {
+                notifications: nextState
+            }
+        });
+    };
 
-    // show feedback while loading or error
     if (profileLoading) {
         return (
-            <div className="flex h-full items-center justify-center bg-background">
-                <p className="text-foreground">Loading account settings…</p>
+            <div className="flex h-full items-center justify-center p-20 bg-background text-foreground/40 font-medium">
+                Loading account configuration...
             </div>
         );
     }
+
     if (profileError || !profileData?.profile) {
-        // if server returned unauthorized we may want to log out as well
-        const msg = (error as Error)?.message || 'Failed to load profile data.';
         return (
-            <div className="flex h-full items-center justify-center bg-background">
-                <p className="text-risk-critical">{msg}</p>
+            <div className="flex h-full items-center justify-center p-20 bg-background text-risk-critical font-medium uppercase tracking-widest text-xs">
+                Error retrieving account security status.
             </div>
         );
     }
+
+    const { profile } = profileData;
 
     return (
         <div className="p-6 md:p-8 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-foreground">Account Settings</h1>
-                <p className="text-sm text-foreground/50 mt-1 uppercase tracking-wider font-medium">Personal & security configuration</p>
+                <p className="text-sm text-foreground/50 mt-1 uppercase tracking-wider font-medium">Personal & Security Configuration</p>
             </div>
 
             <div className="space-y-8">
-                {/* profile info */}
+                {/* section: Profile Info */}
                 <section className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-                    <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center gap-3 mb-8">
                         <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
                             <User className="w-5 h-5" />
                         </div>
-                        <h2 className="text-lg font-bold">Profile Information</h2>
+                        <h2 className="text-lg font-bold">Identity Management</h2>
                     </div>
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            // strip out empty values so schema optional works
-                            const payload: Partial<ProfileResp['profile']> = { ...profileForm };
-                            if (payload.profile_photo === '') delete payload.profile_photo;
-                            if (payload.official_email === '') delete payload.official_email;
-                            if (payload.department === '') delete payload.department;
-                            if (payload.full_name === '') delete payload.full_name;
-                            if (payload.phone_number === '') delete payload.phone_number;
-                            updateMutation.mutate(payload);
-                        }}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                    >
-                        <div className="space-y-1.5">
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-2">
                             <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Full Name</label>
                             <input
-                                value={profileForm.full_name || ''}
-                                onChange={(e) => setProfileForm((p) => ({ ...p, full_name: e.target.value }))}
-                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                                defaultValue={profile.full_name}
+                                onBlur={(e) => {
+                                    if (e.target.value !== profile.full_name) {
+                                        updateMutation.mutate({ full_name: e.target.value });
+                                    }
+                                }}
+                                className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none transition-all"
                             />
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Profile Photo</label>
-                            <input
-                                type="text"
-                                placeholder="Image URL"
-                                value={profileForm.profile_photo || ''}
-                                onChange={(e) => setProfileForm((p) => ({ ...p, profile_photo: e.target.value }))}
-                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Official Email</label>
-                            <input
-                                type="email"
-                                value={profileForm.official_email || ''}
-                                onChange={(e) => setProfileForm((p) => ({ ...p, official_email: e.target.value }))}
-                                required
-                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
+
+                        <div className="space-y-2">
                             <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Department</label>
                             <input
-                                value={profileForm.department || ''}
-                                onChange={(e) => setProfileForm((p) => ({ ...p, department: e.target.value }))}
-                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                                defaultValue={profile.department}
+                                onBlur={(e) => {
+                                    if (e.target.value !== profile.department) {
+                                        updateMutation.mutate({ department: e.target.value });
+                                    }
+                                }}
+                                className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none transition-all"
                             />
                         </div>
-                        <div className="space-y-1.5 md:col-span-2">
-                            <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Contact Number</label>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Phone Number</label>
                             <input
-                                type="tel"
-                                pattern="[0-9]*"
-                                value={profileForm.phone_number || ''}
-                                onChange={(e) => setProfileForm((p) => ({ ...p, phone_number: e.target.value.replace(/\D/g,'') }))}
-                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                                defaultValue={profile.phone_number}
+                                placeholder="+1 (555) 000-0000"
+                                onBlur={(e) => {
+                                    if (e.target.value !== profile.phone_number) {
+                                        updateMutation.mutate({ phone_number: e.target.value });
+                                    }
+                                }}
+                                className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none transition-all"
                             />
                         </div>
-                        <div className="md:col-span-2 flex justify-end">
-                            <button
-                                type="submit"
-                                disabled={updateMutation.isPending}
-                                className="px-4 py-2 bg-primary rounded-lg text-sm text-background disabled:opacity-50"
-                            >
-                                {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
-                            </button>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">System Email</label>
+                            <div className="w-full bg-foreground/5 border border-border rounded-xl px-4 py-2.5 text-sm text-foreground/40 flex items-center gap-2">
+                                <Mail className="w-4 h-4 shrink-0" />
+                                <span>{profile.official_email}</span>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </section>
 
-                {/* security settings */}
+                {/* section: Security & Creds */}
                 <section className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-                    <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center gap-3 mb-8">
                         <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500">
                             <Shield className="w-5 h-5" />
                         </div>
-                        <h2 className="text-lg font-bold">Security Settings</h2>
+                        <h2 className="text-lg font-bold">Access Security</h2>
                     </div>
-                    <div className="space-y-4">
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
-                            onClick={() => setShowPasswordModal(true)}
-                            className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-foreground/5 transition-all"
+                            onClick={() => setIsPasswordModalOpen(true)}
+                            className="flex items-center justify-between p-4 rounded-xl border border-border bg-background hover:bg-foreground/5 hover:border-primary/40 transition-all group"
                         >
-                            <span>Change Password</span>
-                            <Key className="w-4 h-4" />
+                            <div className="flex items-center gap-3">
+                                <Lock className="w-5 h-5 text-foreground/40 group-hover:text-primary transition-colors" />
+                                <div className="text-left">
+                                    <p className="text-sm font-bold">Change System Password</p>
+                                    <p className="text-[10px] text-foreground/40 font-semibold uppercase tracking-wider">Secure Protocol Active</p>
+                                </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-foreground/20" />
                         </button>
-                        <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-foreground/5 transition-all">
-                            <span>Two-Factor Authentication</span>
-                            <Switch enabled={false} />
-                        </button>
-                        <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-foreground/5 transition-all">
-                            <span>Reset via Email</span>
-                            <Mail className="w-4 h-4" />
-                        </button>
-                        <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-foreground/5 transition-all">
-                            <span>Setup Security Questions</span>
-                            <Lock className="w-4 h-4" />
+
+                        <button className="flex items-center justify-between p-4 rounded-xl border border-border bg-background hover:bg-foreground/5 hover:border-primary/40 transition-all group opacity-50 cursor-not-allowed">
+                            <div className="flex items-center gap-3">
+                                <Smartphone className="w-5 h-5 text-foreground/40" />
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-foreground/60">Two-Factor Authentication</p>
+                                    <p className="text-[10px] text-risk-low font-bold uppercase tracking-wider">Recommended</p>
+                                </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-foreground/20" />
                         </button>
                     </div>
                 </section>
 
-                {/* notification preferences */}
-
-                {/* change password modal */}
-                {showPasswordModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-                        <div className="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-                            <h3 className="text-lg font-bold mb-4">Change Password</h3>
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    if (passwordForm.new !== passwordForm.confirm) {
-                                        toast.error('New password and confirmation do not match');
-                                        return;
-                                    }
-                                    changePasswordMutation.mutate({
-                                        current_password: passwordForm.current,
-                                        new_password: passwordForm.new,
-                                    });
-                                }}
-                                className="space-y-4"
-                            >
-                                <div>
-                                    <label className="block text-sm text-foreground/70">Current Password</label>
-                                    <input
-                                        type="password"
-                                        value={passwordForm.current}
-                                        onChange={(e) => setPasswordForm((p) => ({ ...p, current: e.target.value }))}
-                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm text-foreground/70">New Password</label>
-                                    <input
-                                        type="password"
-                                        value={passwordForm.new}
-                                        onChange={(e) => setPasswordForm((p) => ({ ...p, new: e.target.value }))}
-                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm text-foreground/70">Confirm Password</label>
-                                    <input
-                                        type="password"
-                                        value={passwordForm.confirm}
-                                        onChange={(e) => setPasswordForm((p) => ({ ...p, confirm: e.target.value }))}
-                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
-                                        required
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPasswordModal(false)}
-                                        className="px-4 py-2 rounded-lg text-sm border border-border"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={changePasswordMutation.isPending}
-                                        className="px-4 py-2 bg-primary rounded-lg text-sm text-background disabled:opacity-50"
-                                    >
-                                        {changePasswordMutation.isPending ? 'Updating…' : 'Update Password'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
+                {/* section: Notifications */}
                 <section className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-                    <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center gap-3 mb-8">
                         <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500">
                             <Bell className="w-5 h-5" />
                         </div>
                         <h2 className="text-lg font-bold">Notification Preferences</h2>
                     </div>
-                    <div className="space-y-4">
-                        {Object.entries(notifications).map(([k, v]) => (
-                            <div key={k} className="flex items-center justify-between">
-                                <span className="text-sm text-foreground">{k === 'highRisk' ? 'Email high-risk containers' : k === 'anomaly' ? 'Alerts for anomaly detection' : 'Weekly system activity summary'}</span>
-                                <Switch enabled={v} onChange={() => toggle(k as any)} />
+
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-bold">High Risk Alerts</p>
+                                <p className="text-xs text-foreground/40">Immediate email notifications for critical containers</p>
                             </div>
-                        ))}
+                            <Switch enabled={notifState.highRisk} onChange={() => handleToggleNotification('highRisk')} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-bold">Anomaly Detection</p>
+                                <p className="text-xs text-foreground/40">Push alerts when pattern anomalies are detected</p>
+                            </div>
+                            <Switch enabled={notifState.anomaly} onChange={() => handleToggleNotification('anomaly')} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-bold">Weekly Performance Summary</p>
+                                <p className="text-xs text-foreground/40">Consolidated audit of operations and risk trends</p>
+                            </div>
+                            <Switch enabled={notifState.weeklySummary} onChange={() => handleToggleNotification('weeklySummary')} />
+                        </div>
                     </div>
                 </section>
 
-                {/* privacy & sessions */}
-                <section className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-                    <div className="flex items-center gap-3 mb-6">
+                {/* section: Sessions */}
+                <section className="bg-card border border-border rounded-2xl p-8 shadow-sm overflow-hidden relative">
+                    <div className="flex items-center gap-3 mb-8">
                         <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-500">
                             <Lock className="w-5 h-5" />
                         </div>
-                        <h2 className="text-lg font-bold">Privacy & Session Management</h2>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="flex flex-col gap-2">
-                            <span className="text-sm text-foreground/70">Active Sessions</span>
-                            <ul className="space-y-1">
-                                {sessions.map((s, i) => (
-                                    <li key={i} className="flex justify-between text-sm">
-                                        <span>{s.device || 'unknown'}</span>
-                                        <span>{new Date(s.login_time).toLocaleString()}</span>
-                                        {s.ip && <span className="ml-4 text-foreground/70">IP: {s.ip}</span>}
-                                    </li>
-                                ))}
-                                {sessions.length === 0 && (
-                                    <li className="text-xs text-foreground/50">No active sessions</li>
-                                )}
-                            </ul>
+                        <div className="flex items-center justify-between w-full">
+                            <h2 className="text-lg font-bold">Active Sessions</h2>
+                            <button
+                                onClick={() => logoutAllMutation.mutate()}
+                                className="text-[10px] font-bold text-risk-critical uppercase tracking-widest hover:underline"
+                            >
+                                Invalidate all sessions
+                            </button>
                         </div>
-                        <button
-                            onClick={() => logoutAllMutation.mutate()}
-                            disabled={logoutAllMutation.isPending}
-                            className="px-4 py-2 rounded-lg bg-risk-critical/10 text-risk-critical text-sm disabled:opacity-50"
-                        >
-                            {logoutAllMutation.isPending ? 'Logging out…' : 'Logout from all devices'}
-                        </button>
+                    </div>
+
+                    <div className="space-y-3">
+                        {sessionsData?.sessions?.map((s, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 rounded-xl border border-border bg-background/50">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground/30">
+                                        <Smartphone className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold capitalize">{s.device || 'System Browser Session'}</p>
+                                        <p className="text-[10px] text-foreground/40 font-medium">IP: {s.ip || '127.0.0.1'}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-foreground/40 uppercase font-bold tracking-widest">Login Time</p>
+                                    <p className="text-xs font-medium">{new Date(s.login_time).toLocaleString()}</p>
+                                </div>
+                            </div>
+                        ))}
+                        {(!sessionsData?.sessions || sessionsData.sessions.length === 0) && (
+                            <p className="text-xs text-foreground/30 italic text-center py-4">No active sessions detected.</p>
+                        )}
                     </div>
                 </section>
 
-                {/* activity logs */}
+                {/* section: Activity */}
                 <section className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-green-500/10 rounded-lg text-green-500">
-                            <Activity className="w-5 h-5" />
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
+                            <History className="w-5 h-5" />
                         </div>
-                        <h2 className="text-lg font-bold">Account Activity Logs</h2>
+                        <h2 className="text-lg font-bold">Activity Log</h2>
                     </div>
-                    <table className="w-full text-sm text-left">
-                        <thead>
-                            <tr>
-                                <th className="pb-2">Time</th>
-                                <th className="pb-2">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {activities.map((a, i) => (
-                                <tr key={i} className="border-t border-border">
-                                    <td className="py-2">{a.time}</td>
-                                    <td className="py-2">{a.action}</td>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead>
+                                <tr className="border-b border-border">
+                                    <th className="pb-4 font-bold text-foreground/40 uppercase tracking-widest text-[10px]">Action</th>
+                                    <th className="pb-4 font-bold text-foreground/40 uppercase tracking-widest text-[10px]">Timestamp</th>
+                                    <th className="pb-4 font-bold text-foreground/40 uppercase tracking-widest text-[10px] text-right">Reference</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {activityData?.logs?.map((l) => (
+                                    <tr key={l._id}>
+                                        <td className="py-4 font-semibold text-foreground/80">{l.action.replace(/_/g, ' ')}</td>
+                                        <td className="py-4 text-foreground/50">{new Date(l.timestamp).toLocaleString()}</td>
+                                        <td className="py-4 text-right">
+                                            <span className="px-2 py-0.5 bg-foreground/5 rounded-md border border-border text-[9px] font-bold text-foreground/30">
+                                                {l._id.slice(-8).toUpperCase()}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {(!activityData?.logs || activityData.logs.length === 0) && (
+                                    <tr>
+                                        <td colSpan={3} className="py-12 text-center text-foreground/20 italic">No recent activity detected.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
             </div>
+
+            <ChangePasswordModal
+                isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+            />
         </div>
     );
 }
 
-// small switch component
 function Switch({ enabled, onChange }: { enabled: boolean; onChange?: () => void }) {
     return (
         <button
             onClick={onChange}
-            className={`w-10 h-5 rounded-full transition-colors ${
-                enabled ? 'bg-primary' : 'bg-foreground/20'
-            }`}
+            className={`w-11 h-6 rounded-full transition-all relative ${enabled ? 'bg-primary shadow-[0_0_12px_rgba(59,130,246,0.3)]' : 'bg-foreground/10'
+                }`}
         >
             <span
-                className={`block w-4 h-4 rounded-full bg-background transition-transform ${
-                    enabled ? 'translate-x-5' : 'translate-x-0'
-                }`}
+                className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm ${enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
             />
         </button>
     );

@@ -20,6 +20,9 @@ const getProfile = async (req, res) => {
       account_created_date: user.createdAt ? user.createdAt.toISOString().split('T')[0] : null,
       last_login_time: user.last_login,
       active_sessions: await Session.countDocuments({ user_id: user._id }),
+      settings: user.settings || {
+        notifications: { highRisk: true, anomaly: false, weeklySummary: true },
+      },
     },
   });
 };
@@ -34,6 +37,16 @@ const updateProfile = async (req, res) => {
   if (phone_number !== undefined) user.phone_number = phone_number;
   if (department !== undefined) user.department = department;
   if (profile_photo !== undefined) user.profile_photo = profile_photo;
+  if (req.body.settings !== undefined) {
+    user.settings = {
+      ...user.settings,
+      ...req.body.settings,
+      notifications: {
+        ...(user.settings?.notifications || {}),
+        ...(req.body.settings?.notifications || {}),
+      },
+    };
+  }
 
   try {
     await user.save();
@@ -76,7 +89,7 @@ const getActiveSessions = async (req, res) => {
 
 // logout from all sessions
 const logoutAll = async (req, res) => {
-  await Session.deleteMany({ user_id: req.user._id }).catch(() => {});
+  await Session.deleteMany({ user_id: req.user._id }).catch(() => { });
   await audit({ user: req.user, action: 'LOGOUT_ALL', req });
   return res.status(200).json({ success: true, message: 'Logged out from all devices.' });
 };

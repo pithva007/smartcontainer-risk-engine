@@ -80,6 +80,13 @@ const updateProfileSchema = z.object({
     phone_number: z.string().optional(),
     department: z.string().optional(),
     profile_photo: z.string().url().optional(),
+    settings: z.object({
+      notifications: z.object({
+        highRisk: z.boolean().optional(),
+        anomaly: z.boolean().optional(),
+        weeklySummary: z.boolean().optional(),
+      }).optional(),
+    }).optional(),
   }),
 });
 
