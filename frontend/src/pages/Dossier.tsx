@@ -69,7 +69,6 @@ export default function Dossier() {
 
     const isCritical = container.risk_level === 'Critical';
     const isLowRisk  = container.risk_level === 'Low Risk';
-    const isClear    = container.risk_level === 'Clear';
 
     const riskPct      = Math.round((container.risk_score ?? 0) * 100);
     const anomalyPct   = Math.round((container.anomaly_score ?? 0) * 100);

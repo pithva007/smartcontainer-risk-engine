@@ -9,7 +9,6 @@ import type {
     JobRecord,
     QueueItem,
     PredictionInput,
-    ContainerPrediction,
     SinglePredictionResult,
     ImporterRiskHistory,
     EscalationStats,
