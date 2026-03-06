@@ -158,6 +158,13 @@ export default function AIAnalysisPanel({ containerId, onClose }: Props) {
                                     <p className="text-[10px] uppercase tracking-widest text-amber-500/60 font-semibold mb-2 flex items-center gap-1">
                                         <AlertTriangle className="w-3 h-3" /> Risk Explanation
                                     </p>
+
+                                    {data.explanation && (
+                                        <p className="text-[11px] text-foreground/80 italic leading-relaxed mb-3 border-b border-amber-500/10 pb-2">
+                                            "{data.explanation}"
+                                        </p>
+                                    )}
+
                                     <ul className="space-y-1.5">
                                         {data.explanation_bullets.map((b: string, i: number) => (
                                             <li key={i} className="text-[11px] text-foreground/60 leading-relaxed flex items-start gap-1.5">

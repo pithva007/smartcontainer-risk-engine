@@ -3,14 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
     User,
-    Mail,
     Shield,
     Bell,
     Lock,
     Smartphone,
     History,
     ChevronRight,
+    Loader2
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -72,6 +73,8 @@ export default function AccountSettings() {
         onError: () => toast.error('Failed to logout from other devices'),
     });
 
+    const { profile } = profileData || {};
+
     // Local state for immediate UI feedback on toggles
     const [notifState, setNotifState] = useState({
         highRisk: true,
@@ -79,11 +82,32 @@ export default function AccountSettings() {
         weeklySummary: true,
     });
 
+    // Form state
+    const [formData, setFormData] = useState({
+        full_name: '',
+        official_email: '',
+        department: '',
+        phone_number: '',
+    });
+
+    // Sync notification state
     useEffect(() => {
         if (profileData?.profile?.settings?.notifications) {
             setNotifState(profileData.profile.settings.notifications);
         }
     }, [profileData]);
+
+    // Reset local state when profile changes
+    useEffect(() => {
+        if (profile) {
+            setFormData({
+                full_name: profile.full_name || '',
+                official_email: profile.official_email || '',
+                department: profile.department || '',
+                phone_number: profile.phone_number || '',
+            });
+        }
+    }, [profile]);
 
     const handleToggleNotification = (key: keyof typeof notifState) => {
         const nextState = { ...notifState, [key]: !notifState[key] };
@@ -103,7 +127,7 @@ export default function AccountSettings() {
         );
     }
 
-    if (profileError || !profileData?.profile) {
+    if (profileError || !profile) {
         return (
             <div className="flex h-full items-center justify-center p-20 bg-background text-risk-critical font-medium uppercase tracking-widest text-xs">
                 Error retrieving account security status.
@@ -111,7 +135,30 @@ export default function AccountSettings() {
         );
     }
 
-    const { profile } = profileData;
+    const hasChanges =
+        formData.full_name !== (profile.full_name || '') ||
+        formData.official_email !== (profile.official_email || '') ||
+        formData.department !== (profile.department || '') ||
+        formData.phone_number !== (profile.phone_number || '');
+
+    const phoneError = formData.phone_number && formData.phone_number.length !== 10;
+    const emailError = formData.official_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.official_email);
+    const isInvalid = !formData.full_name || !!phoneError || !!emailError;
+
+    const handleSave = () => {
+        if (isInvalid) return;
+        updateMutation.mutate(formData);
+    };
+
+    const handleDiscard = () => {
+        setFormData({
+            full_name: profile.full_name || '',
+            official_email: profile.official_email || '',
+            department: profile.department || '',
+            phone_number: profile.phone_number || '',
+        });
+    };
+
 
     return (
         <div className="p-6 md:p-8 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
@@ -123,60 +170,87 @@ export default function AccountSettings() {
             <div className="space-y-8">
                 {/* section: Profile Info */}
                 <section className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
-                            <User className="w-5 h-5" />
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
+                                <User className="w-5 h-5" />
+                            </div>
+                            <h2 className="text-lg font-bold">Identity Management</h2>
                         </div>
-                        <h2 className="text-lg font-bold">Identity Management</h2>
+                        {hasChanges && (
+                            <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-2 duration-300">
+                                <button
+                                    onClick={handleDiscard}
+                                    className="px-4 py-2 text-xs font-bold text-foreground/40 hover:text-foreground/60 tracking-wider uppercase"
+                                >
+                                    Discard
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={updateMutation.isPending || isInvalid}
+                                    className="px-6 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center gap-2 uppercase tracking-wider"
+                                >
+                                    {updateMutation.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                                    Save Changes
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-2">
                             <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Full Name</label>
                             <input
-                                defaultValue={profile.full_name}
-                                onBlur={(e) => {
-                                    if (e.target.value !== profile.full_name) {
-                                        updateMutation.mutate({ full_name: e.target.value });
-                                    }
-                                }}
+                                value={formData.full_name}
+                                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                                 className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none transition-all"
+                                placeholder="Enter full name"
                             />
                         </div>
 
                         <div className="space-y-2">
                             <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Department</label>
                             <input
-                                defaultValue={profile.department}
-                                onBlur={(e) => {
-                                    if (e.target.value !== profile.department) {
-                                        updateMutation.mutate({ department: e.target.value });
-                                    }
-                                }}
+                                value={formData.department}
+                                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                                 className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none transition-all"
+                                placeholder="Enter department"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Phone Number</label>
+                            <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest flex items-center justify-between">
+                                Phone Number
+                                {phoneError && <span className="text-risk-critical text-[8px] animate-pulse">Exact 10 digits required</span>}
+                            </label>
                             <input
-                                defaultValue={profile.phone_number}
-                                placeholder="+1 (555) 000-0000"
-                                onBlur={(e) => {
-                                    if (e.target.value !== profile.phone_number) {
-                                        updateMutation.mutate({ phone_number: e.target.value });
-                                    }
+                                value={formData.phone_number}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                    setFormData({ ...formData, phone_number: val });
                                 }}
-                                className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/40 focus:outline-none transition-all"
+                                placeholder="1234567890"
+                                className={cn(
+                                    "w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:outline-none transition-all",
+                                    phoneError ? "border-risk-critical/40 focus:ring-risk-critical/40" : "focus:ring-primary/40"
+                                )}
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">System Email</label>
-                            <div className="w-full bg-foreground/5 border border-border rounded-xl px-4 py-2.5 text-sm text-foreground/40 flex items-center gap-2">
-                                <Mail className="w-4 h-4 shrink-0" />
-                                <span>{profile.official_email}</span>
-                            </div>
+                            <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest flex items-center justify-between">
+                                System Email
+                                {emailError && <span className="text-risk-critical text-[8px] animate-pulse">Invalid email format</span>}
+                            </label>
+                            <input
+                                value={formData.official_email}
+                                onChange={(e) => setFormData({ ...formData, official_email: e.target.value })}
+                                className={cn(
+                                    "w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:outline-none transition-all",
+                                    emailError ? "border-risk-critical/40 focus:ring-risk-critical/40" : "focus:ring-primary/40"
+                                )}
+                                placeholder="name@example.com"
+                            />
                         </div>
                     </div>
                 </section>

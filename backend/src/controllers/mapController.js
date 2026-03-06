@@ -373,7 +373,7 @@ const getContainerLocation = async (req, res) => {
       currentCountry = container.destination_country;
     } else if (status === 'transit') {
       if (originCoords && destCoords) {
-        const midPath = generateRoutePath(originCoords, destCoords, 2);
+        const midPath = await generateRoutePath(originCoords, destCoords, 2);
         currentCoords = { lat: midPath[1][0], lng: midPath[1][1] };
       } else {
         currentCoords = originCoords;
@@ -391,7 +391,7 @@ const getContainerLocation = async (req, res) => {
       return res.status(422).json({ success: false, message: `Could not resolve location coordinates for '${id}'.` });
     }
 
-    const route = originCoords && destCoords ? generateRoutePath(originCoords, destCoords) : [];
+    const route = originCoords && destCoords ? await generateRoutePath(originCoords, destCoords) : [];
 
     return res.status(200).json({
       success: true,
@@ -782,6 +782,7 @@ const getContainerAIAnalysis = async (req, res) => {
         anomaly_flag: container.anomaly_flag ?? false,
         model_confidence: parseFloat(modelConfidence.toFixed(2)),
         features,
+        explanation: container.explanation,
         explanation_bullets: explanationBullets,
         raw: {
           origin_country: container.origin_country,

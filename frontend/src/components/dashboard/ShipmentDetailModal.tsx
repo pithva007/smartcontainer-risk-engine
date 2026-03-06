@@ -7,6 +7,7 @@ import { assignContainer, updateContainerStatus } from '@/api/routes';
 import { useAuth } from '@/context/AuthContext';
 import ContainerChatModal from '@/components/chat/ContainerChatModal';
 
+
 interface ShipmentDetailModalProps {
     shipment: ShipmentDetail | null;
     onClose: () => void;
@@ -20,6 +21,7 @@ export default function ShipmentDetailModal({ shipment, onClose }: ShipmentDetai
     const [actionType, setActionType] = useState<'assign' | 'clear' | 'hold' | null>(null);
     const [noteText, setNoteText] = useState('');
     const [chatOpen, setChatOpen] = useState(false);
+
 
     if (!shipment) return null;
 
@@ -181,20 +183,33 @@ export default function ShipmentDetailModal({ shipment, onClose }: ShipmentDetai
                         </div>
                     </div>
 
-                    {/* Risk Explanations */}
-                    {shipment.risk_explanation && shipment.risk_explanation.length > 0 && (
-                        <div>
-                            <h3 className="text-sm font-semibold text-foreground/80 mb-4 flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4 text-red-400" /> AI Risk Explanations
+                    {/* AI Risk Analysis Section */}
+                    {(shipment.explanation || (shipment.risk_explanation && shipment.risk_explanation.length > 0)) && (
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-semibold text-foreground/80 flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4 text-red-500" /> AI Risk Analysis & Explanation
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {shipment.risk_explanation.map((exp, i) => (
-                                    <div key={i} className="flex items-start gap-2 p-3 bg-red-500/5 border border-red-500/10 rounded-lg text-xs text-red-400">
-                                        <div className="mt-0.5">•</div>
-                                        {exp}
-                                    </div>
-                                ))}
-                            </div>
+
+                            {/* High-level Summary Explanation */}
+                            {shipment.explanation && (
+                                <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl">
+                                    <p className="text-sm text-foreground/80 italic leading-relaxed">
+                                        "{shipment.explanation}"
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Detailed Risk Bullets */}
+                            {shipment.risk_explanation && shipment.risk_explanation.length > 0 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {shipment.risk_explanation.map((exp, i) => (
+                                        <div key={i} className="flex items-start gap-2 p-3 bg-red-500/5 border border-red-500/10 rounded-lg text-xs text-red-400">
+                                            <div className="mt-0.5">•</div>
+                                            {exp}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -265,6 +280,8 @@ export default function ShipmentDetailModal({ shipment, onClose }: ShipmentDetai
                             Chat with Exporter
                         </button>
                     )}
+
+
 
                     {shipment.inspection_status === 'NEW' && (
                         <button

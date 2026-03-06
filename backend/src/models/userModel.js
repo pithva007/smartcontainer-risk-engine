@@ -74,8 +74,20 @@ const userSchema = new mongoose.Schema(
 // Hash password before save
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password_hash')) return next();
-  this.password_hash = await bcrypt.hash(this.password_hash, 12);
-  next();
+
+  // Prevent double-hashing if it already looks like a bcrypt hash
+  // (though isModified should handle this, it's a safe guard)
+  if (this.password_hash.startsWith('$2a$') || this.password_hash.startsWith('$2b$')) {
+    return next();
+  }
+
+  try {
+    const salt = await bcrypt.genSalt(12);
+    this.password_hash = await bcrypt.hash(this.password_hash, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Compare plaintext password to hash

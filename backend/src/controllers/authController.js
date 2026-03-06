@@ -144,18 +144,32 @@ const updateProfile = async (req, res) => {
 // ── Change Password ────────────────────────────────────────────────────────────
 const changePassword = async (req, res) => {
   const { current_password, new_password } = req.body;
+
+  // Find user and explicitly select password_hash
   const user = await User.findById(req.user._id).select('+password_hash');
+  if (!user) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found.' } });
+  }
 
   const valid = await user.comparePassword(current_password);
   if (!valid) {
     return res.status(401).json({ error: { code: 'INVALID_CREDENTIALS', message: 'Current password incorrect.' } });
   }
 
-  user.password_hash = new_password; // hook hashes it
+  // Update password - the pre-save hook will hash this new plaintext
+  user.password_hash = new_password;
   await user.save();
+
+  // SECURITY: Invalidate all other sessions on password change
+  const Session = require('../models/sessionModel');
+  await Session.deleteMany({ user_id: user._id });
+
   await audit({ user: req.user, action: 'CHANGE_PASSWORD', req });
 
-  return res.status(200).json({ success: true, message: 'Password updated successfully.' });
+  return res.status(200).json({
+    success: true,
+    message: 'Password updated successfully. You have been logged out from other devices.'
+  });
 };
 
 // ── Me ─────────────────────────────────────────────────────────────────────────

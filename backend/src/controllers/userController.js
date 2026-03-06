@@ -67,18 +67,32 @@ const updateProfile = async (req, res) => {
 // change password
 const changePassword = async (req, res) => {
   const { current_password, new_password } = req.body;
+
+  // Find user and select password_hash
   const user = await User.findById(req.user._id).select('+password_hash');
+  if (!user) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found.' } });
+  }
+
   const valid = await user.comparePassword(current_password);
   if (!valid) {
     return res.status(400).json({
       error: { code: 'INVALID_PASSWORD', message: 'Current password is incorrect.', request_id: req.requestId },
     });
   }
+
   user.password_hash = new_password;
   await user.save();
 
+  // SECURITY: Invalidate all other sessions on password change
+  const Session = require('../models/sessionModel');
+  await Session.deleteMany({ user_id: user._id });
+
   await audit({ user: req.user, action: 'PASSWORD_CHANGE', req });
-  return res.status(200).json({ success: true, message: 'Password updated.' });
+  return res.status(200).json({
+    success: true,
+    message: 'Password updated successfully. You have been logged out from other devices.'
+  });
 };
 
 // get active sessions

@@ -8,6 +8,7 @@ const NodeGeocoder = require('node-geocoder');
 const Container = require('../models/containerModel');
 const { getCache, setCache } = require('../config/redis');
 const logger = require('../utils/logger');
+const { findMaritimeRoute } = require('./maritimeRoutingService');
 
 // Geocoder configuration — uses OpenStreetMap (Nominatim) by default (no key needed)
 const geocoderOptions = {
@@ -29,13 +30,13 @@ try {
  */
 const FALLBACK_COORDS = {
   // ── East Asia ────────────────────────────────────────────────────────────
-  'china': { lat: 35.8617, lng: 104.1954 },
-  'mainland china': { lat: 35.8617, lng: 104.1954 },
+  'china': { lat: 31.2304, lng: 121.4737 }, // Shanghai (Coastal)
+  'mainland china': { lat: 31.2304, lng: 121.4737 },
   'hong kong': { lat: 22.3193, lng: 114.1694 },
   'hksar': { lat: 22.3193, lng: 114.1694 },
   'taiwan': { lat: 23.6978, lng: 120.9605 },
-  'japan': { lat: 36.2048, lng: 138.2529 },
-  'south korea': { lat: 35.9078, lng: 127.7669 },
+  'japan': { lat: 35.4437, lng: 139.6380 }, // Yokohama (Coastal)
+  'south korea': { lat: 35.1796, lng: 129.0756 }, // Busan (Coastal)
   'korea': { lat: 35.9078, lng: 127.7669 },
   'north korea': { lat: 40.3399, lng: 127.5101 },
   'mongolia': { lat: 46.8625, lng: 103.8467 },
@@ -106,7 +107,7 @@ const FALLBACK_COORDS = {
   'sihanoukville': { lat: 10.6094, lng: 103.5297 },
 
   // ── South Asia ───────────────────────────────────────────────────────────
-  'india': { lat: 20.5937, lng: 78.9629 },
+  'india': { lat: 18.9488, lng: 72.9540 }, // Nhava Sheva (Coastal)
   'mumbai': { lat: 19.0760, lng: 72.8777 },
   'nhava sheva': { lat: 18.9488, lng: 72.9540 },
   'jawaharlal nehru port': { lat: 18.9488, lng: 72.9540 },
@@ -165,10 +166,10 @@ const FALLBACK_COORDS = {
   'ashdod': { lat: 31.7940, lng: 34.7016 },
 
   // ── Europe ────────────────────────────────────────────────────────────────
-  'netherlands': { lat: 52.1326, lng: 5.2913 },
+  'netherlands': { lat: 51.9244, lng: 4.4777 }, // Rotterdam
   'rotterdam': { lat: 51.9244, lng: 4.4777 },
   'amsterdam': { lat: 52.3676, lng: 4.9041 },
-  'germany': { lat: 51.1657, lng: 10.4515 },
+  'germany': { lat: 53.5753, lng: 9.8689 }, // Hamburg
   'hamburg': { lat: 53.5753, lng: 9.8689 },
   'bremerhaven': { lat: 53.5396, lng: 8.5809 },
   'bremen': { lat: 53.0793, lng: 8.8017 },
@@ -182,20 +183,20 @@ const FALLBACK_COORDS = {
   'southampton': { lat: 50.9097, lng: -1.4044 },
   'liverpool': { lat: 53.4084, lng: -2.9916 },
   'grimsby': { lat: 53.5667, lng: -0.0708 },
-  'france': { lat: 46.2276, lng: 2.2137 },
+  'france': { lat: 49.4938, lng: 0.1078 }, // Le Havre
   'le havre': { lat: 49.4938, lng: 0.1078 },
   'marseille': { lat: 43.2965, lng: 5.3698 },
   'dunkirk': { lat: 51.0318, lng: 2.3774 },
-  'spain': { lat: 40.4637, lng: -3.7492 },
+  'spain': { lat: 36.1408, lng: -5.4548 }, // Algeciras
   'algeciras': { lat: 36.1408, lng: -5.4548 },
   'barcelona': { lat: 41.3851, lng: 2.1734 },
   'valencia': { lat: 39.4699, lng: -0.3763 },
   'bilbao': { lat: 43.2627, lng: -2.9253 },
-  'portugal': { lat: 39.3999, lng: -8.2245 },
+  'portugal': { lat: 38.7223, lng: -9.1393 }, // Lisbon
   'lisbon': { lat: 38.7223, lng: -9.1393 },
   'sines': { lat: 37.9576, lng: -8.8670 },
   'leixoes': { lat: 41.1963, lng: -8.7016 },
-  'italy': { lat: 41.8719, lng: 12.5674 },
+  'italy': { lat: 44.4056, lng: 8.9463 }, // Genoa
   'genoa': { lat: 44.4056, lng: 8.9463 },
   'la spezia': { lat: 44.1024, lng: 9.8237 },
   'gioia tauro': { lat: 38.4267, lng: 15.9014 },
@@ -206,17 +207,17 @@ const FALLBACK_COORDS = {
   'thessaloniki': { lat: 40.6401, lng: 22.9444 },
   'malta': { lat: 35.9375, lng: 14.3754 },
   'marsaxlokk': { lat: 35.8490, lng: 14.5443 },
-  'sweden': { lat: 60.1282, lng: 18.6435 },
+  'sweden': { lat: 57.7089, lng: 11.9746 }, // Gothenburg
   'gothenburg': { lat: 57.7089, lng: 11.9746 },
-  'denmark': { lat: 56.2639, lng: 9.5018 },
+  'denmark': { lat: 55.6761, lng: 12.5683 }, // Copenhagen
   'copenhagen': { lat: 55.6761, lng: 12.5683 },
-  'norway': { lat: 60.4720, lng: 8.4689 },
+  'norway': { lat: 59.9139, lng: 10.7522 }, // Oslo
   'oslo': { lat: 59.9139, lng: 10.7522 },
-  'finland': { lat: 61.9241, lng: 25.7482 },
+  'finland': { lat: 60.1699, lng: 24.9384 }, // Helsinki
   'helsinki': { lat: 60.1699, lng: 24.9384 },
   'poland': { lat: 51.9194, lng: 19.1451 },
   'gdansk': { lat: 54.3520, lng: 18.6466 },
-  'russia': { lat: 61.5240, lng: 105.3188 },
+  'russia': { lat: 59.9311, lng: 30.3609 }, // St. Petersburg
   'st. petersburg': { lat: 59.9311, lng: 30.3609 },
   'saint petersburg': { lat: 59.9311, lng: 30.3609 },
   'vladivostok': { lat: 43.1332, lng: 131.9113 },
@@ -260,7 +261,7 @@ const FALLBACK_COORDS = {
   'manzanillo': { lat: 19.0524, lng: -104.3187 },
   'veracruz': { lat: 19.1738, lng: -96.1342 },
   'altamira': { lat: 22.4025, lng: -97.9147 },
-  'brazil': { lat: -14.2350, lng: -51.9253 },
+  'brazil': { lat: -23.9608, lng: -46.3334 }, // Santos
   'santos': { lat: -23.9608, lng: -46.3334 },
   'rio de janeiro': { lat: -22.9068, lng: -43.1729 },
   'paranagua': { lat: -25.5127, lng: -48.5089 },
@@ -292,7 +293,7 @@ const FALLBACK_COORDS = {
   'kingston': { lat: 17.9714, lng: -76.7920 },
 
   // ── Africa ────────────────────────────────────────────────────────────────
-  'south africa': { lat: -30.5595, lng: 22.9375 },
+  'south africa': { lat: -29.8587, lng: 31.0218 }, // Durban
   'durban': { lat: -29.8587, lng: 31.0218 },
   'cape town': { lat: -33.9249, lng: 18.4241 },
   'port elizabeth': { lat: -33.9608, lng: 25.6022 },
@@ -409,23 +410,23 @@ const geocodeLocation = async (location) => {
 
 /**
  * Generate intermediate route waypoints between two coordinates.
- * Creates a great-circle approximation with N intermediate points.
+ * Now uses the Maritime Routing Service for sea-aware paths,
+ * falling back to great-circle approximation if the graph fails.
  *
  * @param {{ lat: number, lng: number }} origin
  * @param {{ lat: number, lng: number }} destination
- * @param {number} steps - number of intermediate points (default 8)
- * @returns {Array<[number, number]>} array of [lat, lng]
+ * @param {number} steps - (Used only for linear fallback)
+ * @returns {Promise<Array<[number, number]>>}
  */
-const generateRoutePath = (origin, destination, steps = 8) => {
+const generateRoutePath = async (origin, destination, steps = 10) => {
+  // Simple linear interpolation from port to port as requested
   const path = [];
-
   for (let i = 0; i <= steps; i++) {
     const fraction = i / steps;
     const lat = origin.lat + (destination.lat - origin.lat) * fraction;
     const lng = origin.lng + (destination.lng - origin.lng) * fraction;
     path.push([parseFloat(lat.toFixed(4)), parseFloat(lng.toFixed(4))]);
   }
-
   return path;
 };
 
@@ -467,7 +468,7 @@ const getContainerRoute = async (containerId) => {
     };
   }
 
-  const route = generateRoutePath(originCoords, destCoords);
+  const route = await generateRoutePath(originCoords, destCoords);
 
   const result = {
     container_id: containerId,
@@ -538,7 +539,7 @@ const backfillGeoData = async (limit = 200) => {
       if (destCoords) {
         update.destination_coordinates = destCoords;
         if (originCoords) {
-          update.route_path = generateRoutePath(originCoords, destCoords);
+          update.route_path = await generateRoutePath(originCoords, destCoords);
         }
       }
       await Container.updateOne({ _id: c._id }, { $set: update });

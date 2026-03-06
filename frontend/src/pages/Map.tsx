@@ -11,6 +11,7 @@ import { openChatForContainer } from '@/components/chat/chatEvents';
 import HeatmapLayer from '@/components/map/HeatmapLayer';
 import AIAnalysisPanel from '@/components/map/AIAnalysisPanel';
 import TimelinePanel from '@/components/map/TimelinePanel';
+import { getArcPath } from '@/utils/arcUtils';
 
 // ─── Fix default marker icons ───────────────────────────────────────────────
 L.Icon.Default.mergeOptions({
@@ -162,6 +163,24 @@ const WORLD_PORTS: Array<{ name: string; country: string; lat: number; lng: numb
     { name: 'Tauranga', country: 'New Zealand', lat: -37.6870, lng: 176.1654, type: 'regional' },
     { name: 'Suva', country: 'Fiji', lat: -18.1416, lng: 178.4415, type: 'regional' },
 ];
+
+// ─── Snap coordinates to nearest known port for visual alignment ─────────────
+function snapToPort(lat: number, lng: number): [number, number] {
+    let closest: typeof WORLD_PORTS[0] | null = null;
+    let minDist = 1.0; // Max snap distance in degrees
+
+    for (const port of WORLD_PORTS) {
+        const dLat = port.lat - lat;
+        const dLng = port.lng - lng;
+        const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+        if (dist < minDist) {
+            minDist = dist;
+            closest = port;
+        }
+    }
+
+    return closest ? [closest.lat, closest.lng] : [lat, lng];
+}
 
 // ─── Fly-to helper — fires onComplete after animation ends ────────────────
 function FlyToLocation({ lat, lng, onComplete }: { lat: number; lng: number; onComplete: () => void }) {
@@ -319,7 +338,7 @@ function TrackedPanel({ loc, onClose, showRoute, onRouteToggle }: {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 
@@ -379,7 +398,6 @@ export default function MapPage() {
 
     const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleTrack(); };
 
-    const routePositions: [number, number][] = trackedLoc?.route?.map(([lat, lng]) => [lat, lng]) ?? [];
     const routeColor = trackedLoc ? markerColor[trackedLoc.risk_level] : '#6366f1';
     const visiblePorts = showMegaOnly ? WORLD_PORTS.filter(p => p.type === 'mega') : WORLD_PORTS;
 
@@ -546,35 +564,81 @@ export default function MapPage() {
                             <>
                                 <FlyToLocation lat={trackedLoc.lat} lng={trackedLoc.lng} onComplete={() => setMarkerReady(true)} />
 
-                                {showRoute && routePositions.length > 1 && (
-                                    <Polyline
-                                        positions={routePositions}
-                                        pathOptions={{
-                                            color: routeColor, weight: 3, opacity: 0.9,
-                                            dashArray: trackedLoc.risk_level !== 'Critical' ? '8 5' : undefined,
-                                        }}
-                                    />
-                                )}
+                                {showRoute && trackedLoc.origin_coords && trackedLoc.dest_coords && (() => {
+                                    const snappedOrigin = snapToPort(trackedLoc.origin_coords.lat, trackedLoc.origin_coords.lng);
+                                    const snappedDest = snapToPort(trackedLoc.dest_coords.lat, trackedLoc.dest_coords.lng);
 
-                                {markerReady && trackedLoc.origin_coords && (
-                                    <CircleMarker
-                                        center={[trackedLoc.origin_coords.lat, trackedLoc.origin_coords.lng]}
-                                        radius={7}
-                                        pathOptions={{ color: '#6b7280', fillColor: '#374151', fillOpacity: 0.9, weight: 2 }}
-                                    >
-                                        <Popup><div className="text-xs font-sans"><b>Origin</b><br />{trackedLoc.origin_country}</div></Popup>
-                                    </CircleMarker>
-                                )}
+                                    return (
+                                        <>
+                                            {/* 1. Ground Shadow (Straight line, white, low opacity) */}
+                                            <Polyline
+                                                positions={[snappedOrigin, snappedDest]}
+                                                pathOptions={{
+                                                    color: '#ffffff',
+                                                    weight: 1.5,
+                                                    opacity: 0.25,
+                                                    dashArray: '4, 12'
+                                                }}
+                                            />
 
-                                {markerReady && trackedLoc.dest_coords && (
-                                    <CircleMarker
-                                        center={[trackedLoc.dest_coords.lat, trackedLoc.dest_coords.lng]}
-                                        radius={7}
-                                        pathOptions={{ color: '#6b7280', fillColor: '#374151', fillOpacity: 0.9, weight: 2 }}
-                                    >
-                                        <Popup><div className="text-xs font-sans"><b>Destination</b><br />{trackedLoc.destination_port || trackedLoc.destination_country}</div></Popup>
-                                    </CircleMarker>
-                                )}
+                                            {/* 2. Aerial Arc (Curved line, risk color, high-tech glow) */}
+                                            <Polyline
+                                                positions={getArcPath(snappedOrigin, snappedDest, 40)}
+                                                pathOptions={{
+                                                    color: routeColor,
+                                                    weight: 2.5,
+                                                    opacity: 0.9,
+                                                    lineCap: 'round',
+                                                    lineJoin: 'round'
+                                                }}
+                                            />
+
+                                            {/* 3. Primary Atmospheric Glow */}
+                                            <Polyline
+                                                positions={getArcPath(snappedOrigin, snappedDest, 40)}
+                                                pathOptions={{
+                                                    color: routeColor,
+                                                    weight: 10,
+                                                    opacity: 0.2,
+                                                    lineCap: 'round',
+                                                    lineJoin: 'round'
+                                                }}
+                                            />
+
+                                            {/* 4. Secondary White Core for 3D depth */}
+                                            <Polyline
+                                                positions={getArcPath(snappedOrigin, snappedDest, 40)}
+                                                pathOptions={{
+                                                    color: '#ffffff',
+                                                    weight: 1,
+                                                    opacity: 0.5,
+                                                    lineCap: 'round'
+                                                }}
+                                            />
+
+                                            {/* 5. Snapped Origin/Destination Terminal Markers */}
+                                            {markerReady && (
+                                                <>
+                                                    <CircleMarker
+                                                        center={snappedOrigin}
+                                                        radius={7}
+                                                        pathOptions={{ color: '#6b7280', fillColor: '#374151', fillOpacity: 0.9, weight: 2 }}
+                                                    >
+                                                        <Popup><div className="text-xs font-sans"><b>Origin</b><br />{trackedLoc.origin_country}</div></Popup>
+                                                    </CircleMarker>
+
+                                                    <CircleMarker
+                                                        center={snappedDest}
+                                                        radius={7}
+                                                        pathOptions={{ color: '#6b7280', fillColor: '#374151', fillOpacity: 0.9, weight: 2 }}
+                                                    >
+                                                        <Popup><div className="text-xs font-sans"><b>Destination</b><br />{trackedLoc.destination_port || trackedLoc.destination_country}</div></Popup>
+                                                    </CircleMarker>
+                                                </>
+                                            )}
+                                        </>
+                                    );
+                                })()}
 
                                 {markerReady && (
                                     <CircleMarker
@@ -593,7 +657,11 @@ export default function MapPage() {
                                                 <p><span className="text-gray-500">Risk:</span> {trackedLoc.risk_level} ({Math.round(trackedLoc.risk_score * 100)})</p>
                                                 <p><span className="text-gray-500">Status:</span> {trackedLoc.clearance_status}</p>
                                                 <p><span className="text-gray-500">Route:</span> {trackedLoc.origin_country} → {trackedLoc.destination_port || trackedLoc.destination_country}</p>
-                                                {trackedLoc.explanation && <p className="text-gray-400 italic">{trackedLoc.explanation}</p>}
+                                                {trackedLoc.explanation && (
+                                                    <p className="text-gray-400 italic border-t border-border/50 mt-1 pt-1 leading-relaxed">
+                                                        "{trackedLoc.explanation}"
+                                                    </p>
+                                                )}
                                             </div>
                                         </Popup>
                                     </CircleMarker>
@@ -651,6 +719,6 @@ export default function MapPage() {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

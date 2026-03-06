@@ -1,0 +1,943 @@
+[
+    {
+        "id": "SHANGHAI",
+        "name": "Shanghai, China",
+        "lat": 31.2304,
+        "lng": 121.4737,
+        "adj": [
+            "NINGBO",
+            "SINGAPORE",
+            "TOKYO",
+            "EAST_CHINA_SEA_N"
+        ]
+    },
+    {
+        "id": "NINGBO",
+        "name": "Ningbo, China",
+        "lat": 29.8683,
+        "lng": 122.0,
+        "adj": [
+            "SHANGHAI",
+            "EAST_CHINA_SEA_N"
+        ]
+    },
+    {
+        "id": "EAST_CHINA_SEA_N",
+        "name": "East China Sea North",
+        "lat": 30.0,
+        "lng": 124.0,
+        "adj": [
+            "SHANGHAI",
+            "NINGBO",
+            "EAST_CHINA_SEA_S"
+        ]
+    },
+    {
+        "id": "EAST_CHINA_SEA_S",
+        "name": "East China Sea South",
+        "lat": 27.0,
+        "lng": 123.0,
+        "adj": [
+            "EAST_CHINA_SEA_N",
+            "TAIWAN_STRAIT_N",
+            "OKINAWA"
+        ]
+    },
+    {
+        "id": "OKINAWA",
+        "name": "Okinawa Waypoint",
+        "lat": 26.0,
+        "lng": 127.0,
+        "adj": [
+            "EAST_CHINA_SEA_S",
+            "GUAM"
+        ]
+    },
+    {
+        "id": "TAIWAN_STRAIT_N",
+        "name": "Taiwan Strait North",
+        "lat": 25.5,
+        "lng": 120.5,
+        "adj": [
+            "EAST_CHINA_SEA_S",
+            "TAIWAN_STRAIT_S"
+        ]
+    },
+    {
+        "id": "TAIWAN_STRAIT_S",
+        "name": "Taiwan Strait South",
+        "lat": 23.0,
+        "lng": 118.5,
+        "adj": [
+            "TAIWAN_STRAIT_N",
+            "HONG_KONG"
+        ]
+    },
+    {
+        "id": "HONG_KONG",
+        "name": "Hong Kong",
+        "lat": 22.3193,
+        "lng": 114.1694,
+        "adj": [
+            "TAIWAN_STRAIT_S",
+            "SOUTH_CHINA_SEA_N"
+        ]
+    },
+    {
+        "id": "SOUTH_CHINA_SEA_N",
+        "name": "South China Sea North",
+        "lat": 18.0,
+        "lng": 112.0,
+        "adj": [
+            "HONG_KONG",
+            "SOUTH_CHINA_SEA_C"
+        ]
+    },
+    {
+        "id": "SOUTH_CHINA_SEA_C",
+        "name": "South China Sea Central",
+        "lat": 12.0,
+        "lng": 110.0,
+        "adj": [
+            "SOUTH_CHINA_SEA_N",
+            "SINGAPORE_APPROACH"
+        ]
+    },
+    {
+        "id": "SINGAPORE_APPROACH",
+        "name": "Singapore Approach North",
+        "lat": 3.0,
+        "lng": 105.0,
+        "adj": [
+            "SOUTH_CHINA_SEA_C",
+            "SINGAPORE"
+        ]
+    },
+    {
+        "id": "SINGAPORE",
+        "name": "Singapore",
+        "lat": 1.2966,
+        "lng": 103.7764,
+        "adj": [
+            "SINGAPORE_APPROACH",
+            "MALACCA_E",
+            "MELBOURNE",
+            "GUAM"
+        ]
+    },
+    {
+        "id": "MALACCA_E",
+        "name": "Strait of Malacca East",
+        "lat": 2.2,
+        "lng": 102.2,
+        "adj": [
+            "SINGAPORE",
+            "MALACCA_W"
+        ]
+    },
+    {
+        "id": "MALACCA_W",
+        "name": "Strait of Malacca West",
+        "lat": 5.0,
+        "lng": 98.0,
+        "adj": [
+            "MALACCA_E",
+            "BAY_OF_BENGAL_S"
+        ]
+    },
+    {
+        "id": "BAY_OF_BENGAL_S",
+        "name": "Bay of Bengal South",
+        "lat": 6.0,
+        "lng": 90.0,
+        "adj": [
+            "MALACCA_W",
+            "COLOMBO"
+        ]
+    },
+    {
+        "id": "COLOMBO",
+        "name": "Colombo, Sri Lanka",
+        "lat": 6.9271,
+        "lng": 79.8612,
+        "adj": [
+            "BAY_OF_BENGAL_S",
+            "COMORIN",
+            "MALDIVES",
+            "MALDIVES_S"
+        ]
+    },
+    {
+        "id": "MALDIVES",
+        "name": "Maldives North Waypoint",
+        "lat": 6.0,
+        "lng": 73.5,
+        "adj": [
+            "COLOMBO",
+            "ARABIAN_SEA_S"
+        ]
+    },
+    {
+        "id": "MALDIVES_S",
+        "name": "Maldives South Waypoint",
+        "lat": 0.0,
+        "lng": 73.0,
+        "adj": [
+            "COLOMBO",
+            "DIEGO_GARCIA",
+            "MAURITIUS"
+        ]
+    },
+    {
+        "id": "COMORIN",
+        "name": "Cape Comorin (Kanyakumari)",
+        "lat": 7.5,
+        "lng": 77.5,
+        "adj": [
+            "COLOMBO",
+            "ARABIAN_SEA_S"
+        ]
+    },
+    {
+        "id": "ARABIAN_SEA_S",
+        "name": "Arabian Sea South",
+        "lat": 10.0,
+        "lng": 65.0,
+        "adj": [
+            "COMORIN",
+            "BAB_EL_MANDEB_E",
+            "MUMBAI_APPROACH",
+            "SOMALI_BASIN_N",
+            "MALDIVES"
+        ]
+    },
+    {
+        "id": "MUMBAI_APPROACH",
+        "name": "Mumbai Approach",
+        "lat": 18.5,
+        "lng": 71.0,
+        "adj": [
+            "ARABIAN_SEA_S",
+            "MUMBAI"
+        ]
+    },
+    {
+        "id": "MUMBAI",
+        "name": "Mumbai, India",
+        "lat": 18.9488,
+        "lng": 72.8540,
+        "adj": [
+            "MUMBAI_APPROACH"
+        ]
+    },
+    {
+        "id": "BAB_EL_MANDEB_E",
+        "name": "Bab el Mandeb East",
+        "lat": 12.0,
+        "lng": 45.0,
+        "adj": [
+            "ARABIAN_SEA_S",
+            "BAB_EL_MANDEB"
+        ]
+    },
+    {
+        "id": "BAB_EL_MANDEB",
+        "name": "Bab el Mandeb",
+        "lat": 12.5933,
+        "lng": 43.3442,
+        "adj": [
+            "BAB_EL_MANDEB_E",
+            "RED_SEA_S"
+        ]
+    },
+    {
+        "id": "RED_SEA_S",
+        "name": "Red Sea South",
+        "lat": 16.0,
+        "lng": 41.0,
+        "adj": [
+            "BAB_EL_MANDEB",
+            "RED_SEA_C"
+        ]
+    },
+    {
+        "id": "RED_SEA_C",
+        "name": "Red Sea Central",
+        "lat": 22.0,
+        "lng": 38.0,
+        "adj": [
+            "RED_SEA_S",
+            "RED_SEA_N"
+        ]
+    },
+    {
+        "id": "RED_SEA_N",
+        "name": "Red Sea North",
+        "lat": 27.0,
+        "lng": 34.5,
+        "adj": [
+            "RED_SEA_C",
+            "SUEZ_S"
+        ]
+    },
+    {
+        "id": "SUEZ_S",
+        "name": "Suez Canal (South)",
+        "lat": 29.9329,
+        "lng": 32.5510,
+        "adj": [
+            "RED_SEA_N",
+            "SUEZ_N"
+        ]
+    },
+    {
+        "id": "SUEZ_N",
+        "name": "Suez Canal (North)",
+        "lat": 31.2618,
+        "lng": 32.3117,
+        "adj": [
+            "SUEZ_S",
+            "MALTA",
+            "PIRAEUS",
+            "CYPRUS",
+            "GREECE_W"
+        ]
+    },
+    {
+        "id": "CYPRUS",
+        "name": "Cyprus Waypoint",
+        "lat": 34.5,
+        "lng": 33.0,
+        "adj": [
+            "SUEZ_N"
+        ]
+    },
+    {
+        "id": "PIRAEUS",
+        "name": "Piraeus, Greece",
+        "lat": 37.9476,
+        "lng": 23.6348,
+        "adj": [
+            "SUEZ_N",
+            "MALTA"
+        ]
+    },
+    {
+        "id": "GREECE_W",
+        "name": "West of Greece",
+        "lat": 38.0,
+        "lng": 20.0,
+        "adj": [
+            "SUEZ_N",
+            "MALTA"
+        ]
+    },
+    {
+        "id": "MALTA",
+        "name": "Malta Waypoint",
+        "lat": 36.0,
+        "lng": 14.5,
+        "adj": [
+            "SUEZ_N",
+            "PIRAEUS",
+            "SARDINIA_S",
+            "TUNISIA_N",
+            "GREECE_W"
+        ]
+    },
+    {
+        "id": "TUNISIA_N",
+        "name": "Tunisia North Coast",
+        "lat": 37.5,
+        "lng": 10.0,
+        "adj": [
+            "MALTA",
+            "SARDINIA_S"
+        ]
+    },
+    {
+        "id": "SARDINIA_S",
+        "name": "South of Sardinia",
+        "lat": 38.5,
+        "lng": 8.5,
+        "adj": [
+            "MALTA",
+            "BALEARIC_S",
+            "TUNISIA_N"
+        ]
+    },
+    {
+        "id": "BALEARIC_S",
+        "name": "South of Balearic Islands",
+        "lat": 38.0,
+        "lng": 2.0,
+        "adj": [
+            "SARDINIA_S",
+            "GIBRALTAR_E"
+        ]
+    },
+    {
+        "id": "GIBRALTAR_E",
+        "name": "Gibraltar Approach East",
+        "lat": 36.0,
+        "lng": -2.0,
+        "adj": [
+            "BALEARIC_S",
+            "GIBRALTAR"
+        ]
+    },
+    {
+        "id": "GIBRALTAR",
+        "name": "Strait of Gibraltar",
+        "lat": 35.9405,
+        "lng": -5.3582,
+        "adj": [
+            "GIBRALTAR_E",
+            "GIBRALTAR_W"
+        ]
+    },
+    {
+        "id": "GIBRALTAR_W",
+        "name": "Gibraltar Approach West",
+        "lat": 36.0,
+        "lng": -9.0,
+        "adj": [
+            "GIBRALTAR",
+            "PORTUGAL_C",
+            "CANARY_ISLANDS",
+            "AZORES"
+        ]
+    },
+    {
+        "id": "PORTUGAL_C",
+        "name": "Portugal Coast Central",
+        "lat": 40.0,
+        "lng": -10.0,
+        "adj": [
+            "GIBRALTAR_W",
+            "FISISTERRE"
+        ]
+    },
+    {
+        "id": "FISISTERRE",
+        "name": "Cape Finisterre",
+        "lat": 43.0,
+        "lng": -10.1,
+        "adj": [
+            "PORTUGAL_C",
+            "BAY_OF_BISCAY"
+        ]
+    },
+    {
+        "id": "BAY_OF_BISCAY",
+        "name": "Bay of Biscay Waypoint",
+        "lat": 46.0,
+        "lng": -6.0,
+        "adj": [
+            "FISISTERRE",
+            "USHANT"
+        ]
+    },
+    {
+        "id": "USHANT",
+        "name": "Ushant (Ouessant)",
+        "lat": 48.5,
+        "lng": -5.5,
+        "adj": [
+            "BAY_OF_BISCAY",
+            "ENGLISH_CHANNEL_W"
+        ]
+    },
+    {
+        "id": "ENGLISH_CHANNEL_W",
+        "name": "English Channel West",
+        "lat": 49.5,
+        "lng": -3.5,
+        "adj": [
+            "USHANT",
+            "ENGLISH_CHANNEL_C",
+            "AZORES"
+        ]
+    },
+    {
+        "id": "ENGLISH_CHANNEL_C",
+        "name": "English Channel Central",
+        "lat": 50.0,
+        "lng": -0.5,
+        "adj": [
+            "ENGLISH_CHANNEL_W",
+            "DOVER_STRAIT"
+        ]
+    },
+    {
+        "id": "DOVER_STRAIT",
+        "name": "Strait of Dover",
+        "lat": 51.1,
+        "lng": 1.5,
+        "adj": [
+            "ENGLISH_CHANNEL_C",
+            "ROTTERDAM_APPROACH",
+            "NORTH_SEA_S"
+        ]
+    },
+    {
+        "id": "ROTTERDAM_APPROACH",
+        "name": "Rotterdam Approach",
+        "lat": 52.0,
+        "lng": 3.5,
+        "adj": [
+            "DOVER_STRAIT",
+            "ROTTERDAM",
+            "AMSTERDAM"
+        ]
+    },
+    {
+        "id": "ROTTERDAM",
+        "name": "Rotterdam, Netherlands",
+        "lat": 51.9225,
+        "lng": 4.4792,
+        "adj": [
+            "ROTTERDAM_APPROACH"
+        ]
+    },
+    {
+        "id": "AMSTERDAM",
+        "name": "Amsterdam, Netherlands",
+        "lat": 52.3676,
+        "lng": 4.9041,
+        "adj": [
+            "ROTTERDAM_APPROACH"
+        ]
+    },
+    {
+        "id": "NORTH_SEA_S",
+        "name": "North Sea South",
+        "lat": 53.0,
+        "lng": 4.0,
+        "adj": [
+            "DOVER_STRAIT",
+            "NORTH_SEA_C",
+            "ENGLISH_CHANNEL_C"
+        ]
+    },
+    {
+        "id": "NORTH_SEA_C",
+        "name": "North Sea Central",
+        "lat": 55.0,
+        "lng": 5.0,
+        "adj": [
+            "NORTH_SEA_S",
+            "SKAGERRAK_W"
+        ]
+    },
+    {
+        "id": "SKAGERRAK_W",
+        "name": "Skagerrak Entrance West",
+        "lat": 57.5,
+        "lng": 7.0,
+        "adj": [
+            "NORTH_SEA_C",
+            "SKAGERRAK_E",
+            "NORWAY_S_COAST"
+        ]
+    },
+    {
+        "id": "NORWAY_S_COAST",
+        "name": "Norway South Coast Waypoint",
+        "lat": 58.2,
+        "lng": 8.0,
+        "adj": [
+            "SKAGERRAK_W",
+            "OSLO_S"
+        ]
+    },
+    {
+        "id": "OSLO_S",
+        "name": "South of Oslo (Coast Guard)",
+        "lat": 59.0,
+        "lng": 10.2,
+        "adj": [
+            "NORWAY_S_COAST",
+            "OSLO"
+        ]
+    },
+    {
+        "id": "OSLO",
+        "name": "Oslo, Norway",
+        "lat": 59.9139,
+        "lng": 10.7522,
+        "adj": [
+            "OSLO_S"
+        ]
+    },
+    {
+        "id": "SKAGERRAK_E",
+        "name": "Skagerrak East",
+        "lat": 58.0,
+        "lng": 11.5,
+        "adj": [
+            "SKAGERRAK_W",
+            "GOTHENBURG",
+            "KATTEGAT"
+        ]
+    },
+    {
+        "id": "GOTHENBURG",
+        "name": "Gothenburg, Sweden",
+        "lat": 57.7089,
+        "lng": 11.9746,
+        "adj": [
+            "SKAGERRAK_E"
+        ]
+    },
+    {
+        "id": "KATTEGAT",
+        "name": "Kattegat Waypoint",
+        "lat": 56.5,
+        "lng": 11.5,
+        "adj": [
+            "SKAGERRAK_E",
+            "THE_SOUND"
+        ]
+    },
+    {
+        "id": "THE_SOUND",
+        "name": "The Sound (Oresund)",
+        "lat": 55.8,
+        "lng": 12.7,
+        "adj": [
+            "KATTEGAT",
+            "COPENHAGEN",
+            "BALTIC_SEA_W"
+        ]
+    },
+    {
+        "id": "COPENHAGEN",
+        "name": "Copenhagen, Denmark",
+        "lat": 55.6761,
+        "lng": 12.5683,
+        "adj": [
+            "THE_SOUND"
+        ]
+    },
+    {
+        "id": "BALTIC_SEA_W",
+        "name": "Baltic Sea West",
+        "lat": 55.0,
+        "lng": 15.0,
+        "adj": [
+            "THE_SOUND",
+            "BALTIC_SEA_C"
+        ]
+    },
+    {
+        "id": "BALTIC_SEA_C",
+        "name": "Baltic Sea Central",
+        "lat": 57.0,
+        "lng": 19.0,
+        "adj": [
+            "BALTIC_SEA_W",
+            "BALTIC_SEA_N",
+            "HELSINKI_APPROACH"
+        ]
+    },
+    {
+        "id": "BALTIC_SEA_N",
+        "name": "Baltic Sea North",
+        "lat": 60.0,
+        "lng": 20.0,
+        "adj": [
+            "BALTIC_SEA_C"
+        ]
+    },
+    {
+        "id": "HELSINKI_APPROACH",
+        "name": "Helsinki Approach",
+        "lat": 59.5,
+        "lng": 24.5,
+        "adj": [
+            "BALTIC_SEA_C",
+            "HELSINKI",
+            "ST_PETERSBURG"
+        ]
+    },
+    {
+        "id": "HELSINKI",
+        "name": "Helsinki, Finland",
+        "lat": 60.1699,
+        "lng": 24.9384,
+        "adj": [
+            "HELSINKI_APPROACH"
+        ]
+    },
+    {
+        "id": "ST_PETERSBURG",
+        "name": "St Petersburg, Russia",
+        "lat": 59.9311,
+        "lng": 30.3609,
+        "adj": [
+            "HELSINKI_APPROACH"
+        ]
+    },
+    {
+        "id": "CANARY_ISLANDS",
+        "name": "Canary Islands",
+        "lat": 28.3,
+        "lng": -15.5,
+        "adj": [
+            "GIBRALTAR_W",
+            "CAPE_VERDE",
+            "AZORES"
+        ]
+    },
+    {
+        "id": "CAPE_VERDE",
+        "name": "Cape Verde",
+        "lat": 16.0,
+        "lng": -24.0,
+        "adj": [
+            "CANARY_ISLANDS",
+            "SANTOS_APPROACH",
+            "GOOD_HOPE_N",
+            "AZORES"
+        ]
+    },
+    {
+        "id": "SANTOS_APPROACH",
+        "name": "Santos Approach",
+        "lat": -22.0,
+        "lng": -44.0,
+        "adj": [
+            "CAPE_VERDE",
+            "SANTOS"
+        ]
+    },
+    {
+        "id": "SANTOS",
+        "name": "Santos, Brazil",
+        "lat": -23.9608,
+        "lng": -46.3334,
+        "adj": [
+            "SANTOS_APPROACH"
+        ]
+    },
+    {
+        "id": "GOOD_HOPE_N",
+        "name": "North of Cape of Good Hope",
+        "lat": -25.0,
+        "lng": 10.0,
+        "adj": [
+            "CAPE_VERDE",
+            "GOOD_HOPE"
+        ]
+    },
+    {
+        "id": "GOOD_HOPE",
+        "name": "Cape of Good Hope",
+        "lat": -34.3581,
+        "lng": 18.4716,
+        "adj": [
+            "GOOD_HOPE_N",
+            "DURBAN_W",
+            "MELBOURNE"
+        ]
+    },
+    {
+        "id": "DURBAN_W",
+        "name": "West of Durban",
+        "lat": -33.0,
+        "lng": 28.0,
+        "adj": [
+            "GOOD_HOPE",
+            "DURBAN"
+        ]
+    },
+    {
+        "id": "DURBAN",
+        "name": "Durban, South Africa",
+        "lat": -29.8587,
+        "lng": 31.0218,
+        "adj": [
+            "DURBAN_W",
+            "MADAGASCAR_S"
+        ]
+    },
+    {
+        "id": "MADAGASCAR_S",
+        "name": "South of Madagascar",
+        "lat": -27.0,
+        "lng": 45.0,
+        "adj": [
+            "DURBAN",
+            "MAURITIUS"
+        ]
+    },
+    {
+        "id": "MAURITIUS",
+        "name": "Mauritius",
+        "lat": -20.3484,
+        "lng": 57.5522,
+        "adj": [
+            "MADAGASCAR_S",
+            "INDIAN_OCEAN_MID",
+            "MALDIVES_S",
+            "MADAGASCAR_N"
+        ]
+    },
+    {
+        "id": "INDIAN_OCEAN_MID",
+        "name": "Mid Indian Ocean",
+        "lat": -15.0,
+        "lng": 60.0,
+        "adj": [
+            "MAURITIUS",
+            "COLOMBO"
+        ]
+    },
+    {
+        "id": "SOMALI_BASIN_N",
+        "name": "Somali Basin North",
+        "lat": 5.0,
+        "lng": 55.0,
+        "adj": [
+            "ARABIAN_SEA_S",
+            "SOMALI_BASIN_S"
+        ]
+    },
+    {
+        "id": "SOMALI_BASIN_S",
+        "name": "Somali Basin South",
+        "lat": -5.0,
+        "lng": 50.0,
+        "adj": [
+            "SOMALI_BASIN_N",
+            "MADAGASCAR_N",
+            "DIEGO_GARCIA"
+        ]
+    },
+    {
+        "id": "MADAGASCAR_N",
+        "name": "North of Madagascar",
+        "lat": -10.0,
+        "lng": 45.0,
+        "adj": [
+            "SOMALI_BASIN_S",
+            "MAURITIUS"
+        ]
+    },
+    {
+        "id": "DIEGO_GARCIA",
+        "name": "Diego Garcia Waypoint",
+        "lat": -7.3,
+        "lng": 72.4,
+        "adj": [
+            "SOMALI_BASIN_S",
+            "MALDIVES_S"
+        ]
+    },
+    {
+        "id": "TOKYO",
+        "name": "Tokyo, Japan",
+        "lat": 35.6762,
+        "lng": 139.6503,
+        "adj": [
+            "SHANGHAI",
+            "GUAM",
+            "PACIFIC_N"
+        ]
+    },
+    {
+        "id": "PACIFIC_N",
+        "name": "North Pacific",
+        "lat": 40.0,
+        "lng": -150.0,
+        "adj": [
+            "TOKYO",
+            "LOS_ANGELES"
+        ]
+    },
+    {
+        "id": "LOS_ANGELES",
+        "name": "Los Angeles, USA",
+        "lat": 33.749,
+        "lng": -118.2615,
+        "adj": [
+            "PACIFIC_N",
+            "PANAMA_W"
+        ]
+    },
+    {
+        "id": "PANAMA_W",
+        "name": "Panama Canal West",
+        "lat": 8.9508,
+        "lng": -79.5663,
+        "adj": [
+            "LOS_ANGELES",
+            "PANAMA_E"
+        ]
+    },
+    {
+        "id": "PANAMA_E",
+        "name": "Panama Canal East",
+        "lat": 9.3547,
+        "lng": -79.9003,
+        "adj": [
+            "PANAMA_W",
+            "NEW_YORK_APPROACH"
+        ]
+    },
+    {
+        "id": "NEW_YORK_APPROACH",
+        "name": "New York Approach",
+        "lat": 38.0,
+        "lng": -72.0,
+        "adj": [
+            "PANAMA_E",
+            "NEW_YORK",
+            "AZORES"
+        ]
+    },
+    {
+        "id": "NEW_YORK",
+        "name": "New York, USA",
+        "lat": 40.7128,
+        "lng": -74.0060,
+        "adj": [
+            "NEW_YORK_APPROACH"
+        ]
+    },
+    {
+        "id": "AZORES",
+        "name": "Azores",
+        "lat": 38.5,
+        "lng": -28.0,
+        "adj": [
+            "GIBRALTAR_W",
+            "NEW_YORK_APPROACH",
+            "CANARY_ISLANDS",
+            "ENGLISH_CHANNEL_W",
+            "CAPE_VERDE"
+        ]
+    },
+    {
+        "id": "MELBOURNE",
+        "name": "Melbourne, Australia",
+        "lat": -37.8136,
+        "lng": 144.9631,
+        "adj": [
+            "SINGAPORE",
+            "GOOD_HOPE"
+        ]
+    },
+    {
+        "id": "GUAM",
+        "name": "Guam",
+        "lat": 13.4443,
+        "lng": 144.7937,
+        "adj": [
+            "SINGAPORE",
+            "TOKYO",
+            "OKINAWA"
+        ]
+    }
+]
