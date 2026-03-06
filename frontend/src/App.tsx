@@ -13,6 +13,7 @@ import MapPage from '@/pages/Map';
 import Tracking from '@/pages/Tracking';
 import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
+import Dossier from '@/pages/Dossier';
 import AccountSettings from '@/pages/AccountSettings';
 import SystemAccess from '@/pages/SystemAccess';
 
@@ -60,6 +61,7 @@ export default function App() {
                 <Route path="/account-settings" element={<AccountSettings />} />
                 <Route path="/system-access" element={<SystemAccess />} />
               </Route>
+              <Route path="/dossier/:id" element={<ProtectedRoute><Dossier /></ProtectedRoute>} />
             </Routes>
           </BrowserRouter>
           <Toaster

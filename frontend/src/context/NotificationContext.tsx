@@ -11,6 +11,8 @@ interface NotificationContextType {
     clearNotification: () => void;
     closePopup: () => void;
     togglePopup: () => void;
+    dismissNotification: (id: string) => void;
+    clearAllNotifications: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -50,15 +52,23 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }
     }, [notifications, lastSeenTimestamp]);
 
+    const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+
     const clearNotification = () => setHasNotification(false);
     const closePopup = () => setIsPopupOpen(false);
     const togglePopup = () => setIsPopupOpen((prev) => !prev);
+    const dismissNotification = (id: string) => setDismissed(prev => new Set([...prev, id]));
+    const clearAllNotifications = () => setDismissed(new Set(notifications.map((n: any) => n._id)));
 
-    const unreadCount = notifications.filter((n: any) => lastSeenTimestamp && n.timestamp > lastSeenTimestamp).length;
+    const visibleNotifications = notifications.filter((n: any) => !dismissed.has(n._id));
+    const unreadCount = visibleNotifications.filter((n: any) => lastSeenTimestamp && n.timestamp > lastSeenTimestamp).length;
 
     return (
         <NotificationContext.Provider value={{
-            hasNotification, isPopupOpen, notifications, unreadCount, clearNotification, closePopup, togglePopup
+            hasNotification, isPopupOpen,
+            notifications: visibleNotifications,
+            unreadCount, clearNotification, closePopup, togglePopup,
+            dismissNotification, clearAllNotifications,
         }}>
             {children}
         </NotificationContext.Provider>
