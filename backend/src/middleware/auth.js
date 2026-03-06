@@ -55,6 +55,25 @@ const requireAuth = async (req, res, next) => {
     }
 
     req.user = user;
+    // attach session id from token if present
+    if (decoded && decoded.sid) {
+      req.tokenSid = decoded.sid;
+      // verify session exists
+      const Session = require('../models/sessionModel');
+      const sess = await Session.findById(decoded.sid);
+      if (!sess || String(sess.user_id) !== String(user._id)) {
+        return res.status(401).json({
+          error: {
+            code: 'SESSION_INVALID',
+            message: 'Session not found or expired',
+            request_id: req.requestId,
+          },
+        });
+      }
+      // update last_seen timestamp
+      sess.last_seen = new Date();
+      await sess.save().catch(() => {});
+    }
     next();
   } catch (err) {
     logger.error(`Auth middleware error: ${err.message}`);

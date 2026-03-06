@@ -5,6 +5,9 @@ import {
     Crosshair,
     Map,
     Route,
+    User,
+    Settings,
+    Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +17,9 @@ const links = [
     { to: '/predict', label: 'Single Prediction', icon: Crosshair },
     { to: '/map', label: 'Map Monitoring', icon: Map },
     { to: '/tracking', label: 'Tracking', icon: Route },
+    { to: '/profile', label: 'Profile', icon: User },
+    { to: '/account-settings', label: 'Account Settings', icon: Settings },
+    { to: '/system-access', label: 'System Access', icon: Shield },
 ];
 
 export default function Sidebar() {

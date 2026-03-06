@@ -13,6 +13,8 @@ import MapPage from '@/pages/Map';
 import Tracking from '@/pages/Tracking';
 import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
+import AccountSettings from '@/pages/AccountSettings';
+import SystemAccess from '@/pages/SystemAccess';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,9 +42,11 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+<<<<<<< HEAD
         <NotificationProvider>
           <BrowserRouter>
             <Routes>
@@ -68,7 +72,35 @@ export default function App() {
             }}
           />
         </NotificationProvider>
+=======
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/upload" element={<Upload />} />
+              <Route path="/predict" element={<Predict />} />
+              <Route path="/map" element={<MapPage />} />
+              <Route path="/tracking" element={<Tracking />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/account-settings" element={<AccountSettings />} />
+              <Route path="/system-access" element={<SystemAccess />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: 'var(--card)',
+              color: 'var(--foreground)',
+              border: '1px solid var(--border)',
+            },
+          }}
+        />
+>>>>>>> priyansh-local-profile
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+

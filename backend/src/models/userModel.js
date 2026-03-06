@@ -38,6 +38,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    phone_number: {
+      type: String,
+      trim: true,
+    },
+    department: {
+      type: String,
+      trim: true,
+    },
+    profile_photo: {
+      type: String,
+      trim: true,
+    },
     is_active: {
       type: Boolean,
       default: true,
