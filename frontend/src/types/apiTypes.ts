@@ -51,7 +51,13 @@ export interface RecentHighRisk {
 export interface UploadJobResponse {
     success: boolean;
     job_id: string;
-    poll_url: string;
+    poll_url?: string;
+    message?: string;
+    // Present when processed inline (Vercel)
+    batch_id?: string;
+    total_records?: number;
+    processed_records?: number;
+    failed_records?: number;
 }
 
 /** @deprecated — legacy shape kept for reference */

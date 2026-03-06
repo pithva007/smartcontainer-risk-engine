@@ -91,9 +91,27 @@ export default function Upload() {
             return uploadDataset(fd, setUploadProgress);
         },
         onSuccess: (data) => {
-            setActiveJobId(data.job_id);
-            toast.success('File received — processing in background');
             qc.invalidateQueries({ queryKey: ['jobs'] });
+            // Direct result (Vercel inline processing) — no polling needed
+            if (data.total_records !== undefined) {
+                setCompletedJob({
+                    job_id: data.job_id,
+                    type: 'UPLOAD_DATASET',
+                    status: 'completed',
+                    progress: 100,
+                    created_at: new Date().toISOString(),
+                    result: {
+                        batch_id: data.batch_id,
+                        total_records: data.total_records,
+                        processed_records: data.processed_records,
+                    },
+                });
+                toast.success(`Upload complete — ${data.processed_records} records processed`);
+            } else {
+                // Background job — poll for status
+                setActiveJobId(data.job_id);
+                toast.success('File received — processing in background');
+            }
         },
         onError: () => {
             toast.error('Upload failed. Please try again.');
