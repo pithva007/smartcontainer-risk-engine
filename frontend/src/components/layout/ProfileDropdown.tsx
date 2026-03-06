@@ -30,8 +30,8 @@ export default function ProfileDropdown() {
 
     const navItems = [
         { label: 'View Profile', href: '/profile', icon: User },
-        { label: 'Account Settings', href: '/profile', icon: Settings },
-        { label: 'System Access', href: '/profile', icon: Shield },
+        { label: 'Account Settings', href: '/account-settings', icon: Settings },
+        { label: 'System Access', href: '/system-access', icon: Shield },
     ];
 
     const handleLogout = () => {

@@ -194,6 +194,7 @@ Require stack:
     at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
     at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+<<<<<<< HEAD
 2026-03-06 09:12:54 [error]: MongoDB connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
 2026-03-06 12:42:14 [error]: Unhandled error [26e85b86-f8c3-420f-9177-1b802ba16937]: TypeError: Cannot read properties of undefined (reading 'map')
     at C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\utils\validators\index.js:106:38
@@ -239,3 +240,6 @@ Require stack:
     at next (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\node_modules\express\lib\router\route.js:149:13)
     at requireAuth (C:\Users\princ\OneDrive\Desktop\Hackaminde\smartcontainer-risk-engine\backend\src\middleware\auth.js:58:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+=======
+2026-03-06 08:50:41 [error]: MongoDB connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+>>>>>>> 6338aedbdebcc0de22d786c0b89493890c8f670b
