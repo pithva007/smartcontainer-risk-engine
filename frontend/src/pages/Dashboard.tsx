@@ -41,7 +41,7 @@ function ScoreBar({ score }: { score: number }) {
                     style={{ width: `${pct}%`, background: pct >= 70 ? '#ef4444' : pct >= 40 ? '#f59e0b' : '#10b981' }}
                 />
             </div>
-            <span className="text-xs font-mono font-semibold text-foreground/80 min-w-[26px]">{pct}</span>
+            <span className="text-xs font-mono font-semibold text-foreground/80 min-w-6.5">{pct}</span>
         </div>
     );
 }
@@ -98,7 +98,7 @@ function LiveAlertFeed({
     ].slice(0, 50);
 
     return (
-        <div className="bg-card border border-border rounded-xl shadow-sm flex flex-col h-full max-h-[480px]">
+        <div className="bg-card border border-border rounded-xl shadow-sm flex flex-col h-full max-h-120">
             <div className="p-4 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +133,7 @@ function LiveAlertFeed({
                                 onClick={() => onItemClick(item.container_id)}
                                 className={cn(
                                     'border-l-4 rounded-lg p-3 transition-colors cursor-pointer',
-                                    isSeen ? 'opacity-50 grayscale bg-foreground/[0.02]' : cn('bg-foreground/5 hover:bg-foreground/10', borderColor[item.risk_level]),
+                                    isSeen ? 'opacity-50 grayscale bg-foreground/[0.02]' : cn('bg-foreground/5 hover:bg-foreground/8', borderColor[item.risk_level]),
                                     item.isLive && !isSeen && 'ring-1 ring-primary/20'
                                 )}
                             >
@@ -171,7 +171,7 @@ function HighRiskTable({
     const seenIds = new Set(socketCritical.map((r) => r.container_id));
     const apiCritical = apiRows.filter((r) => !seenIds.has(r.container_id));
     const rows = [
-        ...socketCritical.map((r) => ({ ...r, isLive: true })),
+        ...socketCritical.map((r) => ({ ...r, origin_country: undefined, destination_country: undefined, isLive: true })),
         ...apiCritical.map((r) => ({ ...r, isLive: false })),
     ].slice(0, 100);
 
@@ -228,7 +228,7 @@ function HighRiskTable({
                                     <td className="px-4 py-3 text-foreground/60 whitespace-nowrap">{item.destination_country || '—'}</td>
                                     <td className="px-4 py-3"><ScoreBar score={item.risk_score} /></td>
                                     <td className="px-4 py-3"><RiskBadge level={item.risk_level} /></td>
-                                    <td className="px-4 py-3 text-foreground/50 max-w-[240px] truncate text-xs">
+                                    <td className="px-4 py-3 text-foreground/50 max-w-50 truncate text-xs">
                                         {item.explanation || 'Multiple risk factors detected.'}
                                     </td>
                                 </tr>
@@ -268,7 +268,7 @@ function RiskDonut({ data, liveExtra }: { data: RiskDistribution[]; liveExtra: {
                 <p className="text-[11px] text-foreground/40 mt-0.5">Breakdown by classified risk level</p>
             </div>
             <div className="flex-1 flex flex-col items-center justify-center">
-                <div className="h-44 w-44">
+                <div className="h-44 w-44 max-w-55">
                     <ResponsiveContainer width={176} height={176}>
                         <PieChart>
                             <Pie data={final} cx="50%" cy="50%" innerRadius={44} outerRadius={74} paddingAngle={3} dataKey="count" nameKey="risk_level" stroke="none">
@@ -467,10 +467,10 @@ export default function Dashboard() {
             {isLoading ? (
                 <div className="flex flex-col gap-6">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div className="lg:col-span-5"><div className="animate-pulse bg-border rounded-xl h-[320px]" /></div>
-                        <div className="lg:col-span-7"><div className="animate-pulse bg-border rounded-xl h-[320px]" /></div>
+                        <div className="lg:col-span-5"><div className="animate-pulse bg-border rounded-xl h-80" /></div>
+                        <div className="lg:col-span-7"><div className="animate-pulse bg-border rounded-xl h-80" /></div>
                     </div>
-                    <div className="animate-pulse bg-border rounded-xl h-[360px]" />
+                    <div className="animate-pulse bg-border rounded-xl h-100" />
                 </div>
             ) : (
                 <div className="flex flex-col gap-6">

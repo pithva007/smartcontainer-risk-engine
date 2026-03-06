@@ -32,18 +32,18 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background dark">
+        <div className="min-h-screen flex items-center justify-center bg-background dark animate-in fade-in">
             <div className="w-full max-w-sm px-4">
                 <div className="text-center mb-8">
-                    <h1 className="text-2xl font-bold">
+                    <h1 className="text-2xl font-bold text-white">
                         <span className="text-primary">Smart</span>
-                        <span className="text-foreground">Container</span>
+                        <span className="text-white">Container</span>
                     </h1>
-                    <p className="text-sm text-foreground/60 mt-1">Risk Intelligence Platform</p>
+                    <p className="text-sm text-white/60 mt-1">Risk Intelligence Platform</p>
                 </div>
 
-                <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
-                    <h2 className="text-lg font-semibold text-foreground mb-6">Sign in to your account</h2>
+                <div className="bg-card border border-border rounded-xl p-8 shadow-lg animate-in slide-in-from-bottom-4 duration-500">
+                    <h2 className="text-lg font-semibold text-white mb-6 animate-in slide-in-from-left duration-500">Sign in to your account</h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="block text-xs font-medium text-foreground/70 uppercase tracking-wider mb-1.5">
@@ -56,7 +56,7 @@ export default function Login() {
                                     required
                                     value={username}
                                     onChange={e => setUsername(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                    className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-150"
                                     placeholder="admin"
                                 />
                             </div>
@@ -72,7 +72,7 @@ export default function Login() {
                                     required
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
-                                    className="w-full pl-9 pr-10 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                    className="w-full pl-9 pr-10 py-2 bg-background border border-border rounded-lg text-sm text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-150"
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -88,7 +88,7 @@ export default function Login() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-2.5 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+                            className="w-full py-2.5 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2 mt-2 animate-in slide-in-from-bottom-2 duration-500"
                         >
                             {loading
                                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in...</>
