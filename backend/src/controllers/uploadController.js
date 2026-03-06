@@ -115,7 +115,9 @@ const uploadDataset = async (req, res) => {
 
   try {
     // On Vercel, process inline — no background job queue available
-    if (process.env.VERCEL) {
+    // Vercel auto-sets VERCEL env var; also check VERCEL_URL and VERCEL_ENV as fallbacks
+    const isVercel = !!(process.env.VERCEL || process.env.VERCEL_URL || process.env.VERCEL_ENV);
+    if (isVercel) {
       logger.info(`[Vercel] Processing upload inline: ${originalFilename}`);
       const result = await processInline(filePath, originalFilename, userId);
 

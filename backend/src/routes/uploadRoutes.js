@@ -10,7 +10,8 @@ const fs = require('fs');
 const { uploadDataset, listBatches } = require('../controllers/uploadController');
 
 // On Vercel, only /tmp is writable. Fall back to /tmp/uploads when running serverless.
-const UPLOAD_DIR = process.env.VERCEL
+const isVercel = !!(process.env.VERCEL || process.env.VERCEL_URL || process.env.VERCEL_ENV);
+const UPLOAD_DIR = isVercel
   ? '/tmp/uploads'
   : (process.env.UPLOAD_DIR || './data/uploads');
 try { if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true }); } catch { /* ignore */ }

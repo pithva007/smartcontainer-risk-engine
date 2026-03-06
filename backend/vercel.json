@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "env": {
+    "VERCEL": "1"
+  },
   "functions": {
     "vercel-entry.js": {
       "maxDuration": 60
