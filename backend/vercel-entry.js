@@ -8,6 +8,8 @@ require('dotenv').config();
 const app = require('./src/app');
 const { connectDB } = require('./src/config/database');
 const { connectRedis } = require('./src/config/redis');
+const jobQueueService = require('./src/services/jobQueueService');
+const { processUploadJob } = require('./src/services/uploadJobProcessor');
 
 // Hardcoded allowed origins — these are ALWAYS allowed regardless of CORS_ORIGINS env var.
 // Env var CORS_ORIGINS can only ADD extra origins on top of these.
@@ -52,6 +54,11 @@ const init = () => {
       } catch (redisErr) {
         console.warn('Redis connection failed (non-fatal):', redisErr.message);
       }
+
+      // Initialise job queue and register processors (mirrors server.js)
+      await jobQueueService.initialize();
+      jobQueueService.registerProcessor('UPLOAD_DATASET', processUploadJob);
+      console.log('Job queue initialised, processors registered');
 
       // Seed default admin on first boot
       try {
