@@ -114,10 +114,11 @@ const uploadDataset = async (req, res) => {
   const userId = req.user ? req.user._id : null;
 
   try {
-    // If Redis/BullMQ is unavailable (always true on Vercel serverless), process inline.
-    // setImmediate fallback doesn't survive after the HTTP response is sent on serverless.
+    // Process inline when:
+    // 1. Redis/BullMQ is unavailable (in-process setImmediate doesn't survive serverless), OR
+    // 2. VERCEL=1 is set (even if Redis is available, BullMQ Worker dies with the function on serverless)
     const { isRedisAvailable } = require('../services/jobQueueService');
-    const useInline = !isRedisAvailable;
+    const useInline = !isRedisAvailable || !!process.env.VERCEL;
 
     if (useInline) {
       logger.info(`[Inline] Processing upload: ${originalFilename}`);
