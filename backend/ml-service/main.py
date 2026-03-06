@@ -91,11 +91,17 @@ class BatchRequest(BaseModel):
     records: List[ContainerFeatures]
 
 
+class TopFactor(BaseModel):
+    feature: str
+    impact: float
+
+
 class PredictionResponse(BaseModel):
     container_id: Optional[str]
     risk_score: float
     anomaly_flag: bool
     anomaly_score: float
+    top_factors: Optional[List[TopFactor]] = []
 
 
 class BatchPredictionResponse(BaseModel):
@@ -128,6 +134,7 @@ def predict_endpoint(features: ContainerFeatures):
             risk_score=result["risk_score"],
             anomaly_flag=result["anomaly_flag"],
             anomaly_score=result["anomaly_score"],
+            top_factors=result.get("top_factors", []),
         )
     except ValidationError as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -149,6 +156,7 @@ def predict_batch_endpoint(request: BatchRequest):
                 risk_score=r["risk_score"],
                 anomaly_flag=r["anomaly_flag"],
                 anomaly_score=r["anomaly_score"],
+                top_factors=r.get("top_factors", []),
             )
             for i, r in enumerate(results)
         ]

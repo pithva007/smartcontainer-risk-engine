@@ -6,6 +6,7 @@ const axios = require('axios');
 const Container = require('../models/containerModel');
 const { engineerFeatures, engineerBatchFeatures, buildFrequencyMaps } = require('../utils/featureEngineering');
 const { classifyAndExplain } = require('../utils/riskClassifier');
+const { getImporterStats, getBatchImporterStats, applyAutoEscalation } = require('./importerHistoryService');
 const { getCache, setCache } = require('../config/redis');
 const logger = require('../utils/logger');
 
@@ -97,15 +98,20 @@ const predictSingle = async (rawRecord) => {
   const enriched = engineerFeatures(rawRecord, importerFreqMap, exporterFreqMap, tradeRouteRiskMap);
   const mlResult = await callMLService(enriched);
 
-  const { risk_level, explanation } = classifyAndExplain(mlResult.risk_score, enriched);
+  const { risk_level, explanation, inspection_recommendation } = classifyAndExplain(mlResult.risk_score, enriched);
 
-  const result = {
+  // ── Feature 7: Importer Critical History Auto-Escalation ─────────────────
+  const importerStats = await getImporterStats(rawRecord.importer_id);
+
+  const baseResult = {
     container_id: rawRecord.container_id,
     risk_score: mlResult.risk_score,
     risk_level,
     anomaly_flag: mlResult.anomaly_flag,
     anomaly_score: mlResult.anomaly_score,
     explanation,
+    inspection_recommendation,
+    top_factors: mlResult.top_factors || [],
     features: {
       weight_difference: enriched.weight_difference,
       weight_mismatch_percentage: enriched.weight_mismatch_percentage,
@@ -116,22 +122,46 @@ const predictSingle = async (rawRecord) => {
     },
   };
 
-  // Persist or update in MongoDB
+  // Apply escalation rule — this sets final_risk_score/level and audit fields
+  const escalated = applyAutoEscalation(baseResult, importerStats);
+
+  // Persist with both raw model outputs and final business-adjusted values
   await Container.findOneAndUpdate(
     { container_id: rawRecord.container_id },
     {
       ...enriched,
-      risk_score: mlResult.risk_score,
-      risk_level,
+      // Raw ML outputs
+      model_risk_score: mlResult.risk_score,
+      model_risk_level: escalated.model_risk_level,
+      // Final decision (may differ if auto-escalated)
+      risk_score: escalated.final_risk_score,
+      risk_level: escalated.final_risk_level,
+      final_risk_score: escalated.final_risk_score,
+      final_risk_level: escalated.final_risk_level,
+      // Auto-escalation audit
+      auto_escalated_by_importer_history: escalated.auto_escalated_by_importer_history,
+      importer_critical_percentage: escalated.importer_critical_percentage,
+      override_reason: escalated.override_reason,
+      // Other prediction fields
       anomaly_flag: mlResult.anomaly_flag,
       anomaly_score: mlResult.anomaly_score,
-      explanation,
+      explanation: escalated.explanation,
+      explanation_summary: escalated.explanation_summary,
+      prediction_source: 'single',
       processed_at: new Date(),
     },
     { upsert: true, new: true }
   );
 
-  return result;
+  // Return full result including importer stats for frontend display
+  return {
+    ...escalated,
+    importer_stats: {
+      total_shipments: importerStats.totalShipments,
+      critical_shipments: importerStats.criticalShipments,
+      critical_percentage: importerStats.criticalPercentage,
+    },
+  };
 };
 
 /**
@@ -158,23 +188,41 @@ const predictBatch = async (rawRecords, batchId) => {
     mlResults = enrichedRecords.map(computeHeuristicRisk);
   }
 
+  // ── Feature 7: Compute all importer stats in ONE aggregation ─────────────
+  const uniqueImporterIds = [...new Set(enrichedRecords.map((r) => r.importer_id).filter(Boolean))];
+  const importerStatsMap = await getBatchImporterStats(uniqueImporterIds);
+
   const results = [];
   const bulkOps = [];
+  let autoEscalatedCount = 0;
+  const now = new Date();
 
   for (let i = 0; i < enrichedRecords.length; i++) {
     const enriched = enrichedRecords[i];
     const ml = mlResults[i] || computeHeuristicRisk(enriched);
-    const { risk_level, explanation } = classifyAndExplain(ml.risk_score, enriched);
+    const { risk_level, explanation, inspection_recommendation } = classifyAndExplain(ml.risk_score, enriched);
 
-    const resultRecord = {
+    const importerStats = importerStatsMap.get(enriched.importer_id) || {
+      totalShipments: 0,
+      criticalShipments: 0,
+      criticalPercentage: 0,
+    };
+
+    const baseResult = {
       container_id: enriched.container_id,
       risk_score: ml.risk_score,
       risk_level,
       anomaly_flag: ml.anomaly_flag,
       anomaly_score: ml.anomaly_score,
       explanation,
+      inspection_recommendation,
+      top_factors: ml.top_factors || [],
     };
-    results.push(resultRecord);
+
+    const escalated = applyAutoEscalation(baseResult, importerStats);
+    if (escalated.auto_escalated_by_importer_history) autoEscalatedCount++;
+
+    results.push(escalated);
 
     bulkOps.push({
       updateOne: {
@@ -182,13 +230,27 @@ const predictBatch = async (rawRecords, batchId) => {
         update: {
           $set: {
             ...enriched,
-            risk_score: ml.risk_score,
-            risk_level,
+            // Raw ML outputs
+            model_risk_score: ml.risk_score,
+            model_risk_level: escalated.model_risk_level,
+            // Final business-adjusted decision
+            risk_score: escalated.final_risk_score,
+            risk_level: escalated.final_risk_level,
+            final_risk_score: escalated.final_risk_score,
+            final_risk_level: escalated.final_risk_level,
+            // Auto-escalation audit
+            auto_escalated_by_importer_history: escalated.auto_escalated_by_importer_history,
+            importer_critical_percentage: escalated.importer_critical_percentage,
+            override_reason: escalated.override_reason,
+            // Other fields
             anomaly_flag: ml.anomaly_flag,
             anomaly_score: ml.anomaly_score,
-            explanation,
+            explanation: escalated.explanation,
+            explanation_summary: escalated.explanation_summary,
+            prediction_source: 'batch',
             upload_batch_id: batchId,
-            processed_at: new Date(),
+            batch_id: batchId,
+            processed_at: now,
           },
         },
         upsert: true,
@@ -201,7 +263,8 @@ const predictBatch = async (rawRecords, batchId) => {
     await Container.bulkWrite(bulkOps, { ordered: false });
   }
 
-  return results;
+  // Return results array AND escalation summary
+  return { results, autoEscalatedCount };
 };
 
 /**
@@ -214,4 +277,4 @@ const triggerTraining = async () => {
   return response.data;
 };
 
-module.exports = { predictSingle, predictBatch, triggerTraining, computeHeuristicRisk };
+module.exports = { predictSingle, predictBatch, triggerTraining, callMLService, computeHeuristicRisk };

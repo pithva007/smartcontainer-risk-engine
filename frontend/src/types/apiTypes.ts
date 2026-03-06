@@ -329,3 +329,148 @@ export interface StreamUploadResponse {
     batch_id: string;
     message: string;
 }
+
+// ─── Explainable AI ────────────────────────────────────────
+export interface TopFactor {
+    feature: string;
+    impact: number;
+}
+
+export interface InspectionRecommendation {
+    recommendedAction: string;
+    reason: string;
+    confidence: 'High' | 'Medium' | 'Low';
+}
+
+export interface SimulationResult {
+    container_id: string;
+    risk_score: number;
+    risk_level: RiskLevel;
+    anomaly_flag: boolean;
+    anomaly_score: number;
+    top_factors: TopFactor[];
+    explanation: string;
+    inspection_recommendation: InspectionRecommendation;
+    engineered_features: Record<string, number>;
+}
+
+export interface SimulateRiskResponse {
+    success: boolean;
+    simulation: SimulationResult;
+}
+
+// ─── Analytics ─────────────────────────────────────────────
+export interface RouteRisk {
+    origin: string;
+    destination: string;
+    total_count: number;
+    critical_count: number;
+    low_risk_count: number;
+    clear_count: number;
+    anomaly_count: number;
+    critical_rate: number;
+    avg_risk_score: number;
+    avg_dwell_time: number;
+}
+
+export interface SuspiciousImporter {
+    importer_id: string;
+    total_shipments: number;
+    critical_count: number;
+    anomaly_count: number;
+    critical_rate: number;
+    avg_risk_score: number;
+    origin_countries: string[];
+}
+
+export interface FraudPatternEntry {
+    hs_code?: string;
+    shipping_line?: string;
+    total: number;
+    critical_count: number;
+    critical_rate: number;
+    avg_risk_score: number;
+}
+
+export interface FraudPatterns {
+    high_risk_hs_codes: FraudPatternEntry[];
+    high_risk_shipping_lines: FraudPatternEntry[];
+}
+
+export interface RiskTrendPoint {
+    date: string;
+    Critical: number;
+    'Low Risk': number;
+    Clear: number;
+}
+
+// ─── Feature 7: Auto-Escalation ────────────────────────────
+
+/** Importer historical stats bundled into every single-prediction response */
+export interface ImporterStats {
+    total_shipments: number;
+    critical_shipments: number;
+    critical_percentage: number;
+}
+
+/**
+ * Full result from POST /api/predict (single prediction).
+ * Includes both raw model outputs and final business-adjusted decision.
+ */
+export interface SinglePredictionResult {
+    // Core identifiers
+    container_id: string;
+
+    // ── Raw ML outputs (never overwritten) ──────────────────
+    model_risk_score: number;
+    model_risk_level: RiskLevel;
+
+    // ── Final business-adjusted decision ────────────────────
+    final_risk_score: number;
+    final_risk_level: RiskLevel;
+
+    // ── Backward-compat aliases (= final values) ────────────
+    risk_score: number;
+    risk_level: RiskLevel;
+
+    // ── Escalation audit ────────────────────────────────────
+    auto_escalated_by_importer_history: boolean;
+    importer_critical_percentage: number;
+    override_reason: string | null;
+    prediction_source: 'single' | 'batch';
+
+    // ── Prediction metadata ─────────────────────────────────
+    anomaly_flag: boolean;
+    anomaly_score: number;
+    explanation: string;
+    explanation_summary: string;
+    top_factors: TopFactor[];
+    inspection_recommendation: InspectionRecommendation;
+    importer_stats: ImporterStats;
+    features: Record<string, number | boolean>;
+}
+
+/** GET /api/analytics/importer-risk-history row */
+export interface ImporterRiskHistory {
+    importer_id: string;
+    total_shipments: number;
+    critical_count: number;
+    critical_percentage: number;
+    auto_escalated_count: number;
+    avg_risk_score: number;
+    triggers_escalation: boolean;
+    latest_shipment: string | null;
+    origin_countries: string[];
+}
+
+/** GET /api/analytics/escalation-stats */
+export interface EscalationStats {
+    total_auto_escalated: number;
+    total_containers: number;
+    escalation_rate: number;
+    by_importer: Array<{
+        importer_id: string;
+        escalated_count: number;
+        critical_percentage: number;
+    }>;
+}

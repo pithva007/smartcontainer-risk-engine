@@ -10,6 +10,9 @@ import type {
     QueueItem,
     PredictionInput,
     ContainerPrediction,
+    SinglePredictionResult,
+    ImporterRiskHistory,
+    EscalationStats,
     AllRoutesGeoJSON,
     RouteDetail,
     TrackingData,
@@ -20,6 +23,11 @@ import type {
     ProfileResp,
     SessionsResp,
     ActivityResp,
+    SimulateRiskResponse,
+    RouteRisk,
+    SuspiciousImporter,
+    FraudPatterns,
+    RiskTrendPoint,
 } from '@/types/apiTypes';
 import type { ConversationListItem, StartConversationResponse, ChatMessage, ConversationStatus } from '@/types/chatTypes';
 
@@ -135,8 +143,24 @@ export const clearAllData = () =>
     apiClient.delete('/containers/all').then(r => r.data);
 
 // ─── Prediction ────────────────────────────────────────────
+/**
+ * POST /api/predict — Single container risk prediction.
+ * Returns the full enriched result including model vs final risk comparison
+ * and importer auto-escalation audit fields.
+ */
 export const predictContainer = (input: PredictionInput) =>
-    apiClient.post<ContainerPrediction>('/predict', input).then(r => r.data);
+    apiClient.post<{ success: boolean; prediction: SinglePredictionResult }>('/predict', input)
+        .then(r => r.data.prediction);
+
+export const fetchImporterRiskHistory = (limit = 20, minPct = 0) =>
+    apiClient.get<{ success: boolean; data: ImporterRiskHistory[] }>(
+        '/analytics/importer-risk-history',
+        { params: { limit, min_pct: minPct } }
+    ).then(r => r.data.data ?? []);
+
+export const fetchEscalationStats = () =>
+    apiClient.get<{ success: boolean; data: EscalationStats }>('/analytics/escalation-stats')
+        .then(r => r.data.data);
 
 // ─── Map ───────────────────────────────────────────────────
 export const fetchAllRoutes = () =>
@@ -199,6 +223,27 @@ export const fetchChatMessages = (conversation_id: string, params?: { limit?: nu
     apiClient.get<{ success: boolean; data: ChatMessage[]; next_before: string | null }>(`/chat/messages/${conversation_id}`, { params })
         .then(r => r.data);
 
+// ─── Simulation ─────────────────────────────────────────────
+export const simulateRisk = (input: Record<string, unknown>) =>
+    apiClient.post<SimulateRiskResponse>('/simulate-risk', input).then(r => r.data);
+
+// ─── Analytics ─────────────────────────────────────────────
+export const fetchRouteRisk = (limit = 20) =>
+    apiClient.get<{ success: boolean; data: RouteRisk[] }>('/analytics/route-risk', { params: { limit } })
+        .then(r => r.data.data ?? []);
+
+export const fetchSuspiciousImporters = (limit = 15) =>
+    apiClient.get<{ success: boolean; data: SuspiciousImporter[] }>('/analytics/suspicious-importers', { params: { limit } })
+        .then(r => r.data.data ?? []);
+
+export const fetchFraudPatterns = () =>
+    apiClient.get<{ success: boolean; data: FraudPatterns }>('/analytics/fraud-patterns')
+        .then(r => r.data.data);
+
+export const fetchRiskTrend = (days = 30) =>
+    apiClient.get<{ success: boolean; data: RiskTrendPoint[] }>('/analytics/risk-trend', { params: { days } })
+        .then(r => r.data.data ?? []);
+
 export const sendChatMessage = (payload: { conversation_id: string; message_text?: string; attachment_url?: string; attachment_name?: string; attachment_mime?: string }) =>
     apiClient.post('/chat/message', payload).then(r => r.data);
 
@@ -250,7 +295,7 @@ export const exportLivePredictionsCSV = (rows: import('@/types/apiTypes').Predic
         [
             escapeCSV(r.container_id),
             r.risk_score.toFixed(4),
-            escapeCSV(r.risk_level === 'Critical' ? 'Critical' : 'Low'),
+            escapeCSV(r.risk_level || 'Clear'),
             escapeCSV(r.explanation || 'No explanation available.'),
         ].join(',')
     );

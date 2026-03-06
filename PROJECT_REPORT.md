@@ -87,6 +87,7 @@ Port authorities inspect only a fraction of incoming containers due to volume co
        ▼                           ▼
 ┌─────────────┐         ┌─────────────────────┐
 │  MongoDB    │         │  Python FastAPI      │
+
 │ (local:     │         │  ML Microservice     │
 │  27017)     │         │  localhost:8000      │
 │             │         │  96.83% accuracy     │

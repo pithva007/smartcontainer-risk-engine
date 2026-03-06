@@ -26,12 +26,17 @@ const engineerFeatures = (record, importerFreqMap = new Map(), exporterFreqMap =
   const dwellTime = parseFloat(enriched.dwell_time_hours) || 0;
 
   // Weight difference (absolute)
-  enriched.weight_difference = Math.abs(declaredWeight - measuredWeight);
+  enriched.weight_difference = Math.abs(measuredWeight - declaredWeight);
 
-  // Weight mismatch percentage
-  enriched.weight_mismatch_percentage = declaredWeight > 0
-    ? (enriched.weight_difference / declaredWeight) * 100
-    : 0;
+  // Robust weight mismatch percentage — 0.001 guard prevents div/0 on zero
+  // declarations; capped at 200% so extreme outliers don't skew the feature.
+  enriched.weight_mismatch_percentage = Math.min(
+    (enriched.weight_difference / (declaredWeight + 0.001)) * 100,
+    200
+  );
+
+  // Binary flag: declared weight is exactly zero (evasion / data omission signal)
+  enriched.is_declared_zero = declaredWeight === 0 ? 1 : 0;
 
   // Value to weight ratio (declared value per kg)
   const referenceWeight = measuredWeight > 0 ? measuredWeight : declaredWeight;
@@ -41,6 +46,8 @@ const engineerFeatures = (record, importerFreqMap = new Map(), exporterFreqMap =
 
   // High dwell time binary flag
   enriched.high_dwell_time_flag = dwellTime > HIGH_DWELL_TIME_THRESHOLD ? 1 : 0;
+  // Alias used by the explainability layer and Python pipeline
+  enriched.excessive_dwell_time = enriched.high_dwell_time_flag;
 
   // Importer frequency from pre-computed map
   enriched.importer_frequency = importerFreqMap.get(enriched.importer_id) || 1;

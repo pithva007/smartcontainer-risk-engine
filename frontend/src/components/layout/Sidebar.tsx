@@ -5,15 +5,20 @@ import {
     Crosshair,
     Map,
     Route,
+    BarChart2,
+    FlaskConical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo.png';
 
 const links = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/upload', label: 'Upload Dataset', icon: UploadCloud },
     { to: '/predict', label: 'Single Prediction', icon: Crosshair },
+    { to: '/simulator', label: 'Risk Simulator', icon: FlaskConical },
     { to: '/map', label: 'Map Monitoring', icon: Map },
     { to: '/tracking', label: 'Tracking', icon: Route },
+    { to: '/analytics', label: 'Insights', icon: BarChart2 },
 ];
 
 export default function Sidebar() {
@@ -21,10 +26,7 @@ export default function Sidebar() {
         <aside className="w-64 shrink-0 bg-sidebar border-r border-border flex flex-col h-screen sticky top-0 z-20">
             {/* Logo */}
             <div className="flex items-center h-16 px-5 border-b border-border">
-                <h1 className="text-lg font-bold tracking-tight">
-                    <span className="text-primary">Smart</span>
-                    <span className="text-foreground">Container</span>
-                </h1>
+                <img src={logo} alt="SmartContainer" className="h-15 w-full w-auto object-contain" />
             </div>
 
             {/* Navigation */}

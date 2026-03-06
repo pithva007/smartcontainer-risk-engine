@@ -117,8 +117,8 @@ const generatePredictionCSV = (predictions) => {
         ? p.risk_explanation.join('. ')
         : (p.explanation || 'No explanation available.');
 
-    // Normalize risk_level: "Clear" containers are labelled "Low" per spec
-    const level = p.risk_level === 'Critical' ? 'Critical' : 'Low';
+    // Pass through the actual risk_level from the model (Critical / Low Risk / Clear)
+    const level = p.risk_level || 'Clear';
 
     return {
       Container_ID: p.container_id || '',

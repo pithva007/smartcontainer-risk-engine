@@ -29,6 +29,7 @@ from sklearn.metrics import (
     accuracy_score,
     f1_score,
     roc_auc_score,
+    roc_curve,
     classification_report,
 )
 try:
@@ -491,7 +492,29 @@ def run_training_pipeline(data_path: str = None) -> dict:
     combined = w_xgb * xgb_prob + w_rf * rf_prob + w_if * if_score
 
     val_scores_100 = np.round(combined * 100, 2)
-    y_pred_bin     = (val_scores_100 >= THRESHOLD).astype(int)
+
+    # ── Dynamic threshold computation ─────────────────────────────────────────
+    # critical_threshold: Youden's J (maximises sensitivity + specificity).
+    #   This adapts automatically to whatever score distribution this dataset
+    #   produces — no hardcoded numbers.
+    # low_risk_threshold: set at half the critical value so containers with
+    #   weak-but-present signals still surface for review instead of passing
+    #   through as Clear.  Both values are clipped to a reasonable safety band.
+    if len(np.unique(y_val)) > 1:
+        fpr_arr, tpr_arr, thresh_arr = roc_curve(y_val, combined)
+        j_scores    = tpr_arr - fpr_arr
+        best_idx    = int(np.argmax(j_scores))
+        critical_threshold = float(np.clip(thresh_arr[best_idx], 0.20, 0.80))
+    else:
+        critical_threshold = 0.45   # graceful fallback for degenerate val sets
+
+    low_risk_threshold = float(np.clip(critical_threshold * 0.50, 0.05, 0.35))
+    logger.info(
+        f"Dynamic thresholds — Critical: {critical_threshold:.4f}, "
+        f"Low Risk: {low_risk_threshold:.4f}"
+    )
+
+    y_pred_bin = (combined >= critical_threshold).astype(int)
 
     acc = accuracy_score(y_val, y_pred_bin)
     f1  = f1_score(y_val, y_pred_bin, average="weighted", zero_division=0)
@@ -503,17 +526,20 @@ def run_training_pipeline(data_path: str = None) -> dict:
 
     # ── 12. Save artefacts ────────────────────────────────────────────────────
     ensemble_artifacts = {
-        "train_stats":      train_stats,
-        "encoders":         encoders,
-        "scaler":           scaler,
-        "num_feats":        num_feats,
-        "if_features":      if_feats_avail,
-        "feature_cols":     avail_cols,
-        "cat_cols":         CAT_COLS,
-        "weights":          {"xgb": w_xgb, "rf": w_rf, "if_": w_if},
-        "threshold":        THRESHOLD,
-        "train_if_raw_min": float(train_if_raw.min()),
-        "train_if_raw_max": float(train_if_raw.max()),
+        "train_stats":          train_stats,
+        "encoders":             encoders,
+        "scaler":               scaler,
+        "num_feats":            num_feats,
+        "if_features":          if_feats_avail,
+        "feature_cols":         avail_cols,
+        "cat_cols":             CAT_COLS,
+        "weights":              {"xgb": w_xgb, "rf": w_rf, "if_": w_if},
+        "threshold":            THRESHOLD,
+        "train_if_raw_min":     float(train_if_raw.min()),
+        "train_if_raw_max":     float(train_if_raw.max()),
+        # ── Dynamic classification thresholds (model-derived, not hardcoded) ─
+        "critical_threshold":   critical_threshold,
+        "low_risk_threshold":   low_risk_threshold,
     }
 
     # Save ensemble files
@@ -529,14 +555,17 @@ def run_training_pipeline(data_path: str = None) -> dict:
         pickle.dump(rf_model, fh)
 
     metrics = {
-        "accuracy":         round(float(acc), 4),
-        "f1_score":         round(float(f1), 4),
-        "roc_auc":          round(float(roc), 4),
-        "training_samples": int(len(X_train_df)),
-        "test_samples":     int(len(X_val_df)),
-        "feature_count":    len(avail_cols),
-        "trained_at":       datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f"),
-        "model_type":       "XGBoost+RF+IsolationForest" if xgb_model else "RF+IsolationForest",
+        "accuracy":             round(float(acc), 4),
+        "f1_score":             round(float(f1), 4),
+        "roc_auc":              round(float(roc), 4),
+        "training_samples":     int(len(X_train_df)),
+        "test_samples":         int(len(X_val_df)),
+        "feature_count":        len(avail_cols),
+        "trained_at":           datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f"),
+        "model_type":           "XGBoost+RF+IsolationForest" if xgb_model else "RF+IsolationForest",
+        # Written here so Node.js (riskClassifier.js) can read them at startup
+        "critical_threshold":   round(critical_threshold, 4),
+        "low_risk_threshold":   round(low_risk_threshold, 4),
     }
 
     with open(METRICS_PATH, "w") as fh:

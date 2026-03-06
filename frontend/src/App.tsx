@@ -17,6 +17,8 @@ import Profile from '@/pages/Profile';
 import AccountSettings from '@/pages/AccountSettings';
 import SystemAccess from '@/pages/SystemAccess';
 import Dossier from '@/pages/Dossier';
+import Analytics from '@/pages/Analytics';
+import Simulator from '@/pages/Simulator';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,6 +61,8 @@ export default function App() {
                 <Route path="/predict" element={<Predict />} />
                 <Route path="/map" element={<MapPage />} />
                 <Route path="/tracking" element={<Tracking />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/simulator" element={<Simulator />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/account-settings" element={<AccountSettings />} />
                 <Route path="/system-access" element={<SystemAccess />} />

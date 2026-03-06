@@ -140,9 +140,10 @@ def predict_single_record(record: dict[str, Any]) -> dict[str, Any]:
         risk    = predict_single(record)
         anomaly = detect_anomaly_single(record)
         return {
-            "risk_score":   risk.get("risk_score",    0.0),
-            "anomaly_flag": anomaly.get("anomaly_flag", False),
+            "risk_score":    risk.get("risk_score",    0.0),
+            "anomaly_flag":  anomaly.get("anomaly_flag", False),
             "anomaly_score": anomaly.get("anomaly_score", 0.0),
+            "top_factors":   risk.get("top_factors",   []),
         }
     except ValidationError:
         raise
@@ -187,6 +188,7 @@ def predict_batch_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]
                 "risk_score":   risk.get("risk_score",    0.0),
                 "anomaly_flag": anomaly.get("anomaly_flag", False),
                 "anomaly_score": anomaly.get("anomaly_score", 0.0),
+                "top_factors":  risk.get("top_factors",   []),
             })
         return output
     except ValidationError:

@@ -23,13 +23,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [lastSeenTimestamp, setLastSeenTimestamp] = useState<string | null>(null);
 
-    // Poll for notifications every 5 seconds
+    // Poll for notifications every 30 seconds (5s was exhausting the rate limit)
     const { data: notifications = [] } = useQuery({
         queryKey: ['activity-notifications'],
         queryFn: () => fetchNotifications(20),
         enabled: isAuthenticated,
-        refetchInterval: 5000,
-        refetchIntervalInBackground: true,
+        refetchInterval: 30000,
+        refetchIntervalInBackground: false,
     });
 
     useEffect(() => {
