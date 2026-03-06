@@ -11,14 +11,17 @@ const Container = require('../models/containerModel');
 const { enqueueJob } = require('../services/jobQueueService');
 const { audit } = require('../services/auditService');
 const { parseFile } = require('../utils/fileParser');
-const { predictBatch } = require('../services/predictionService');
+const { engineerBatchFeatures } = require('../utils/featureEngineering');
+const { computeHeuristicRisk } = require('../services/predictionService');
+const { classifyAndExplain } = require('../utils/riskClassifier');
 const { deleteCache } = require('../config/redis');
 const logger = require('../utils/logger');
 const Job = require('../models/jobModel');
 
 /**
  * Process the uploaded file inline (used on Vercel where background jobs don't work).
- * Parses CSV, upserts to MongoDB, runs predictions, returns result.
+ * Uses pure in-memory heuristic scoring — no HTTP calls, no chunked DB loops.
+ * Total MongoDB round-trips: 3 (create job + one bulk upsert + update job).
  */
 const processInline = async (filePath, originalFilename, userId) => {
   const records = await parseFile(filePath);
@@ -40,42 +43,54 @@ const processInline = async (filePath, originalFilename, userId) => {
     started_at: new Date(),
   });
 
-  // Stamp batch ID and upsert
-  const stamped = records.map((r) => ({
-    ...r,
-    upload_batch_id: batchId,
-    declaration_date: r.declaration_date ? new Date(r.declaration_date) : undefined,
-    inspection_status: 'NEW',
-  }));
+  // Engineer features for all records in one pass (pure CPU, all in-memory)
+  const enrichedRecords = engineerBatchFeatures(
+    records.map((r) => ({
+      ...r,
+      upload_batch_id: batchId,
+      declaration_date: r.declaration_date ? new Date(r.declaration_date) : undefined,
+      inspection_status: 'NEW',
+    }))
+  );
 
-  const bulkOps = stamped.map((record) => ({
-    updateOne: {
-      filter: { container_id: record.container_id },
-      update: { $set: record },
-      upsert: true,
-    },
-  }));
+  // Compute heuristic risk for every record (pure CPU, no HTTP, no per-chunk DB writes)
+  const now = new Date();
+  const bulkOps = enrichedRecords.map((enriched) => {
+    const ml = computeHeuristicRisk(enriched);
+    const { risk_level, explanation } = classifyAndExplain(ml.risk_score, enriched);
+    return {
+      updateOne: {
+        filter: { container_id: enriched.container_id },
+        update: {
+          $set: {
+            ...enriched,
+            risk_score: ml.risk_score,
+            risk_level,
+            anomaly_flag: ml.anomaly_flag,
+            anomaly_score: ml.anomaly_score,
+            explanation,
+            processed_at: now,
+          },
+        },
+        upsert: true,
+      },
+    };
+  });
 
+  // ONE single bulkWrite — raw data + risk scores in a single round-trip
   await Container.bulkWrite(bulkOps, { ordered: false });
-  logger.info(`[Inline] Upserted ${total} records (batch: ${batchId})`);
+  logger.info(`[Inline] Upserted ${total} records with risk scores (batch: ${batchId})`);
 
-  // Run ML predictions in chunks (has built-in heuristic fallback)
-  const CHUNK = 200;
-  let processed = 0;
-  let failed = 0;
-  for (let i = 0; i < stamped.length; i += CHUNK) {
-    const chunk = stamped.slice(i, i + CHUNK);
-    try {
-      await predictBatch(chunk);
-    } catch (err) {
-      failed += chunk.length;
-      logger.warn(`[Inline] Prediction chunk failed: ${err.message}`);
-    }
-    processed += chunk.length;
-  }
-
-  // Invalidate dashboard cache
-  try { await deleteCache('dashboard:summary'); } catch { /* ignore */ }
+  // Invalidate all dashboard caches so the UI refreshes immediately
+  const cacheKeys = [
+    'dashboard:summary',
+    'dashboard:risk_dist',
+    'dashboard:recent_high_risk:500',
+    'dashboard:recent_high_risk:1000',
+    'dashboard:top_routes:10',
+    'dashboard:top_routes:50',
+  ];
+  await Promise.all(cacheKeys.map((k) => deleteCache(k).catch(() => {})));
 
   // Mark job completed
   await Job.updateOne(
@@ -86,15 +101,15 @@ const processInline = async (filePath, originalFilename, userId) => {
       completed_at: new Date(),
       'metadata.batch_id': batchId,
       'metadata.total_records': total,
-      'metadata.processed_records': processed,
-      $push: { logs: { level: 'info', message: `Processed ${processed}/${total} records inline.` } },
+      'metadata.processed_records': total,
+      $push: { logs: { level: 'info', message: `Processed ${total}/${total} records inline.` } },
     }
   );
 
   // Clean up temp file
   try { fs.unlinkSync(filePath); } catch { /* ignore */ }
 
-  return { jobId, batchId, total, processed, failed };
+  return { jobId, batchId, total, processed: total, failed: 0 };
 };
 
 /**

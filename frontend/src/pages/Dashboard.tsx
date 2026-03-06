@@ -177,18 +177,13 @@ const DIST_COLORS: Record<string, string> = {
     Low: '#10b981',
     'Low Risk': '#f59e0b',
     Clear: '#10b981',
+    'No Data': '#374151',
 };
 
 function RiskDonut({ data }: { data: RiskDistribution[] }) {
-    // Enrich with extra segments for visual richness
-    const enriched = data.length <= 3
-        ? [
-            { risk_level: 'Critical', count: data.find(d => d.risk_level === 'Critical')?.count || 23 },
-            { risk_level: 'High', count: 89 },
-            { risk_level: 'Medium', count: 178 },
-            { risk_level: 'Low', count: data.find(d => d.risk_level === 'Clear')?.count || 957 },
-        ]
-        : data.map(d => ({ risk_level: d.risk_level, count: d.count }));
+    const enriched = data.length > 0
+        ? data.map(d => ({ risk_level: d.risk_level, count: d.count }))
+        : [{ risk_level: 'No Data', count: 1 }];
 
     return (
         <div className="bg-card border border-border rounded-xl shadow-sm p-5 flex flex-col h-full">
