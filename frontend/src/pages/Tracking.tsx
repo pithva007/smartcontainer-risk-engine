@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
-import { fetchContainersList } from '@/api/routes';
+import { useInfiniteQuery, useQuery, keepPreviousData } from '@tanstack/react-query';
+import { fetchContainersList, fetchContainerById } from '@/api/routes';
 import {
     flexRender,
     getCoreRowModel,
@@ -11,10 +11,9 @@ import {
     type SortingState,
     type ColumnDef,
 } from '@tanstack/react-table';
-import {
-    Search, ChevronUp, ChevronDown, ChevronsUpDown, TableIcon,
-} from 'lucide-react';
+import { ArrowUpRight, Search, Table as TableIcon, ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import type { RiskLevel } from '@/types/apiTypes';
+import ShipmentDetailModal from '@/components/dashboard/ShipmentDetailModal';
 import { cn } from '@/lib/utils';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 
@@ -78,6 +77,14 @@ export default function Tracking() {
     const [sorting, setSorting] = useState<SortingState>([{ id: 'risk_score', desc: true }]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [searchParams] = useSearchParams();
+    const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
+
+    // Fetch full details when a shipment is clicked
+    const { data: containerDetail } = useQuery({
+        queryKey: ['containerDetail', selectedContainerId],
+        queryFn: () => selectedContainerId ? fetchContainerById(selectedContainerId) : Promise.resolve(null),
+        enabled: !!selectedContainerId
+    });
 
     // Initialize filter from URL if present, otherwise default to All
     const [riskFilter, setRiskFilter] = useState<FilterLevel>(() => {
@@ -306,7 +313,8 @@ export default function Tracking() {
                                             <tr
                                                 key={row.id}
                                                 ref={isLast ? lastElementRef : null}
-                                                className="border-b border-border/50 hover:bg-foreground/[0.03] transition-colors"
+                                                onClick={() => setSelectedContainerId(row.original.container_id)}
+                                                className="border-b border-border/50 hover:bg-foreground/[0.03] transition-colors cursor-pointer"
                                             >
                                                 {row.getVisibleCells().map((cell) => (
                                                     <td key={cell.id} className="px-4 py-3.5">
@@ -336,6 +344,14 @@ export default function Tracking() {
                     </>
                 )}
             </div>
+
+            {/* Detail Modal */}
+            {selectedContainerId && (
+                <ShipmentDetailModal
+                    shipment={containerDetail || null}
+                    onClose={() => setSelectedContainerId(null)}
+                />
+            )}
         </div>
     );
 }

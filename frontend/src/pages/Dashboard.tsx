@@ -54,60 +54,114 @@ function ScoreBar({ score }: { score: number }) {
 
 /* ───────── Live Alert Feed ───────── */
 function LiveAlertFeed({ data, readAlerts }: { data: RecentHighRisk[], readAlerts: Set<string> }) {
+    const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+
     const borderColor: Record<RiskLevel, string> = {
         Critical: 'border-l-red-500',
         'Low Risk': 'border-l-amber-500',
         Clear: 'border-l-emerald-500',
     };
+    const badgeColor: Record<RiskLevel, string> = {
+        Critical: 'bg-red-500/15 text-red-400 border-red-500/20',
+        'Low Risk': 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+        Clear: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    };
+
+    const visible = data.filter(item => !dismissed.has(item.container_id));
+    const clearAll = () => setDismissed(new Set(data.map(d => d.container_id)));
 
     return (
         <div className="bg-card border border-border rounded-xl shadow-sm flex flex-col h-full max-h-[480px]">
-            <div className="p-4 border-b border-border flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-400" />
-                <h3 className="text-sm font-semibold text-foreground">Live Alert Feed</h3>
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                    <h3 className="text-sm font-semibold text-foreground">Live Alert Feed</h3>
+                    {visible.length > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400 text-[10px] font-bold border border-red-500/20">
+                            {visible.length}
+                        </span>
+                    )}
+                </div>
+                {visible.length > 0 && (
+                    <button
+                        onClick={clearAll}
+                        className="text-[10px] font-medium text-foreground/40 hover:text-foreground/70 border border-border hover:border-foreground/20 rounded-md px-2 py-1 transition-all"
+                    >
+                        Clear All
+                    </button>
+                )}
             </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {data.map((item, i) => {
-                    const isSeen = readAlerts.has(item.container_id);
-                    const diffMs = Date.now() - new Date(item.processed_at || Date.now()).getTime();
-                    const diffMins = Math.floor(diffMs / 60000);
-                    const timeStr = diffMins < 60 ? `${Math.max(1, diffMins)} min ago` : `${Math.floor(diffMins / 60)} hr ago`;
 
-                    const explanations = [
-                        'Extreme value-to-weight anomaly detected',
-                        'Shipper flagged in intelligence database',
-                        'Documentation discrepancy: weight mismatch',
-                        'High-risk origin-destination pairing',
-                        'Minor customs declaration inconsistency',
-                        'Radiation detection threshold exceeded',
-                        'Unusual clearance timing pattern',
-                        'Multiple prior violations on file',
-                    ];
-                    return (
-                        <div
-                            key={item.container_id + i}
-                            data-container-id={item.container_id}
-                            className={cn(
-                                'border-l-4 rounded-lg p-3 bg-foreground/5 hover:bg-foreground/10 transition-colors cursor-pointer',
-                                isSeen ? 'opacity-50 grayscale' : borderColor[item.risk_level]
-                            )}
-                        >
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-mono font-semibold text-foreground">{item.container_id}</span>
-                                <span className="text-[10px] text-foreground/40 flex items-center gap-1 font-medium">
-                                    {isSeen ? (
-                                        <span className="text-primary tracking-wider uppercase">Seen</span>
-                                    ) : (
-                                        <><Clock className="w-3 h-3" /> {timeStr}</>
-                                    )}
-                                </span>
+            {/* Feed */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {visible.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-2 py-8 text-foreground/30">
+                        <ShieldCheck className="w-8 h-8" />
+                        <p className="text-xs font-medium">No active alerts</p>
+                    </div>
+                ) : (
+                    visible.map((item, i) => {
+                        const isSeen = readAlerts.has(item.container_id);
+                        const diffMs = Date.now() - new Date(item.processed_at || Date.now()).getTime();
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const timeStr = diffMins < 60 ? `${Math.max(1, diffMins)} min ago` : `${Math.floor(diffMins / 60)} hr ago`;
+
+                        const explanations = [
+                            'Extreme value-to-weight anomaly detected',
+                            'Shipper flagged in intelligence database',
+                            'Documentation discrepancy: weight mismatch',
+                            'High-risk origin-destination pairing',
+                            'Minor customs declaration inconsistency',
+                            'Radiation detection threshold exceeded',
+                            'Unusual clearance timing pattern',
+                            'Multiple prior violations on file',
+                        ];
+
+                        return (
+                            <div
+                                key={item.container_id + i}
+                                data-container-id={item.container_id}
+                                className={cn(
+                                    'border-l-4 rounded-lg p-3 bg-foreground/5 hover:bg-foreground/[0.08] transition-all duration-150 group cursor-pointer',
+                                    isSeen ? 'opacity-40' : borderColor[item.risk_level]
+                                )}
+                            >
+                                {/* Row 1: ID + time + dismiss */}
+                                <div className="flex items-center justify-between mb-1.5 gap-2">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="text-xs font-mono font-bold text-foreground shrink-0">{item.container_id}</span>
+                                        <span className={cn('px-1.5 py-0.5 rounded-full text-[9px] font-semibold border', badgeColor[item.risk_level])}>
+                                            {item.risk_level}
+                                        </span>
+                                        {isSeen && <span className="text-[9px] text-primary font-semibold tracking-widest uppercase">✓ Seen</span>}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <span className="text-[10px] text-foreground/35 flex items-center gap-1">
+                                            <Clock className="w-3 h-3" />{timeStr}
+                                        </span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDismissed(prev => new Set([...prev, item.container_id]));
+                                            }}
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded-full hover:bg-foreground/15 text-foreground/40 hover:text-foreground/70"
+                                            title="Dismiss alert"
+                                        >
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                {/* Row 2: explanation */}
+                                <p className="text-[11px] text-foreground/55 leading-relaxed line-clamp-2">
+                                    {item.explanation || explanations[i % explanations.length]}
+                                </p>
                             </div>
-                            <p className="text-xs text-foreground/60 leading-relaxed">
-                                {item.explanation || explanations[i % explanations.length]}
-                            </p>
-                        </div>
-                    );
-                })}
+                        );
+                    })
+                )}
             </div>
         </div>
     );
@@ -192,16 +246,17 @@ function RiskDonut({ data }: { data: RiskDistribution[] }) {
                 <p className="text-[11px] text-foreground/40 mt-0.5">Container risk level breakdown</p>
             </div>
             <div className="flex-1 flex flex-col items-center justify-center">
-                <div className="h-48 w-48">
-                    <ResponsiveContainer width={192} height={192}>
+                {/* Full-width responsive pie — no fixed wrapper needed */}
+                <div className="w-full" style={{ height: 192 }}>
+                    <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
                                 data={enriched}
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={50}
-                                outerRadius={80}
-                                paddingAngle={3}
+                                innerRadius={54}
+                                outerRadius={84}
+                                paddingAngle={0}
                                 dataKey="count"
                                 nameKey="risk_level"
                                 stroke="none"

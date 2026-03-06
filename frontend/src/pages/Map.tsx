@@ -1,11 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
-import { fetchContainerLocation } from '@/api/routes';
+import { fetchContainerLocation, fetchHeatmap } from '@/api/routes';
 import { MapContainer, TileLayer, useMap, CircleMarker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { RiskLevel, ContainerLocation } from '@/types/apiTypes';
 import { cn, riskBgClass } from '@/lib/utils';
-import { Search, Loader2, X, MapPin, AlertTriangle, Shield, Navigation, Info } from 'lucide-react';
+import { Search, Loader2, X, MapPin, AlertTriangle, Shield, Navigation, Info, Layers } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import HeatmapLayer from '@/components/map/HeatmapLayer';
+import AIAnalysisPanel from '@/components/map/AIAnalysisPanel';
+import TimelinePanel from '@/components/map/TimelinePanel';
 
 // ─── Fix default marker icons ───────────────────────────────────────────────
 L.Icon.Default.mergeOptions({
@@ -314,22 +318,40 @@ export default function MapPage() {
     const [searchError, setSearchError] = useState<string | null>(null);
     const [isTracking, setIsTracking] = useState(false);
     const [showMegaOnly, setShowMegaOnly] = useState(false);
-    // Hide markers until fly-to animation completes (prevents giant dot during zoom)
+    // Marker visibility — hidden during fly-to animation to prevent oversized dot
     const [markerReady, setMarkerReady] = useState(false);
-    // Route polyline toggle — off by default, user can enable
+    // Layer toggles
     const [showRoute, setShowRoute] = useState(false);
+    const [showHeatmap, setShowHeatmap] = useState(false);
+    const [showMarkers, setShowMarkers] = useState(true);
+    const [showAIPanel, setShowAIPanel] = useState(false);
+    const [showTimeline, setShowTimeline] = useState(false);
+
+    // Fetch heatmap data (only when toggle is on)
+    const { data: heatPoints = [] } = useQuery({
+        queryKey: ['heatmap'],
+        queryFn: fetchHeatmap,
+        enabled: showHeatmap,
+        staleTime: 120_000,
+    });
 
     const handleTrack = useCallback(async () => {
         const id = searchInput.trim().toUpperCase();
         if (!id) return;
         setSearchError(null);
         setIsTracking(true);
-        setMarkerReady(false);   // reset so marker hides during new fly-to
-        setShowRoute(false);     // reset route on each new track
+        setMarkerReady(false);
+        setShowRoute(false);
         try {
             const result = await fetchContainerLocation(id);
             setTrackedLoc(result ?? null);
-            if (!result) setSearchError(`Shipment '${id}' not found.`);
+            if (!result) {
+                setSearchError(`Shipment '${id}' not found.`);
+            } else {
+                // Auto-open AI panel and timeline on successful track
+                setShowAIPanel(true);
+                setShowTimeline(true);
+            }
         } catch {
             setSearchError(`Shipment '${id}' not found or location unavailable.`);
             setTrackedLoc(null);
@@ -340,53 +362,62 @@ export default function MapPage() {
     const clearTrack = () => {
         setTrackedLoc(null); setSearchInput('');
         setSearchError(null); setMarkerReady(false); setShowRoute(false);
+        setShowAIPanel(false); setShowTimeline(false);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleTrack(); };
 
     const routePositions: [number, number][] = trackedLoc?.route?.map(([lat, lng]) => [lat, lng]) ?? [];
     const routeColor = trackedLoc ? markerColor[trackedLoc.risk_level] : '#6366f1';
-
     const visiblePorts = showMegaOnly ? WORLD_PORTS.filter(p => p.type === 'mega') : WORLD_PORTS;
-
 
     return (
         <div className="flex flex-col h-full gap-4">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* ── Page Header ──────────────────────────────────────────────────── */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Map Monitoring</h1>
-                    <p className="text-sm text-foreground/60 mt-1">
-                        {WORLD_PORTS.length} major world ports shown. Search to track any shipment's live location and route.
+                    <p className="text-sm text-foreground/60 mt-0.5">
+                        {WORLD_PORTS.length} major world ports · Global risk heatmap · AI-explained risk analysis
                     </p>
                 </div>
-                {/* Port filter toggle */}
-                <div className="flex items-center gap-2 text-xs font-medium">
+                {/* Port filter pills + standalone Heatmap toggle */}
+                <div className="flex items-center gap-2 text-xs font-medium shrink-0">
                     <button
                         onClick={() => setShowMegaOnly(false)}
                         className={cn('px-3 py-1.5 rounded-full border transition-all', !showMegaOnly ? 'border-primary bg-primary text-white' : 'bg-card border-border text-foreground/60 hover:border-foreground/30')}
-                    >
-                        All Ports ({WORLD_PORTS.length})
-                    </button>
+                    >All Ports ({WORLD_PORTS.length})</button>
                     <button
                         onClick={() => setShowMegaOnly(true)}
                         className={cn('px-3 py-1.5 rounded-full border transition-all', showMegaOnly ? 'border-primary bg-primary text-white' : 'bg-card border-border text-foreground/60 hover:border-foreground/30')}
+                    >Mega Only ({WORLD_PORTS.filter(p => p.type === 'mega').length})</button>
+                    {/* Heatmap is global (all data), so lives here — not in per-shipment Layers */}
+                    <div className="w-px h-4 bg-border mx-0.5" />
+                    <button
+                        onClick={() => setShowHeatmap(h => !h)}
+                        className={cn(
+                            'flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all font-medium',
+                            showHeatmap
+                                ? 'bg-amber-500/15 border-amber-500/50 text-amber-400'
+                                : 'bg-card border-border text-foreground/60 hover:border-foreground/30'
+                        )}
                     >
-                        Mega Ports Only ({WORLD_PORTS.filter(p => p.type === 'mega').length})
+                        🌡️ Global Heatmap
                     </button>
                 </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="flex items-center gap-3">
-                <div className="relative flex-1 max-w-md">
+            {/* ── Search Bar + Layer Controls ──────────────────────────────── */}
+            <div className="flex flex-wrap items-center gap-3">
+                {/* Search */}
+                <div className="relative flex-1 min-w-[200px] max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
                     <input
                         type="text"
                         value={searchInput}
                         onChange={(e) => { setSearchInput(e.target.value); setSearchError(null); }}
                         onKeyDown={handleKeyDown}
-                        placeholder="Enter Container ID to track shipment..."
+                        placeholder="Enter Container ID to track..."
                         className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-foreground/30 transition-all"
                     />
                 </div>
@@ -396,13 +427,42 @@ export default function MapPage() {
                     className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isTracking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
-                    Track Shipment
+                    Track
                 </button>
                 {trackedLoc && (
                     <button onClick={clearTrack} className="flex items-center gap-2 px-4 py-2.5 bg-foreground/10 text-foreground/60 text-sm font-medium rounded-xl hover:bg-foreground/20 transition-colors">
                         <X className="w-4 h-4" /> Clear
                     </button>
                 )}
+
+                {/* ── Layer toggle buttons ─────────────────────────────── */}
+                <div className="flex items-center gap-1.5 ml-auto">
+                    <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-medium mr-1 flex items-center gap-1">
+                        <Layers className="w-3 h-3" /> Layers
+                    </span>
+                    {([
+                        { key: 'markers', label: 'Ports', icon: '🔵', state: showMarkers, toggle: () => setShowMarkers(m => !m) },
+                        { key: 'route', label: 'Route', icon: '🛤️', state: showRoute, toggle: () => setShowRoute(r => !r), disabled: !trackedLoc },
+                        { key: 'ai', label: 'AI Panel', icon: '🧠', state: showAIPanel, toggle: () => setShowAIPanel(a => !a), disabled: !trackedLoc },
+                        { key: 'timeline', label: 'Timeline', icon: '⏱', state: showTimeline, toggle: () => setShowTimeline(t => !t), disabled: !trackedLoc },
+                    ] as const).map(({ key, label, icon, state, toggle, disabled }: any) => (
+                        <button
+                            key={key}
+                            onClick={toggle}
+                            disabled={disabled}
+                            title={disabled ? 'Track a shipment first' : undefined}
+                            className={cn(
+                                'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all',
+                                state
+                                    ? 'bg-primary/15 border-primary/40 text-primary'
+                                    : 'bg-card border-border text-foreground/50 hover:border-foreground/30 hover:text-foreground/80',
+                                disabled && 'opacity-40 cursor-not-allowed'
+                            )}
+                        >
+                            <span>{icon}</span>{label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {searchError && (
@@ -411,143 +471,174 @@ export default function MapPage() {
                 </div>
             )}
 
-            {/* Map */}
-            <div className="flex-1 min-h-[500px] relative rounded-xl overflow-hidden border border-border shadow-sm">
-                <MapContainer
-                    center={[20, 0]} zoom={2}
-                    style={{ height: '100%', width: '100%' }}
-                    minZoom={2}
-                    zoomAnimation={true}
-                    zoomAnimationThreshold={4}
-                    inertia={true}
-                    inertiaDeceleration={2000}
-                    inertiaMaxSpeed={1500}
-                    easeLinearity={0.2}
-                    wheelDebounceTime={40}
-                    wheelPxPerZoomLevel={80}
-                >
-                    {/* Esri Dark Gray basemap */}
-                    <TileLayer
-                        attribution='Tiles &copy; <a href="https://www.esri.com">Esri</a>'
-                        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-                        maxZoom={16}
-                    />
-                    {/* Esri label reference overlay */}
-                    <TileLayer
-                        attribution=""
-                        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
-                        maxZoom={16}
-                        pane="shadowPane"
-                    />
+            {/* ── Map ──────────────────────────────────────────────────────────── */}
+            <div className="flex-1 min-h-[500px] relative rounded-xl overflow-visible border border-border shadow-sm">
+                {/* overflow-visible so absolute panels can extend past the map div */}
+                <div className="absolute inset-0 rounded-xl overflow-hidden">
+                    <MapContainer
+                        center={[20, 0]} zoom={2}
+                        style={{ height: '100%', width: '100%' }}
+                        minZoom={2}
+                        zoomAnimation={true}
+                        zoomAnimationThreshold={4}
+                        inertia={true}
+                        inertiaDeceleration={2000}
+                        inertiaMaxSpeed={1500}
+                        easeLinearity={0.2}
+                        wheelDebounceTime={40}
+                        wheelPxPerZoomLevel={80}
+                    >
+                        {/* Basemap tiles */}
+                        <TileLayer
+                            attribution='Tiles &copy; <a href="https://www.esri.com">Esri</a>'
+                            url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+                            maxZoom={16}
+                        />
+                        <TileLayer
+                            attribution=""
+                            url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
+                            maxZoom={16}
+                            pane="shadowPane"
+                        />
 
-                    {/* ── World Port Markers ─────────────────────────────────────── */}
-                    {visiblePorts.map((port) => (
-                        <CircleMarker
-                            key={port.name}
-                            center={[port.lat, port.lng]}
-                            radius={port.type === 'mega' ? 6 : port.type === 'major' ? 4 : 3}
-                            pathOptions={{
-                                color: port.type === 'mega' ? '#6366f1' : '#94a3b8',
-                                fillColor: port.type === 'mega' ? '#818cf8' : '#64748b',
-                                fillOpacity: port.type === 'mega' ? 0.9 : 0.7,
-                                weight: port.type === 'mega' ? 2 : 1,
-                            }}
-                        >
-                            <Popup>
-                                <div className="text-xs font-sans min-w-[120px]">
-                                    <p className="font-bold text-sm">{port.name}</p>
-                                    <p className="text-gray-500">{port.country}</p>
-                                    {port.type === 'mega' && <span className="text-indigo-500 font-semibold">Mega Port</span>}
-                                </div>
-                            </Popup>
-                        </CircleMarker>
-                    ))}
+                        {/* ── Heatmap layer ────────────────────────────────────── */}
+                        {showHeatmap && heatPoints.length > 0 && (
+                            <HeatmapLayer points={heatPoints} radius={28} blur={22} />
+                        )}
 
-                    {/* ── Tracked container layers (only shown after search) ─────── */}
-                    {trackedLoc && (
-                        <>
-                            {/* FlyTo — marker won't render until moveend fires */}
-                            <FlyToLocation lat={trackedLoc.lat} lng={trackedLoc.lng} onComplete={() => setMarkerReady(true)} />
+                        {/* ── World Port Markers ───────────────────────────────── */}
+                        {showMarkers && visiblePorts.map((port) => (
+                            <CircleMarker
+                                key={port.name}
+                                center={[port.lat, port.lng]}
+                                radius={port.type === 'mega' ? 6 : port.type === 'major' ? 4 : 3}
+                                pathOptions={{
+                                    color: port.type === 'mega' ? '#6366f1' : '#94a3b8',
+                                    fillColor: port.type === 'mega' ? '#818cf8' : '#64748b',
+                                    fillOpacity: port.type === 'mega' ? 0.9 : 0.7,
+                                    weight: port.type === 'mega' ? 2 : 1,
+                                }}
+                            >
+                                <Popup>
+                                    <div className="text-xs font-sans min-w-[120px]">
+                                        <p className="font-bold text-sm">{port.name}</p>
+                                        <p className="text-gray-500">{port.country}</p>
+                                        {port.type === 'mega' && <span className="text-indigo-500 font-semibold">Mega Port</span>}
+                                    </div>
+                                </Popup>
+                            </CircleMarker>
+                        ))}
 
-                            {/* Route polyline — only when user toggles it on */}
-                            {showRoute && routePositions.length > 1 && (
-                                <Polyline
-                                    positions={routePositions}
-                                    pathOptions={{
-                                        color: routeColor, weight: 3, opacity: 0.9,
-                                        dashArray: trackedLoc.risk_level !== 'Critical' ? '8 5' : undefined,
-                                    }}
-                                />
-                            )}
+                        {/* ── Tracked container layers ─────────────────────────── */}
+                        {trackedLoc && (
+                            <>
+                                <FlyToLocation lat={trackedLoc.lat} lng={trackedLoc.lng} onComplete={() => setMarkerReady(true)} />
 
-                            {/* Origin dot — only after animation */}
-                            {markerReady && trackedLoc.origin_coords && (
-                                <CircleMarker
-                                    center={[trackedLoc.origin_coords.lat, trackedLoc.origin_coords.lng]}
-                                    radius={7}
-                                    pathOptions={{ color: '#6b7280', fillColor: '#374151', fillOpacity: 0.9, weight: 2 }}
-                                >
-                                    <Popup><div className="text-xs font-sans"><b>Origin</b><br />{trackedLoc.origin_country}</div></Popup>
-                                </CircleMarker>
-                            )}
+                                {showRoute && routePositions.length > 1 && (
+                                    <Polyline
+                                        positions={routePositions}
+                                        pathOptions={{
+                                            color: routeColor, weight: 3, opacity: 0.9,
+                                            dashArray: trackedLoc.risk_level !== 'Critical' ? '8 5' : undefined,
+                                        }}
+                                    />
+                                )}
 
-                            {/* Destination dot — only after animation */}
-                            {markerReady && trackedLoc.dest_coords && (
-                                <CircleMarker
-                                    center={[trackedLoc.dest_coords.lat, trackedLoc.dest_coords.lng]}
-                                    radius={7}
-                                    pathOptions={{ color: '#6b7280', fillColor: '#374151', fillOpacity: 0.9, weight: 2 }}
-                                >
-                                    <Popup><div className="text-xs font-sans"><b>Destination</b><br />{trackedLoc.destination_port || trackedLoc.destination_country}</div></Popup>
-                                </CircleMarker>
-                            )}
+                                {markerReady && trackedLoc.origin_coords && (
+                                    <CircleMarker
+                                        center={[trackedLoc.origin_coords.lat, trackedLoc.origin_coords.lng]}
+                                        radius={7}
+                                        pathOptions={{ color: '#6b7280', fillColor: '#374151', fillOpacity: 0.9, weight: 2 }}
+                                    >
+                                        <Popup><div className="text-xs font-sans"><b>Origin</b><br />{trackedLoc.origin_country}</div></Popup>
+                                    </CircleMarker>
+                                )}
 
-                            {/* Current position (risk-colored) — only after animation */}
-                            {markerReady && (
-                                <CircleMarker
-                                    center={[trackedLoc.lat, trackedLoc.lng]}
-                                    radius={9}
-                                    pathOptions={{
-                                        color: markerColor[trackedLoc.risk_level],
-                                        fillColor: markerColor[trackedLoc.risk_level],
-                                        fillOpacity: 0.85, weight: 3,
-                                    }}
-                                >
-                                    <Popup>
-                                        <div className="text-xs font-sans space-y-1 min-w-[160px]">
-                                            <p className="font-bold text-sm">{trackedLoc.container_id}</p>
-                                            <p><span className="text-gray-500">Port:</span> {trackedLoc.current_port}</p>
-                                            <p><span className="text-gray-500">Risk:</span> {trackedLoc.risk_level} ({Math.round(trackedLoc.risk_score * 100)})</p>
-                                            <p><span className="text-gray-500">Status:</span> {trackedLoc.clearance_status}</p>
-                                            <p><span className="text-gray-500">Origin:</span> {trackedLoc.origin_country}</p>
-                                            <p><span className="text-gray-500">Destination:</span> {trackedLoc.destination_port || trackedLoc.destination_country}</p>
-                                            {trackedLoc.explanation && <p className="text-gray-400 italic">{trackedLoc.explanation}</p>}
-                                        </div>
-                                    </Popup>
-                                </CircleMarker>
-                            )}
-                        </>
-                    )}
+                                {markerReady && trackedLoc.dest_coords && (
+                                    <CircleMarker
+                                        center={[trackedLoc.dest_coords.lat, trackedLoc.dest_coords.lng]}
+                                        radius={7}
+                                        pathOptions={{ color: '#6b7280', fillColor: '#374151', fillOpacity: 0.9, weight: 2 }}
+                                    >
+                                        <Popup><div className="text-xs font-sans"><b>Destination</b><br />{trackedLoc.destination_port || trackedLoc.destination_country}</div></Popup>
+                                    </CircleMarker>
+                                )}
 
-                </MapContainer>
-
-                {/* Legend */}
-                <div className="absolute bottom-4 left-4 z-[1000] bg-card/90 backdrop-blur-sm border border-border rounded-lg p-3 text-xs space-y-1.5">
-                    <p className="font-semibold text-foreground/60 uppercase tracking-wider text-[10px]">Legend</p>
-                    <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-indigo-500 shrink-0" /><span className="text-foreground/70">Mega Port</span></div>
-                    <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 shrink-0" /><span className="text-foreground/70">Major / Regional Port</span></div>
-                    {trackedLoc && <>
-                        <div className="border-t border-border/50 pt-1.5 mt-1">
-                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500 shrink-0" /><span className="text-foreground/70">Critical container</span></div>
-                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-amber-500 shrink-0" /><span className="text-foreground/70">Low Risk container</span></div>
-                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500 shrink-0" /><span className="text-foreground/70">Clear container</span></div>
-                        </div>
-                    </>}
+                                {markerReady && (
+                                    <CircleMarker
+                                        center={[trackedLoc.lat, trackedLoc.lng]}
+                                        radius={10}
+                                        pathOptions={{
+                                            color: markerColor[trackedLoc.risk_level],
+                                            fillColor: markerColor[trackedLoc.risk_level],
+                                            fillOpacity: 0.9, weight: 3,
+                                        }}
+                                    >
+                                        <Popup>
+                                            <div className="text-xs font-sans space-y-1 min-w-[180px]">
+                                                <p className="font-bold text-sm">{trackedLoc.container_id}</p>
+                                                <p><span className="text-gray-500">Port:</span> {trackedLoc.current_port}</p>
+                                                <p><span className="text-gray-500">Risk:</span> {trackedLoc.risk_level} ({Math.round(trackedLoc.risk_score * 100)})</p>
+                                                <p><span className="text-gray-500">Status:</span> {trackedLoc.clearance_status}</p>
+                                                <p><span className="text-gray-500">Route:</span> {trackedLoc.origin_country} → {trackedLoc.destination_port || trackedLoc.destination_country}</p>
+                                                {trackedLoc.explanation && <p className="text-gray-400 italic">{trackedLoc.explanation}</p>}
+                                            </div>
+                                        </Popup>
+                                    </CircleMarker>
+                                )}
+                            </>
+                        )}
+                    </MapContainer>
                 </div>
 
-                {/* Tracked panel */}
-                {trackedLoc && <TrackedPanel loc={trackedLoc} onClose={clearTrack} showRoute={showRoute} onRouteToggle={() => setShowRoute(r => !r)} />}
+                {/* ── Absolute overlays (outside MapContainer so z-index works) ── */}
+
+                {/* Compact info panel (existing TrackedPanel replaces old right panel) */}
+                {trackedLoc && !showAIPanel && (
+                    <TrackedPanel
+                        loc={trackedLoc}
+                        onClose={clearTrack}
+                        showRoute={showRoute}
+                        onRouteToggle={() => setShowRoute(r => !r)}
+                    />
+                )}
+
+                {/* AI Analysis Panel */}
+                {trackedLoc && showAIPanel && (
+                    <AIAnalysisPanel
+                        containerId={trackedLoc.container_id}
+                        onClose={() => setShowAIPanel(false)}
+                    />
+                )}
+
+                {/* Timeline Panel */}
+                {trackedLoc && showTimeline && (
+                    <TimelinePanel
+                        containerId={trackedLoc.container_id}
+                        onClose={() => setShowTimeline(false)}
+                    />
+                )}
+
+                {/* Legend — only shown when NOT tracking a container */}
+                {!trackedLoc && (
+                    <div className="absolute bottom-4 right-4 z-[1000] bg-card/90 backdrop-blur-sm border border-border rounded-xl p-3 text-xs space-y-1.5">
+                        <p className="font-semibold text-foreground/50 uppercase tracking-wider text-[10px]">Legend</p>
+                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-indigo-500 shrink-0" /><span className="text-foreground/70">Mega Port</span></div>
+                        <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 shrink-0" /><span className="text-foreground/70">Major / Regional Port</span></div>
+                        {showHeatmap && (
+                            <div className="border-t border-border/50 pt-1.5 mt-1 space-y-1">
+                                <p className="text-[9px] uppercase tracking-wider text-foreground/40 font-semibold">Heatmap Intensity</p>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-16 h-2 rounded-full" style={{ background: 'linear-gradient(to right, #00fa9a, #ffd700, #ff4500, #ff0055)' }} />
+                                    <div className="flex justify-between w-16 text-[9px] text-foreground/40">
+                                        <span>Clear</span><span>Critical</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
-        </div >
+        </div>
     );
 }

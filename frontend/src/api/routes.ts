@@ -121,7 +121,16 @@ export const fetchAllTracks = () =>
     apiClient.get<AllRoutesGeoJSON>('/map/tracks').then(r => r.data);
 
 export const fetchHeatmap = () =>
-    apiClient.get('/map/heatmap').then(r => r.data);
+    apiClient.get<{ success: boolean; data: Array<{ lat: number; lng: number; intensity: number }> }>('/map/heatmap')
+        .then(r => r.data.data ?? []);
+
+export const fetchContainerAnalysis = (containerId: string) =>
+    apiClient.get<{ success: boolean; data: any }>(`/container-analysis/${containerId.toUpperCase()}`)
+        .then(r => r.data.data);
+
+export const fetchContainerTimeline = (containerId: string) =>
+    apiClient.get<{ success: boolean; data: any }>(`/container-timeline/${containerId.toUpperCase()}`)
+        .then(r => r.data.data);
 
 // ─── Workflow Queue ────────────────────────────────────────
 export const fetchQueue = () =>
