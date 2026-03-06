@@ -77,13 +77,22 @@ export const uploadDataset = (formData: FormData, onProgress?: (pct: number) => 
 
 // ─── Jobs ──────────────────────────────────────────────────
 export const listJobs = () =>
-    apiClient.get<JobRecord[]>('/jobs').then(r => r.data);
+    apiClient.get<{ success: boolean; jobs: JobRecord[]; total: number }>('/jobs')
+        .then(r => r.data.jobs ?? []);
 
 export const getJob = (jobId: string) =>
-    apiClient.get<JobRecord>(`/jobs/${jobId}`).then(r => r.data);
+    apiClient.get<{ success: boolean; job: JobRecord }>(`/jobs/${jobId}`)
+        .then(r => r.data.job);
 
 export const getJobLogs = (jobId: string) =>
-    apiClient.get<string[]>(`/jobs/${jobId}/logs`).then(r => r.data);
+    apiClient.get<{ success: boolean; logs: string[] }>(`/jobs/${jobId}/logs`)
+        .then(r => r.data.logs ?? []);
+
+export const deleteJob = (jobId: string) =>
+    apiClient.delete(`/jobs/${jobId}`).then(r => r.data);
+
+export const clearAllData = () =>
+    apiClient.delete('/containers/all').then(r => r.data);
 
 // ─── Prediction ────────────────────────────────────────────
 export const predictContainer = (input: PredictionInput) =>

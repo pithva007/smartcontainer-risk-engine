@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, keepPreviousData } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -16,7 +16,9 @@ import Profile from '@/pages/Profile';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 2, // 2 min cache
+      staleTime: 1000 * 60 * 5,     // 5 min — serve from cache without refetch
+      gcTime: 1000 * 60 * 15,       // 15 min — keep data in memory
+      placeholderData: keepPreviousData, // show stale data instantly, no loading flash
       retry: 1,
       refetchOnWindowFocus: false,
     },

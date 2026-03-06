@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { fetchContainersList } from '@/api/routes';
 import {
     flexRender,
@@ -105,6 +105,7 @@ export default function Tracking() {
             return undefined;
         },
         initialPageParam: 1,
+        placeholderData: keepPreviousData,
     });
 
     const observer = useRef<IntersectionObserver | null>(null);

@@ -291,6 +291,7 @@ export default function Dashboard() {
     });
 
     const kpi = summary.data;
+    // Use isLoading (no data at all) not isFetching — so cached data shows immediately
     const isLoading = summary.isLoading || risk.isLoading || highRisk.isLoading;
     const hasError = summary.error || risk.error || highRisk.error;
 
