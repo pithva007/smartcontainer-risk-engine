@@ -1,9 +1,10 @@
 {
-  "accuracy": 0.9683,
-  "f1_score": 0.9681,
-  "roc_auc": 0.9827,
+  "accuracy": 0.6567,
+  "f1_score": 0.5875,
+  "roc_auc": 0.5061,
   "training_samples": 2400,
   "test_samples": 600,
-  "feature_count": 15,
-  "trained_at": "2026-03-05T10:08:29.740178"
+  "feature_count": 22,
+  "trained_at": "2026-03-06T08:25:05.546294",
+  "model_type": "XGBoost+RF+IsolationForest"
 }

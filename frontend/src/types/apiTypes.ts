@@ -235,3 +235,42 @@ export interface TrackingData {
         };
     };
 }
+
+// ─── Socket.IO Live Prediction Events ─────────────────────
+export interface PredictionRow {
+    job_id: string;
+    batch_id: string;
+    container_id: string;
+    risk_score: number;
+    risk_level: RiskLevel;
+    anomaly_flag: boolean;
+    anomaly_score: number;
+    explanation: string;
+    origin_country: string;
+    destination_country: string;
+    declared_value: number;
+    declared_weight: number;
+    processed_at: string;
+}
+
+export interface PredictionProgress {
+    job_id: string;
+    processed: number;
+    total: number;
+    percent: number;
+}
+
+export interface PredictionDone {
+    job_id: string;
+    batch_id: string;
+    total: number;
+    processed: number;
+    failed: number;
+}
+
+export interface StreamUploadResponse {
+    success: boolean;
+    job_id: string;
+    batch_id: string;
+    message: string;
+}

@@ -109,6 +109,7 @@ const authLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV !== 'production',
   message: { success: false, message: 'Too many login attempts. Please wait 15 minutes.' },
 });
 app.use('/api/auth/', authLimiter);
@@ -134,6 +135,7 @@ app.use(
 // ── Health Check ───────────────────────────────────────────────────────────────
 app.get('/health', async (req, res) => {
   const mongoose = require('mongoose');
+  const mlProcessService = require('./services/mlProcessService');
   const dbState = ['disconnected', 'connected', 'connecting', 'disconnecting'];
   res.status(200).json({
     status: 'ok',
@@ -143,6 +145,10 @@ app.get('/health', async (req, res) => {
     environment: process.env.NODE_ENV || 'development',
     is_serverless: !!(process.env.VERCEL || process.env.VERCEL_URL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME),
     database: dbState[mongoose.connection.readyState] || 'unknown',
+    ml_service: {
+      url: mlProcessService.serviceUrl(),
+      ready: mlProcessService.isReady(),
+    },
     request_id: req.requestId,
   });
 });

@@ -8,7 +8,7 @@ const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
 const { body, validationResult } = require('express-validator');
-const { predictContainer, predictBatchFromFile, trainModel } = require('../controllers/predictionController');
+const { predictContainer, predictBatchFromFile, trainModel, reprocessAllContainers, getReprocessProgress } = require('../controllers/predictionController');
 
 // Multer storage for batch prediction uploads
 const storage = multer.diskStorage({
@@ -52,5 +52,7 @@ const validateSinglePrediction = [
 router.post('/predict', validateSinglePrediction, predictContainer);
 router.post('/predict-batch', upload.single('dataset'), predictBatchFromFile);
 router.post('/train', trainModel);
+router.post('/reprocess-all', reprocessAllContainers);
+router.get('/reprocess-progress', getReprocessProgress);
 
 module.exports = router;

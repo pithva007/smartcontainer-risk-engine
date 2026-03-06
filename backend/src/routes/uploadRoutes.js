@@ -8,6 +8,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { uploadDataset, listBatches } = require('../controllers/uploadController');
+const { streamUpload } = require('../controllers/streamUploadController');
 
 // On Vercel, only /tmp is writable. Fall back to /tmp/uploads when running serverless.
 const isVercel = !!(process.env.VERCEL || process.env.VERCEL_URL || process.env.VERCEL_ENV);
@@ -43,6 +44,7 @@ const upload = multer({
 });
 
 router.post('/upload', upload.single('dataset'), uploadDataset);
+router.post('/upload/stream', upload.single('dataset'), streamUpload);
 router.get('/upload/batches', listBatches);
 
 module.exports = router;

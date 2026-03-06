@@ -7,6 +7,7 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { Parser } = require('json2csv');
 const { predictSingle, predictBatch, triggerTraining } = require('../services/predictionService');
+const { reprocessAll, getProgress } = require('../services/mlBulkService');
 const { parseFile } = require('../utils/fileParser');
 const logger = require('../utils/logger');
 
@@ -128,4 +129,31 @@ const trainModel = async (req, res) => {
   }
 };
 
-module.exports = { predictContainer, predictBatchFromFile, trainModel };
+/**
+ * POST /api/predict/reprocess-all
+ * Bulk-run ML predictions over all containers that have not yet been scored.
+ * Pass query param ?force=true to re-score every container regardless.
+ */
+const reprocessAllContainers = async (req, res) => {
+  const forceAll = req.query.force === 'true';
+
+  // Kick off in background so the HTTP response returns immediately
+  reprocessAll({ forceAll }).catch((err) => {
+    logger.error(`[reprocessAll] Background run failed: ${err.message}`);
+  });
+
+  return res.status(202).json({
+    success: true,
+    message: `Bulk reprocessing started (forceAll=${forceAll}). Check /api/predict/reprocess-progress for status.`,
+  });
+};
+
+/**
+ * GET /api/predict/reprocess-progress
+ * Returns the status of the current or last bulk reprocessing run.
+ */
+const getReprocessProgress = (req, res) => {
+  return res.status(200).json({ success: true, progress: getProgress() });
+};
+
+module.exports = { predictContainer, predictBatchFromFile, trainModel, reprocessAllContainers, getReprocessProgress };

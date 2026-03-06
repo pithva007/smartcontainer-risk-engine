@@ -13,8 +13,14 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 import uvicorn
 
-from predict import predict_single, predict_batch, load_risk_model
-from anomaly_detection import detect_anomaly_single, detect_anomaly_batch, load_anomaly_model
+import model_service
+from model_service import (
+    predict_single_record,
+    predict_batch_records,
+    ensure_loaded,
+    health_status,
+    ValidationError,
+)
 from train_model import run_training_pipeline
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -27,13 +33,12 @@ logger = logging.getLogger("ml-service")
 # ── Lifespan: load models on startup ─────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Loading ML models...")
+    logger.info("Loading ML models via model_service...")
     try:
-        load_risk_model()
-        load_anomaly_model()
+        ensure_loaded()
         logger.info("Models loaded successfully")
     except Exception as e:
-        logger.warning(f"Model loading failed: {e} — models will load on first request")
+        logger.warning(f"Model loading failed: {e} — heuristic fallback active")
     yield
     logger.info("ML service shutting down")
 
@@ -78,6 +83,8 @@ class ContainerFeatures(BaseModel):
     importer_frequency: Optional[int] = 1
     exporter_frequency: Optional[int] = 1
     trade_route_risk: Optional[float] = 0.0
+    # Optional temporal field
+    declaration_date: Optional[str] = None
 
 
 class BatchRequest(BaseModel):
@@ -108,21 +115,22 @@ class TrainingResponse(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "ml-microservice"}
+    return {"service": "ml-microservice", **health_status()}
 
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict_endpoint(features: ContainerFeatures):
     """Predict risk score for a single container."""
     try:
-        result = predict_single(features.model_dump())
-        anomaly = detect_anomaly_single(features.model_dump())
+        result = predict_single_record(features.model_dump())
         return PredictionResponse(
             container_id=features.container_id,
             risk_score=result["risk_score"],
-            anomaly_flag=anomaly["anomaly_flag"],
-            anomaly_score=anomaly["anomaly_score"],
+            anomaly_flag=result["anomaly_flag"],
+            anomaly_score=result["anomaly_score"],
         )
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Prediction error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -133,20 +141,20 @@ def predict_batch_endpoint(request: BatchRequest):
     """Batch predict risk scores for multiple containers."""
     try:
         records = [r.model_dump() for r in request.records]
-        risk_results = predict_batch(records)
-        anomaly_results = detect_anomaly_batch(records)
+        results = predict_batch_records(records)
 
-        predictions = []
-        for i, r in enumerate(records):
-            predictions.append(
-                PredictionResponse(
-                    container_id=r.get("container_id"),
-                    risk_score=risk_results[i]["risk_score"],
-                    anomaly_flag=anomaly_results[i]["anomaly_flag"],
-                    anomaly_score=anomaly_results[i]["anomaly_score"],
-                )
+        predictions = [
+            PredictionResponse(
+                container_id=records[i].get("container_id"),
+                risk_score=r["risk_score"],
+                anomaly_flag=r["anomaly_flag"],
+                anomaly_score=r["anomaly_score"],
             )
+            for i, r in enumerate(results)
+        ]
         return BatchPredictionResponse(predictions=predictions)
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Batch prediction error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -156,8 +164,10 @@ def predict_batch_endpoint(request: BatchRequest):
 def anomaly_single_endpoint(features: ContainerFeatures):
     """Detect anomaly for a single container."""
     try:
-        result = detect_anomaly_single(features.model_dump())
-        return result
+        result = predict_single_record(features.model_dump())
+        return {"anomaly_flag": result["anomaly_flag"], "anomaly_score": result["anomaly_score"]}
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Anomaly detection error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -168,8 +178,15 @@ def anomaly_batch_endpoint(request: BatchRequest):
     """Batch detect anomalies."""
     try:
         records = [r.model_dump() for r in request.records]
-        results = detect_anomaly_batch(records)
-        return {"results": results}
+        results = predict_batch_records(records)
+        return {
+            "results": [
+                {"anomaly_flag": r["anomaly_flag"], "anomaly_score": r["anomaly_score"]}
+                for r in results
+            ]
+        }
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Anomaly batch error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

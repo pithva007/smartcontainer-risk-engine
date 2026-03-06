@@ -16,6 +16,7 @@ import type {
     LoginResponse,
     AuthUser,
     ContainerLocation,
+    StreamUploadResponse,
 } from '@/types/apiTypes';
 
 // ─── Auth ──────────────────────────────────────────────────
@@ -70,6 +71,18 @@ export const fetchContainersList = (params?: { risk_level?: string; anomaly?: bo
 // ─── Upload ────────────────────────────────────────────────
 export const uploadDataset = (formData: FormData, onProgress?: (pct: number) => void) =>
     apiClient.post<UploadJobResponse>('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (e) => {
+            if (e.total && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+        },
+    }).then(r => r.data);
+
+/**
+ * Stream upload — responds with 202 immediately then pushes prediction rows
+ * via Socket.IO `prediction:row` events.  Returns { job_id, batch_id }.
+ */
+export const streamUploadDataset = (formData: FormData, onProgress?: (pct: number) => void) =>
+    apiClient.post<StreamUploadResponse>('/upload/stream', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (e) => {
             if (e.total && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
