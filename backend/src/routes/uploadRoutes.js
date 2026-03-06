@@ -6,11 +6,18 @@
 const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { uploadDataset, listBatches } = require('../controllers/uploadController');
+
+// On Vercel, only /tmp is writable. Fall back to /tmp/uploads when running serverless.
+const UPLOAD_DIR = process.env.VERCEL
+  ? '/tmp/uploads'
+  : (process.env.UPLOAD_DIR || './data/uploads');
+try { if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true }); } catch { /* ignore */ }
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, process.env.UPLOAD_DIR || './data/uploads');
+    cb(null, UPLOAD_DIR);
   },
   filename: (req, file, cb) => {
     const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;

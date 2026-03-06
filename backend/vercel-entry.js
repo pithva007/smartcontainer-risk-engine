@@ -9,6 +9,22 @@ const app = require('./src/app');
 const { connectDB } = require('./src/config/database');
 const { connectRedis } = require('./src/config/redis');
 
+// Hardcoded allowed origins — these are ALWAYS allowed regardless of CORS_ORIGINS env var.
+// Env var CORS_ORIGINS can only ADD extra origins on top of these.
+const BUILTIN_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'https://smartcontainerrrr.vercel.app',
+  'https://smartcontainer-risk-engine-fwkw.vercel.app',
+];
+const EXTRA_ORIGINS = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
+  : [];
+const ALLOWED_ORIGINS = [...new Set([...BUILTIN_ORIGINS, ...EXTRA_ORIGINS])];
+
 let initPromise = null;
 let initError = null;
 
@@ -67,27 +83,12 @@ const init = () => {
   return initPromise;
 };
 
-// Allowed origins — mirror what app.js uses; CORS_ORIGINS env var overrides
-const getAllowedOrigins = () =>
-  (process.env.CORS_ORIGINS || [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:5174',
-    'https://smartcontainerrrr.vercel.app',
-    'https://smartcontainer-risk-engine-fwkw.vercel.app',
-  ].join(','))
-    .split(',')
-    .map(o => o.trim())
-    .filter(Boolean);
-
 // Vercel calls this handler for every request
 module.exports = async (req, res) => {
-  // Always inject CORS headers FIRST so they are present on error responses too
+  // Always inject CORS headers FIRST so they are present on error responses too.
+  // vercel.json 'headers' config also sets these as a safety net at infra level.
   const origin = req.headers.origin;
-  const allowed = getAllowedOrigins();
-  if (origin && allowed.includes(origin)) {
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Vary', 'Origin');
