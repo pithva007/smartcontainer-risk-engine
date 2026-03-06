@@ -130,6 +130,7 @@ app.get('/health', async (req, res) => {
     version: '2.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
+    is_serverless: !!(process.env.VERCEL || process.env.VERCEL_URL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME),
     database: dbState[mongoose.connection.readyState] || 'unknown',
     request_id: req.requestId,
   });

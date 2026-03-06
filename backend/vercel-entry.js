@@ -3,6 +3,11 @@
  * Exports the Express app after initialising DB/Redis.
  * Connection is cached across warm invocations.
  */
+
+// Mark this as a Vercel/serverless environment before loading any modules.
+// This ensures all downstream code (upload controller, job queue) can detect it.
+process.env.VERCEL = '1';
+
 require('dotenv').config();
 
 const app = require('./src/app');

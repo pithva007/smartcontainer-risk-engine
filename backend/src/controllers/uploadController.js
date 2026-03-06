@@ -114,10 +114,9 @@ const uploadDataset = async (req, res) => {
   const userId = req.user ? req.user._id : null;
 
   try {
-    // On Vercel, process inline — no background job queue available
-    // Vercel auto-sets VERCEL env var; also check VERCEL_URL and VERCEL_ENV as fallbacks
-    const isVercel = !!(process.env.VERCEL || process.env.VERCEL_URL || process.env.VERCEL_ENV);
-    if (isVercel) {
+    // Detect serverless: VERCEL env var, VERCEL_URL, or AWS_LAMBDA
+    const isServerless = !!(process.env.VERCEL || process.env.VERCEL_URL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME);
+    if (isServerless) {
       logger.info(`[Vercel] Processing upload inline: ${originalFilename}`);
       const result = await processInline(filePath, originalFilename, userId);
 
