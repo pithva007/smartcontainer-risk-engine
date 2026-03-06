@@ -67,7 +67,17 @@ app.use(metricsMiddleware);
 app.use(helmet());
 
 // CORS — restrict origins in production via environment variable
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174').split(',');
+// Set CORS_ORIGINS in Vercel project settings (comma-separated, no spaces)
+const allowedOrigins = (process.env.CORS_ORIGINS || [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'https://smartcontainerrrr.vercel.app',
+  'https://smartcontainer-risk-engine-fwkw.vercel.app',
+].join(',')).split(',').map(o => o.trim()).filter(Boolean);
+
 app.use(
   cors({
     origin: (origin, callback) => {

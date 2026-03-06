@@ -17,7 +17,7 @@ export default function RiskChart({ riskData, anomalyData }: Props) {
             <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Risk Distribution</h3>
                 <div className="h-72">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height={288}>
                         <PieChart>
                             <Pie
                                 data={riskData}
@@ -47,7 +47,7 @@ export default function RiskChart({ riskData, anomalyData }: Props) {
             <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Anomaly Types</h3>
                 <div className="h-72">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height={288}>
                         <BarChart data={anomalyData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                             <XAxis

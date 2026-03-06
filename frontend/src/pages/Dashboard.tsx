@@ -198,7 +198,7 @@ function RiskDonut({ data }: { data: RiskDistribution[] }) {
             </div>
             <div className="flex-1 flex flex-col items-center justify-center">
                 <div className="h-48 w-48">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width={192} height={192}>
                         <PieChart>
                             <Pie
                                 data={enriched}
