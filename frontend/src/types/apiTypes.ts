@@ -3,6 +3,7 @@ export type RiskLevel = 'Critical' | 'Low Risk' | 'Clear';
 
 // ─── Auth ──────────────────────────────────────────────────
 export interface AuthUser {
+    _id?: string;
     username: string;
     role: string;
     email?: string;

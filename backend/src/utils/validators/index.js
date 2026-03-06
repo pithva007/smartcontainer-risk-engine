@@ -76,6 +76,7 @@ const addNoteSchema = z.object({
 const updateProfileSchema = z.object({
   body: z.object({
     full_name: z.string().optional(),
+    official_email: z.string().email().optional(),
     phone_number: z.string().optional(),
     department: z.string().optional(),
     profile_photo: z.string().url().optional(),
@@ -86,6 +87,55 @@ const changePasswordSchema = z.object({
   body: z.object({
     current_password: z.string().min(6),
     new_password: z.string().min(8),
+  }),
+});
+
+const notificationSettingsSchema = z.object({
+  body: z.object({
+    highRisk: z.boolean().optional(),
+    anomaly: z.boolean().optional(),
+    weeklySummary: z.boolean().optional(),
+  }),
+});
+
+// ── Chat ───────────────────────────────────────────────────────────────────────
+
+const chatStartSchema = z.object({
+  body: z.object({
+    container_id: z.string().min(1, 'container_id is required'),
+    exporter_id: z.string().min(1, 'exporter_id is required'),
+  }),
+});
+
+const chatSendMessageSchema = z.object({
+  body: z.object({
+    conversation_id: z.string().min(1, 'conversation_id is required'),
+    message_text: z.string().optional().default(''),
+    attachment_url: z.string().optional().default(''),
+    attachment_name: z.string().optional().default(''),
+    attachment_mime: z.string().optional().default(''),
+  }).refine(
+    (d) => (d.message_text && d.message_text.trim().length > 0) || (d.attachment_url && d.attachment_url.trim().length > 0),
+    { message: 'message_text or attachment_url is required' }
+  ),
+});
+
+const chatListConversationsSchema = z.object({
+  query: z.object({
+    q: z.string().optional(),
+    status: z.enum(['Open', 'Pending Documents', 'Resolved']).optional(),
+    limit: z.coerce.number().int().min(1).max(50).optional().default(20),
+    page: z.coerce.number().int().min(1).max(2000).optional().default(1),
+  }),
+});
+
+const chatGetMessagesSchema = z.object({
+  params: z.object({
+    conversation_id: z.string().min(1),
+  }),
+  query: z.object({
+    limit: z.coerce.number().int().min(1).max(100).optional().default(30),
+    before: z.string().optional(), // ISO timestamp cursor
   }),
 });
 
@@ -151,5 +201,10 @@ module.exports = {
     linkVessel: linkVesselSchema,
     updateProfile: updateProfileSchema,
     changePassword: changePasswordSchema,
+    notificationSettings: notificationSettingsSchema,
+    chatStart: chatStartSchema,
+    chatSendMessage: chatSendMessageSchema,
+    chatListConversations: chatListConversationsSchema,
+    chatGetMessages: chatGetMessagesSchema,
   },
 };

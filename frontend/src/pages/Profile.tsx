@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
     User,
@@ -6,9 +5,6 @@ import {
     Shield,
     Clock,
     CheckCircle2,
-    Lock,
-    LogOut,
-    Edit3,
     Building2,
     Calendar,
     Activity
@@ -21,15 +17,9 @@ import { cn } from '@/lib/utils';
  * Suitable for professional logistics/government monitoring dashboard.
  */
 export default function Profile() {
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
+    const { user } = useAuth();
 
     if (!user) return null;
-
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
 
     // User Permissions - Mocked based on 'admin' role
     const permissions = [
@@ -83,35 +73,6 @@ export default function Profile() {
                         </div>
                     </div>
 
-                    {/* Quick Actions */}
-                    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-                        <h3 className="text-xs font-bold text-foreground/40 uppercase tracking-widest mb-6 flex items-center gap-2">
-                            Account Actions
-                        </h3>
-                        <div className="space-y-3">
-                            <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-foreground/5 hover:border-primary/40 transition-all group">
-                                <div className="flex items-center gap-3">
-                                    <Edit3 className="w-4 h-4 text-foreground/40 group-hover:text-primary" />
-                                    <span className="text-sm font-medium">Edit Profile</span>
-                                </div>
-                            </button>
-                            <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-foreground/5 hover:border-primary/40 transition-all group">
-                                <div className="flex items-center gap-3">
-                                    <Lock className="w-4 h-4 text-foreground/40 group-hover:text-primary" />
-                                    <span className="text-sm font-medium">Change Password</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={handleLogout}
-                                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-risk-critical/20 bg-risk-critical/5 hover:bg-risk-critical/10 transition-all group"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <LogOut className="w-4 h-4 text-risk-critical" />
-                                    <span className="text-sm font-medium text-risk-critical">Logout from System</span>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 {/* RIGHT COLUMN: Permissions & Activity */}

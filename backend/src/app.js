@@ -33,6 +33,8 @@ const trackingRoutes = require('./routes/trackingRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const workflowRoutes = require('./routes/workflowRoutes');
 const userRoutes = require('./routes/userRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const exporterRoutes = require('./routes/exporterRoutes');
 
 // Ensure upload directory exists (use /tmp on Vercel)
 const uploadDir = process.env.UPLOAD_DIR || './data/uploads';
@@ -119,6 +121,9 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serve uploaded files (datasets + chat attachments)
+app.use('/uploads', express.static(uploadDir));
+
 // HTTP request logging
 app.use((req, res, next) => {
   logger.info(`INCOMING: ${req.method} ${req.url}`);
@@ -181,6 +186,8 @@ app.use('/api', trackingRoutes);
 app.use('/api', reportRoutes);
 app.use('/api', workflowRoutes);
 app.use('/api', userRoutes);
+app.use('/api', chatRoutes);
+app.use('/api', exporterRoutes);
 
 // ── 404 Handler ────────────────────────────────────────────────────────────────
 app.use((req, res) => {

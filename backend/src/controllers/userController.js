@@ -14,6 +14,7 @@ const getProfile = async (req, res) => {
       full_name: user.full_name || user.username,
       official_email: user.email,
       department: user.department || '',
+      phone_number: user.phone_number || '',
       system_role: user.role,
       profile_photo: user.profile_photo || '',
       account_created_date: user.createdAt ? user.createdAt.toISOString().split('T')[0] : null,
@@ -25,15 +26,27 @@ const getProfile = async (req, res) => {
 
 // update profile
 const updateProfile = async (req, res) => {
-  const { full_name, phone_number, department, profile_photo } = req.body;
+  const { full_name, official_email, phone_number, department, profile_photo } = req.body;
   const user = req.user;
 
   if (full_name !== undefined) user.full_name = full_name;
+  if (official_email !== undefined) user.email = official_email;
   if (phone_number !== undefined) user.phone_number = phone_number;
   if (department !== undefined) user.department = department;
   if (profile_photo !== undefined) user.profile_photo = profile_photo;
 
-  await user.save();
+  try {
+    await user.save();
+  } catch (err) {
+    // handle duplicate email
+    if (err.code === 11000 && err.keyPattern && err.keyPattern.email) {
+      return res.status(409).json({
+        error: { code: 'EMAIL_EXISTS', message: 'Email address already in use.', request_id: req.requestId },
+      });
+    }
+    throw err;
+  }
+
   await audit({ user, action: 'UPDATE_USER', req, metadata: { fields: Object.keys(req.body) } });
   return res.status(200).json({ success: true, user: user.toSafeObject() });
 };
@@ -75,6 +88,31 @@ const getActivityLogs = async (req, res) => {
     .limit(50)
     .lean();
   return res.status(200).json({ success: true, logs });
+};
+
+// notification preferences
+const NotificationSettings = require('../models/notificationSettingsModel');
+
+const getNotificationSettings = async (req, res) => {
+  let settings = await NotificationSettings.findOne({ user_id: req.user._id });
+  if (!settings) {
+    settings = await NotificationSettings.create({ user_id: req.user._id });
+  }
+  return res.status(200).json({ success: true, settings });
+};
+
+const updateNotificationSettings = async (req, res) => {
+  const { highRisk, anomaly, weeklySummary } = req.body;
+  let settings = await NotificationSettings.findOne({ user_id: req.user._id });
+  if (!settings) {
+    settings = new NotificationSettings({ user_id: req.user._id });
+  }
+  if (highRisk !== undefined) settings.highRisk = highRisk;
+  if (anomaly !== undefined) settings.anomaly = anomaly;
+  if (weeklySummary !== undefined) settings.weeklySummary = weeklySummary;
+  await settings.save();
+  await audit({ user: req.user, action: 'UPDATE_NOTIFICATIONS', req, metadata: { settings: req.body } });
+  return res.status(200).json({ success: true, settings });
 };
 
 // return system access info
@@ -128,5 +166,7 @@ module.exports = {
   getActiveSessions,
   logoutAll,
   getActivityLogs,
+  getNotificationSettings,
+  updateNotificationSettings,
   getSystemAccess,
 };

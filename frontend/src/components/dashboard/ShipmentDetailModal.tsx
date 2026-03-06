@@ -1,10 +1,11 @@
-import { X, Shield, MapPin, Globe, User, Clock, Info, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { X, Shield, MapPin, Globe, User, Clock, Info, CheckCircle, AlertTriangle, Loader2, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ShipmentDetail } from '@/types/apiTypes';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { assignContainer, updateContainerStatus } from '@/api/routes';
 import { useAuth } from '@/context/AuthContext';
+import ContainerChatModal from '@/components/chat/ContainerChatModal';
 
 interface ShipmentDetailModalProps {
     shipment: ShipmentDetail | null;
@@ -18,6 +19,7 @@ export default function ShipmentDetailModal({ shipment, onClose }: ShipmentDetai
     const [successAction, setSuccessAction] = useState<string | null>(null);
     const [actionType, setActionType] = useState<'assign' | 'clear' | 'hold' | null>(null);
     const [noteText, setNoteText] = useState('');
+    const [chatOpen, setChatOpen] = useState(false);
 
     if (!shipment) return null;
 
@@ -253,6 +255,17 @@ export default function ShipmentDetailModal({ shipment, onClose }: ShipmentDetai
                         Close
                     </button>
 
+                    {(user?.role === 'admin' || user?.role === 'officer') && (
+                        <button
+                            type="button"
+                            onClick={() => setChatOpen(true)}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2"
+                        >
+                            <MessageCircle className="w-4 h-4" />
+                            Chat with Exporter
+                        </button>
+                    )}
+
                     {shipment.inspection_status === 'NEW' && (
                         <button
                             onClick={() => handleActionClick('assign')}
@@ -292,6 +305,16 @@ export default function ShipmentDetailModal({ shipment, onClose }: ShipmentDetai
                     )}
                 </div>
             </div>
+
+            {chatOpen && (
+                <ContainerChatModal
+                    open={chatOpen}
+                    containerId={shipment.container_id}
+                    exporterId={shipment.exporter_id}
+                    riskLevel={shipment.risk_level}
+                    onClose={() => setChatOpen(false)}
+                />
+            )}
         </div>
     );
 } 
