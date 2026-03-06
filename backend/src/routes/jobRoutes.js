@@ -46,7 +46,7 @@ router.get('/jobs', requireAuth, requireRole('officer'), listJobs);
  *         required: true
  *         schema: { type: string }
  */
-router.get('/jobs/:job_id', requireAuth, requireRole('officer'), getJobStatus);
+router.get('/jobs/:job_id', requireAuth, getJobStatus);
 
 /**
  * @swagger
@@ -56,7 +56,7 @@ router.get('/jobs/:job_id', requireAuth, requireRole('officer'), getJobStatus);
  *     summary: Get job log lines
  *     security: [{ bearerAuth: [] }]
  */
-router.get('/jobs/:job_id/logs', requireAuth, requireRole('officer'), getJobLogs);
+router.get('/jobs/:job_id/logs', requireAuth, getJobLogs);
 
 /**
  * @swagger

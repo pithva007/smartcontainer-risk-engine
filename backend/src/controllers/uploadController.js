@@ -114,15 +114,38 @@ const uploadDataset = async (req, res) => {
   const userId = req.user ? req.user._id : null;
 
   try {
-    // Process inline when:
-    // 1. Redis/BullMQ is unavailable (in-process setImmediate doesn't survive serverless), OR
-    // 2. VERCEL=1 is set (even if Redis is available, BullMQ Worker dies with the function on serverless)
+    // On any serverless platform (Vercel, AWS Lambda, etc.) the BullMQ Worker
+    // runs in a DIFFERENT Lambda invocation where /tmp is empty — the uploaded
+    // file is gone by the time the worker runs.  Always process inline on
+    // serverless regardless of whether Redis is available.
+    const isServerless = !!(process.env.VERCEL || process.env.VERCEL_URL ||
+      process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME);
     const { isRedisAvailable } = require('../services/jobQueueService');
-    const useInline = !isRedisAvailable || !!process.env.VERCEL;
+    const useInline = isServerless || !isRedisAvailable;
 
     if (useInline) {
       logger.info(`[Inline] Processing upload: ${originalFilename}`);
-      const result = await processInline(filePath, originalFilename, userId);
+      let result;
+      try {
+        result = await processInline(filePath, originalFilename, userId);
+      } catch (inlineErr) {
+        // Mark the job as failed in MongoDB so the UI shows the correct status
+        logger.error(`[Inline] Processing failed: ${inlineErr.message}`);
+        try {
+          const Job = require('../models/jobModel');
+          await Job.updateOne(
+            { 'metadata.original_filename': originalFilename, status: { $in: ['active', 'waiting'] } },
+            { status: 'failed', error: inlineErr.message, completed_at: new Date(),
+              $push: { logs: { level: 'error', message: inlineErr.message } } }
+          );
+        } catch { /* best-effort */ }
+        try { fs.unlinkSync(filePath); } catch { /* ignore */ }
+        return res.status(500).json({
+          success: false,
+          message: `Processing failed: ${inlineErr.message}`,
+          request_id: req.requestId,
+        });
+      }
 
       await audit({
         user: req.user,

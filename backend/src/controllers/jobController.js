@@ -162,12 +162,19 @@ const listJobs = async (req, res) => {
       .populate('created_by', 'username'),
   ]);
 
+  // Normalise timestamp field so frontend can use created_at consistently
+  const jobsOut = jobs.map((j) => {
+    const obj = j.toObject();
+    obj.created_at = obj.createdAt;
+    return obj;
+  });
+
   return res.status(200).json({
     success: true,
     total,
     page: parseInt(page),
     limit: parseInt(limit),
-    jobs,
+    jobs: jobsOut,
   });
 };
 
