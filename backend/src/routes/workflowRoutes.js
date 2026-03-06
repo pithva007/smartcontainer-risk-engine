@@ -8,7 +8,17 @@
 const router = require('express').Router();
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { validate, schemas } = require('../utils/validators');
-const { assignContainer, updateStatus, addNote, getQueue, getContainer } = require('../controllers/workflowController');
+const { assignContainer, updateStatus, addNote, getQueue, getContainer, getNotifications } = require('../controllers/workflowController');
+
+/**
+ * @swagger
+ * /api/notifications:
+ *   get:
+ *     tags: [Workflow]
+ *     summary: Get recent inspection activity notifications
+ *     security: [{ bearerAuth: [] }]
+ */
+router.get('/notifications', requireAuth, getNotifications);
 
 /**
  * @swagger

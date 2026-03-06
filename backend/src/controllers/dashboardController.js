@@ -181,13 +181,19 @@ const getAnomalyStats = async (req, res) => {
  */
 const getRecentHighRisk = async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 500, 1000);
+  const cacheKey = `dashboard:recent_high_risk:${limit}`;
+
   try {
+    const cached = await getCache(cacheKey);
+    if (cached) return res.status(200).json({ success: true, data: cached, cached: true });
+
     const containers = await Container.find({ risk_level: 'Critical' })
       .sort({ processed_at: -1 })
       .limit(limit)
       .select('container_id origin_country destination_country risk_score risk_level anomaly_flag explanation processed_at')
       .lean();
 
+    await setCache(cacheKey, containers, CACHE_TTL);
     return res.status(200).json({ success: true, data: containers });
   } catch (error) {
     logger.error(`Recent high risk error: ${error.message}`);
@@ -201,12 +207,16 @@ const getRecentHighRisk = async (req, res) => {
  */
 const getContainersList = async (req, res) => {
   const { page = 1, limit = 50, risk_level, anomaly } = req.query;
+  const cacheKey = `dashboard:containers:${page}:${limit}:${risk_level || 'all'}:${anomaly || 'false'}`;
 
   const filter = {};
   if (risk_level) filter.risk_level = risk_level;
   if (anomaly === 'true') filter.anomaly_flag = true;
 
   try {
+    const cached = await getCache(cacheKey);
+    if (cached) return res.status(200).json({ ...cached, cached: true });
+
     const [total, containers] = await Promise.all([
       Container.countDocuments(filter),
       Container.find(filter)
@@ -214,20 +224,53 @@ const getContainersList = async (req, res) => {
         .skip((parseInt(page) - 1) * parseInt(limit))
         .limit(parseInt(limit))
         .select(
-          'container_id origin_country destination_country risk_score risk_level anomaly_flag inspection_status assigned_to'
+          'container_id origin_country destination_country risk_score risk_level anomaly_flag inspection_status assigned_to queued_at'
         )
         .lean(),
     ]);
 
-    return res.status(200).json({
+    const payload = {
       success: true,
       total,
       page: parseInt(page),
       limit: parseInt(limit),
       data: containers,
-    });
+    };
+
+    await setCache(cacheKey, payload, 60); // 60s cache for paginated lists
+    return res.status(200).json(payload);
   } catch (error) {
     logger.error(`Get containers list error: ${error.message}`);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * DELETE /api/containers/all
+ * Wipe every container record and flush all dashboard Redis cache.
+ * Requires authentication (any logged-in user may reset their own data).
+ */
+const clearAllData = async (req, res) => {
+  try {
+    const { deletedCount } = await Container.deleteMany({});
+
+    // Also delete all jobs so history is in sync
+    const Job = require('../models/jobModel');
+    await Job.deleteMany({});
+
+    // Flush entire dashboard cache
+    const { flushCache } = require('../config/redis');
+    await flushCache();
+
+    logger.info(`All data cleared by ${req.user?.username || 'unknown'} — ${deletedCount} containers removed`);
+
+    return res.status(200).json({
+      success: true,
+      message: `All data cleared. ${deletedCount} containers removed.`,
+      deleted_containers: deletedCount,
+    });
+  } catch (error) {
+    logger.error(`Clear all data error: ${error.message}`);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -239,4 +282,5 @@ module.exports = {
   getAnomalyStats,
   getRecentHighRisk,
   getContainersList,
+  clearAllData,
 };

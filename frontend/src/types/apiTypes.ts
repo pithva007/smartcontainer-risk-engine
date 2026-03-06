@@ -51,7 +51,13 @@ export interface RecentHighRisk {
 export interface UploadJobResponse {
     success: boolean;
     job_id: string;
-    poll_url: string;
+    poll_url?: string;
+    message?: string;
+    // Present when processed inline (Vercel)
+    batch_id?: string;
+    total_records?: number;
+    processed_records?: number;
+    failed_records?: number;
 }
 
 /** @deprecated — legacy shape kept for reference */
@@ -129,6 +135,25 @@ export interface ShipmentDetail {
     risk_explanation: string[];
     createdAt: string;
     updatedAt: string;
+}
+
+export interface ContainerLocation {
+    container_id: string;
+    current_port: string;
+    country: string;
+    lat: number;
+    lng: number;
+    clearance_status: string;
+    risk_level: RiskLevel;
+    risk_score: number;
+    origin_country: string;
+    destination_country: string;
+    destination_port?: string;
+    anomaly_flag: boolean;
+    explanation?: string;
+    route: Array<[number, number]>;
+    origin_coords?: { lat: number; lng: number };
+    dest_coords?: { lat: number; lng: number };
 }
 
 // ─── Prediction ────────────────────────────────────────────

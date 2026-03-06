@@ -15,6 +15,7 @@ import type {
     TrackingData,
     LoginResponse,
     AuthUser,
+    ContainerLocation,
 } from '@/types/apiTypes';
 
 // ─── Auth ──────────────────────────────────────────────────
@@ -77,13 +78,22 @@ export const uploadDataset = (formData: FormData, onProgress?: (pct: number) => 
 
 // ─── Jobs ──────────────────────────────────────────────────
 export const listJobs = () =>
-    apiClient.get<JobRecord[]>('/jobs').then(r => r.data);
+    apiClient.get<{ success: boolean; jobs: JobRecord[]; total: number }>('/jobs')
+        .then(r => r.data.jobs ?? []);
 
 export const getJob = (jobId: string) =>
-    apiClient.get<JobRecord>(`/jobs/${jobId}`).then(r => r.data);
+    apiClient.get<{ success: boolean; job: JobRecord }>(`/jobs/${jobId}`)
+        .then(r => r.data.job);
 
 export const getJobLogs = (jobId: string) =>
-    apiClient.get<string[]>(`/jobs/${jobId}/logs`).then(r => r.data);
+    apiClient.get<{ success: boolean; logs: string[] }>(`/jobs/${jobId}/logs`)
+        .then(r => r.data.logs ?? []);
+
+export const deleteJob = (jobId: string) =>
+    apiClient.delete(`/jobs/${jobId}`).then(r => r.data);
+
+export const clearAllData = () =>
+    apiClient.delete('/containers/all').then(r => r.data);
 
 // ─── Prediction ────────────────────────────────────────────
 export const predictContainer = (input: PredictionInput) =>
@@ -98,6 +108,10 @@ export const fetchRouteById = (id: string) =>
     apiClient.get<{ success: boolean; data: RouteDetail }>(`/container-route/${id}`)
         .then(r => r.data.data ?? r.data as unknown as RouteDetail);
 
+export const fetchContainerLocation = (containerId: string) =>
+    apiClient.get<{ success: boolean; data: ContainerLocation }>(`/container-location/${containerId.toUpperCase()}`)
+        .then(r => r.data.data);
+
 // ─── Tracking ──────────────────────────────────────────────
 export const fetchTracking = (containerId: string) =>
     apiClient.get<{ success: boolean; data: TrackingData } | TrackingData>(`/map/track/${containerId}`)
@@ -107,7 +121,16 @@ export const fetchAllTracks = () =>
     apiClient.get<AllRoutesGeoJSON>('/map/tracks').then(r => r.data);
 
 export const fetchHeatmap = () =>
-    apiClient.get('/map/heatmap').then(r => r.data);
+    apiClient.get<{ success: boolean; data: Array<{ lat: number; lng: number; intensity: number }> }>('/map/heatmap')
+        .then(r => r.data.data ?? []);
+
+export const fetchContainerAnalysis = (containerId: string) =>
+    apiClient.get<{ success: boolean; data: any }>(`/container-analysis/${containerId.toUpperCase()}`)
+        .then(r => r.data.data);
+
+export const fetchContainerTimeline = (containerId: string) =>
+    apiClient.get<{ success: boolean; data: any }>(`/container-timeline/${containerId.toUpperCase()}`)
+        .then(r => r.data.data);
 
 // ─── Workflow Queue ────────────────────────────────────────
 export const fetchQueue = () =>
@@ -121,6 +144,9 @@ export const updateContainerStatus = (id: string, status: string, notes?: string
 
 export const fetchContainerById = (id: string) =>
     apiClient.get<{ success: boolean; data: any }>(`/containers/${id}`).then(r => r.data.data);
+
+export const fetchNotifications = (limit: number = 20) =>
+    apiClient.get<{ success: boolean; data: any[] }>('/notifications', { params: { limit } }).then(r => r.data.data);
 
 // ─── Reports ───────────────────────────────────────────────
 export const downloadCSV = () =>

@@ -8,6 +8,8 @@
 const path = require('path');
 const fs = require('fs');
 const Job = require('../models/jobModel');
+const Container = require('../models/containerModel');
+const { deleteCache } = require('../config/redis');
 const logger = require('../utils/logger');
 
 // ── GET Job Status ─────────────────────────────────────────────────────────────
@@ -88,6 +90,56 @@ const getJobResult = async (req, res) => {
   return res.send(csv);
 };
 
+// ── DELETE Job ─────────────────────────────────────────────────────────────────
+const deleteJob = async (req, res) => {
+  const job = await Job.findOne({ job_id: req.params.job_id });
+
+  if (!job) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Job not found.', request_id: req.requestId },
+    });
+  }
+
+  // Only the job owner or an admin can delete
+  if (req.user.role !== 'admin' && String(job.created_by) !== String(req.user._id)) {
+    return res.status(403).json({
+      error: { code: 'FORBIDDEN', message: 'You can only delete your own jobs.', request_id: req.requestId },
+    });
+  }
+
+  // Prevent deleting an actively running job
+  if (job.status === 'active') {
+    return res.status(409).json({
+      error: { code: 'JOB_ACTIVE', message: 'Cannot delete an actively running job.', request_id: req.requestId },
+    });
+  }
+
+  // Delete all containers that were created by this job's batch
+  const batchId = job.metadata?.batch_id;
+  let deletedContainers = 0;
+  if (batchId) {
+    const result = await Container.deleteMany({ upload_batch_id: batchId });
+    deletedContainers = result.deletedCount;
+    logger.info(`Deleted ${deletedContainers} containers for batch ${batchId}`);
+  }
+
+  await Job.deleteOne({ job_id: req.params.job_id });
+  logger.info(`Job ${req.params.job_id} deleted by ${req.user.username}`);
+
+  // Bust all dashboard Redis cache keys so counts reflect the deletion immediately
+  await Promise.all([
+    deleteCache('dashboard:summary'),
+    deleteCache('dashboard:risk_dist'),
+    deleteCache('dashboard:anomaly_stats'),
+    deleteCache(`dashboard:recent_high_risk:500`),
+    deleteCache(`dashboard:recent_high_risk:1000`),
+    deleteCache(`dashboard:top_routes:10`),
+    deleteCache(`dashboard:top_routes:50`),
+  ]);
+
+  return res.status(200).json({ success: true, message: 'Job deleted.', deleted_containers: deletedContainers });
+};
+
 // ── LIST Recent Jobs ───────────────────────────────────────────────────────────
 const listJobs = async (req, res) => {
   const { status, type, page = 1, limit = 20 } = req.query;
@@ -110,13 +162,20 @@ const listJobs = async (req, res) => {
       .populate('created_by', 'username'),
   ]);
 
+  // Normalise timestamp field so frontend can use created_at consistently
+  const jobsOut = jobs.map((j) => {
+    const obj = j.toObject();
+    obj.created_at = obj.createdAt;
+    return obj;
+  });
+
   return res.status(200).json({
     success: true,
     total,
     page: parseInt(page),
     limit: parseInt(limit),
-    jobs,
+    jobs: jobsOut,
   });
 };
 
-module.exports = { getJobStatus, getJobLogs, getJobResult, listJobs };
+module.exports = { getJobStatus, getJobLogs, getJobResult, listJobs, deleteJob };

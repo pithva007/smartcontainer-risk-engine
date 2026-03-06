@@ -10,12 +10,14 @@ const connectDB = async () => {
     const conn = await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 8000,
     });
     logger.info(`MongoDB connected to: ${mongoUri.replace(/:([^:@]{1,})@/, ':****@')}`);
     logger.info(`MongoDB host: ${conn.connection.host}`);
   } catch (error) {
     logger.error(`MongoDB connection error: ${error.message}`);
-    process.exit(1);
+    // Throw instead of process.exit so serverless handlers can catch it
+    throw error;
   }
 };
 

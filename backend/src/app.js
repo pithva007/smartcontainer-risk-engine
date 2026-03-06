@@ -32,17 +32,28 @@ const jobRoutes = require('./routes/jobRoutes');
 const trackingRoutes = require('./routes/trackingRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const workflowRoutes = require('./routes/workflowRoutes');
+const userRoutes = require('./routes/userRoutes');
 
-// Ensure upload directory exists
+// Ensure upload directory exists (use /tmp on Vercel)
 const uploadDir = process.env.UPLOAD_DIR || './data/uploads';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn(`Could not create upload dir ${uploadDir}: ${err.message}`);
 }
 
-// Ensure logs directory exists
-const logsDir = path.join(__dirname, '../logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+// Ensure logs directory exists (skip on serverless - logs go to stdout)
+if (!process.env.VERCEL) {
+  const logsDir = path.join(__dirname, '../logs');
+  try {
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+  } catch (err) {
+    console.warn(`Could not create logs dir: ${err.message}`);
+  }
 }
 
 const app = express();
@@ -57,7 +68,17 @@ app.use(metricsMiddleware);
 app.use(helmet());
 
 // CORS — restrict origins in production via environment variable
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174').split(',');
+// Set CORS_ORIGINS in Vercel project settings (comma-separated, no spaces)
+const allowedOrigins = (process.env.CORS_ORIGINS || [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'https://smartcontainerrrr.vercel.app',
+  'https://smartcontainer-risk-engine-fwkw.vercel.app',
+].join(',')).split(',').map(o => o.trim()).filter(Boolean);
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -75,12 +96,22 @@ app.use(
 // Rate limiting — prevents brute-force and DoS
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests. Please retry later.' },
 });
 app.use('/api/', limiter);
+
+// Stricter limit for auth endpoints to prevent credential brute-force
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts. Please wait 15 minutes.' },
+});
+app.use('/api/auth/', authLimiter);
 
 // ── General Middleware ─────────────────────────────────────────────────────────
 app.use(compression());
@@ -110,6 +141,7 @@ app.get('/health', async (req, res) => {
     version: '2.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
+    is_serverless: !!(process.env.VERCEL || process.env.VERCEL_URL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME),
     database: dbState[mongoose.connection.readyState] || 'unknown',
     request_id: req.requestId,
   });
@@ -142,6 +174,7 @@ app.use('/api', jobRoutes);
 app.use('/api', trackingRoutes);
 app.use('/api', reportRoutes);
 app.use('/api', workflowRoutes);
+app.use('/api', userRoutes);
 
 // ── 404 Handler ────────────────────────────────────────────────────────────────
 app.use((req, res) => {

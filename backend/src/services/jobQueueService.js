@@ -122,6 +122,11 @@ const enqueueJob = async (type, data, userId = null) => {
   if (isRedisAvailable && bullQueue) {
     await bullQueue.add(type, { job_id: jobId, ...data }, { jobId });
     logger.info(`Job ${jobId} (${type}) queued via BullMQ`);
+  } else if (process.env.VERCEL || process.env.VERCEL_URL || process.env.VERCEL_ENV) {
+    // On Vercel serverless, setImmediate won't survive after the response is sent.
+    // Run the processor synchronously (blocks the response until done).
+    logger.info(`Job ${jobId} (${type}) running synchronously (Vercel)`);
+    await _runProcessor(jobId, type, data);
   } else {
     // Non-blocking in-process execution
     setImmediate(() => _runProcessor(jobId, type, data));

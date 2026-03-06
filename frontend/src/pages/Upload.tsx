@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { uploadDataset, listJobs, getJob } from '@/api/routes';
-import { UploadCloud, File, AlertCircle, CheckCircle2, Loader2, Clock, XCircle } from 'lucide-react';
+import { uploadDataset, listJobs, getJob, deleteJob, clearAllData } from '@/api/routes';
+import { UploadCloud, File, AlertCircle, CheckCircle2, Loader2, Clock, XCircle, Trash2, DatabaseBackup } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import type { UploadJobResponse, JobRecord, JobStatus } from '@/types/apiTypes';
@@ -84,6 +84,43 @@ export default function Upload() {
 
     const jobs = useQuery({ queryKey: ['jobs'], queryFn: listJobs });
 
+    const deleteMutation = useMutation({
+        mutationFn: (jobId: string) => deleteJob(jobId),
+        onSuccess: (data) => {
+            qc.invalidateQueries({ queryKey: ['jobs'] });
+            // Also invalidate all dashboard caches so counts update immediately
+            qc.invalidateQueries({ queryKey: ['summary'] });
+            qc.invalidateQueries({ queryKey: ['risk-distribution'] });
+            qc.invalidateQueries({ queryKey: ['recent-high-risk'] });
+            qc.invalidateQueries({ queryKey: ['tracking-list'] });
+            const deleted = (data as { deleted_containers?: number }).deleted_containers;
+            toast.success(deleted ? `Job removed — ${deleted} containers cleared.` : 'Job removed.');
+        },
+        onError: () => toast.error('Could not delete job.'),
+    });
+
+    const handleDelete = (jobId: string) => {
+        if (!window.confirm('Remove this job from history?')) return;
+        deleteMutation.mutate(jobId);
+    };
+
+    const clearAllMutation = useMutation({
+        mutationFn: clearAllData,
+        onSuccess: (data: { deleted_containers?: number }) => {
+            qc.invalidateQueries({ queryKey: ['jobs'] });
+            qc.invalidateQueries({ queryKey: ['summary'] });
+            qc.invalidateQueries({ queryKey: ['risk-distribution'] });
+            qc.invalidateQueries({ queryKey: ['recent-high-risk'] });
+            qc.invalidateQueries({ queryKey: ['tracking-list'] });
+            toast.success(`All data cleared — ${data.deleted_containers?.toLocaleString() ?? 0} containers removed.`);
+        },
+        onError: () => toast.error('Failed to clear data.'),
+    });
+
+    const handleClearAll = () => {
+        if (!window.confirm('This will permanently delete ALL container records and job history from the database. This cannot be undone. Continue?')) return;
+        clearAllMutation.mutate();
+    };
     const mutation = useMutation<UploadJobResponse, Error, File>({
         mutationFn: (f: File) => {
             const fd = new FormData();
@@ -91,9 +128,27 @@ export default function Upload() {
             return uploadDataset(fd, setUploadProgress);
         },
         onSuccess: (data) => {
-            setActiveJobId(data.job_id);
-            toast.success('File received — processing in background');
             qc.invalidateQueries({ queryKey: ['jobs'] });
+            // Direct result (Vercel inline processing) — no polling needed
+            if (data.total_records !== undefined) {
+                setCompletedJob({
+                    job_id: data.job_id,
+                    type: 'UPLOAD_DATASET',
+                    status: 'completed',
+                    progress: 100,
+                    created_at: new Date().toISOString(),
+                    result: {
+                        batch_id: data.batch_id,
+                        total_records: data.total_records,
+                        processed_records: data.processed_records,
+                    },
+                });
+                toast.success(`Upload complete — ${data.processed_records} records processed`);
+            } else {
+                // Background job — poll for status
+                setActiveJobId(data.job_id);
+                toast.success('File received — processing in background');
+            }
         },
         onError: () => {
             toast.error('Upload failed. Please try again.');
@@ -245,6 +300,25 @@ export default function Upload() {
                 <p>Datasets must include columns for Container_ID, Origin_Country, Destination_Port, Declared_Value, Declared_Weight, and Measured_Weight.</p>
             </div>
 
+            {/* Danger Zone */}
+            <div className="border border-red-500/20 rounded-xl p-5 bg-red-500/5">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-sm font-semibold text-red-400">Danger Zone</h3>
+                        <p className="text-xs text-foreground/50 mt-0.5">Permanently delete all container records and job history from the database.</p>
+                    </div>
+                    <button
+                        onClick={handleClearAll}
+                        disabled={clearAllMutation.isPending}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                    >
+                        {clearAllMutation.isPending
+                            ? <><Loader2 className="w-4 h-4 animate-spin" /> Clearing...</>
+                            : <><DatabaseBackup className="w-4 h-4" /> Clear All Data</>}
+                    </button>
+                </div>
+            </div>
+
             {/* Job History */}
             <div>
                 <h2 className="text-lg font-semibold text-foreground mb-4">Job History</h2>
@@ -260,6 +334,7 @@ export default function Upload() {
                                     <th className="px-4 py-3 text-left font-medium">Status</th>
                                     <th className="px-4 py-3 text-left font-medium">Progress</th>
                                     <th className="px-4 py-3 text-left font-medium">Created</th>
+                                    <th className="px-4 py-3 text-left font-medium">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -278,6 +353,16 @@ export default function Upload() {
                                         </td>
                                         <td className="px-4 py-3 text-foreground/60 text-xs">
                                             {new Date(j.created_at).toLocaleString()}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <button
+                                                disabled={j.status === 'active' || deleteMutation.isPending}
+                                                onClick={() => handleDelete(j.job_id)}
+                                                className="p-1.5 rounded hover:bg-red-500/10 text-foreground/30 hover:text-red-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                                title={j.status === 'active' ? 'Cannot delete an active job' : 'Remove job'}
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
