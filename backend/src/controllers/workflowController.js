@@ -166,4 +166,29 @@ const getContainer = async (req, res) => {
   return res.status(200).json({ success: true, data: container });
 };
 
-module.exports = { assignContainer, updateStatus, addNote, getQueue, getContainer };
+// ── Notifications (Activity Feed) ──────────────────────────────────────────────
+const getNotifications = async (req, res) => {
+  const { limit = 20 } = req.query;
+
+  try {
+    const AuditLog = require('../models/auditLogModel');
+    // Fetch recent ADD_NOTE, UPDATE_STATUS, and ASSIGN_CONTAINER events
+    const logs = await AuditLog.find({
+      entity_type: 'Container',
+      action: { $in: ['ADD_NOTE', 'UPDATE_STATUS', 'ASSIGN_CONTAINER'] }
+    })
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit))
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: logs
+    });
+  } catch (error) {
+    logger.error('Error fetching notifications:', error);
+    return res.status(500).json({ success: false, error: 'Failed to fetch notifications' });
+  }
+};
+
+module.exports = { assignContainer, updateStatus, addNote, getQueue, getContainer, getNotifications };

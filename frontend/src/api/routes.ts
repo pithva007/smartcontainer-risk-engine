@@ -122,6 +122,9 @@ export const updateContainerStatus = (id: string, status: string, notes?: string
 export const fetchContainerById = (id: string) =>
     apiClient.get<{ success: boolean; data: any }>(`/containers/${id}`).then(r => r.data.data);
 
+export const fetchNotifications = (limit: number = 20) =>
+    apiClient.get<{ success: boolean; data: any[] }>('/notifications', { params: { limit } }).then(r => r.data.data);
+
 // ─── Reports ───────────────────────────────────────────────
 export const downloadCSV = () =>
     apiClient.get('/report/summary.csv', { responseType: 'blob' }).then(r => r.data as Blob);
