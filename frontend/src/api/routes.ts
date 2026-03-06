@@ -23,7 +23,7 @@ export const login = (username: string, password: string) =>
     apiClient.post<LoginResponse>('/auth/login', { username, password }).then(r => r.data);
 
 export const getMe = () =>
-    apiClient.get<AuthUser>('/auth/me').then(r => r.data);
+    apiClient.get<{ success: boolean; user: AuthUser }>('/auth/me').then(r => r.data.user);
 
 export const logout = () =>
     apiClient.post('/auth/logout').catch(() => {/* ignore errors on logout */ });
