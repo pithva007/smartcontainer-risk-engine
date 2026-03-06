@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { fetchContainersList } from '@/api/routes';
 import {
@@ -146,7 +146,11 @@ export default function Tracking() {
         {
             accessorKey: 'container_id',
             header: 'Container ID',
-            cell: (info) => <span className="font-mono font-semibold text-foreground">{info.getValue<string>()}</span>,
+            cell: (info) => (
+                <Link to={`/dossier/${info.getValue<string>()}`} className="font-mono font-semibold text-primary hover:underline">
+                    {info.getValue<string>()}
+                </Link>
+            ),
         },
         {
             accessorKey: 'origin',

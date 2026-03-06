@@ -13,6 +13,7 @@ import MapPage from '@/pages/Map';
 import Tracking from '@/pages/Tracking';
 import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
+import Dossier from '@/pages/Dossier';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +56,7 @@ export default function App() {
                 <Route path="/tracking" element={<Tracking />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>
+              <Route path="/dossier/:id" element={<ProtectedRoute><Dossier /></ProtectedRoute>} />
             </Routes>
           </BrowserRouter>
           <Toaster
