@@ -20,6 +20,9 @@ const createUserSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     full_name: z.string().optional(),
+    phone_number: z.string().optional(),
+    department: z.string().optional(),
+    profile_photo: z.string().url().optional(),
     role: z.enum(['admin', 'officer', 'viewer']).optional().default('viewer'),
   }),
 });
@@ -67,6 +70,22 @@ const updateStatusSchema = z.object({
 const addNoteSchema = z.object({
   body: z.object({
     note: z.string().min(1, 'Note text is required').max(1000),
+  }),
+});
+
+const updateProfileSchema = z.object({
+  body: z.object({
+    full_name: z.string().optional(),
+    phone_number: z.string().optional(),
+    department: z.string().optional(),
+    profile_photo: z.string().url().optional(),
+  }),
+});
+
+const changePasswordSchema = z.object({
+  body: z.object({
+    current_password: z.string().min(6),
+    new_password: z.string().min(8),
   }),
 });
 
@@ -130,5 +149,7 @@ module.exports = {
     updateStatus: updateStatusSchema,
     addNote: addNoteSchema,
     linkVessel: linkVesselSchema,
+    updateProfile: updateProfileSchema,
+    changePassword: changePasswordSchema,
   },
 };

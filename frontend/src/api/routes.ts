@@ -15,6 +15,7 @@ import type {
     TrackingData,
     LoginResponse,
     AuthUser,
+    ContainerLocation,
 } from '@/types/apiTypes';
 
 // ─── Auth ──────────────────────────────────────────────────
@@ -106,6 +107,10 @@ export const fetchAllRoutes = () =>
 export const fetchRouteById = (id: string) =>
     apiClient.get<{ success: boolean; data: RouteDetail }>(`/container-route/${id}`)
         .then(r => r.data.data ?? r.data as unknown as RouteDetail);
+
+export const fetchContainerLocation = (containerId: string) =>
+    apiClient.get<{ success: boolean; data: ContainerLocation }>(`/container-location/${containerId.toUpperCase()}`)
+        .then(r => r.data.data);
 
 // ─── Tracking ──────────────────────────────────────────────
 export const fetchTracking = (containerId: string) =>
