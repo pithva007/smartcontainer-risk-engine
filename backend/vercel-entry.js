@@ -67,8 +67,40 @@ const init = () => {
   return initPromise;
 };
 
+// Allowed origins — mirror what app.js uses; CORS_ORIGINS env var overrides
+const getAllowedOrigins = () =>
+  (process.env.CORS_ORIGINS || [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'https://smartcontainerrrr.vercel.app',
+    'https://smartcontainer-risk-engine-fwkw.vercel.app',
+  ].join(','))
+    .split(',')
+    .map(o => o.trim())
+    .filter(Boolean);
+
 // Vercel calls this handler for every request
 module.exports = async (req, res) => {
+  // Always inject CORS headers FIRST so they are present on error responses too
+  const origin = req.headers.origin;
+  const allowed = getAllowedOrigins();
+  if (origin && allowed.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Request-ID');
+
+  // Handle CORS preflight immediately — no DB needed
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+
   try {
     await init();
     return app(req, res);
