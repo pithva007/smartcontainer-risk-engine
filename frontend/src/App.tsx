@@ -13,12 +13,9 @@ import MapPage from '@/pages/Map';
 import Tracking from '@/pages/Tracking';
 import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
-<<<<<<< HEAD
 import Dossier from '@/pages/Dossier';
-=======
 import AccountSettings from '@/pages/AccountSettings';
 import SystemAccess from '@/pages/SystemAccess';
->>>>>>> 6338aedbdebcc0de22d786c0b89493890c8f670b
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,7 +47,6 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-<<<<<<< HEAD
         <NotificationProvider>
           <BrowserRouter>
             <Routes>
@@ -62,6 +58,8 @@ export default function App() {
                 <Route path="/map" element={<MapPage />} />
                 <Route path="/tracking" element={<Tracking />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/account-settings" element={<AccountSettings />} />
+                <Route path="/system-access" element={<SystemAccess />} />
               </Route>
               <Route path="/dossier/:id" element={<ProtectedRoute><Dossier /></ProtectedRoute>} />
             </Routes>
@@ -77,33 +75,6 @@ export default function App() {
             }}
           />
         </NotificationProvider>
-=======
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/upload" element={<Upload />} />
-              <Route path="/predict" element={<Predict />} />
-              <Route path="/map" element={<MapPage />} />
-              <Route path="/tracking" element={<Tracking />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/account-settings" element={<AccountSettings />} />
-              <Route path="/system-access" element={<SystemAccess />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: 'var(--card)',
-              color: 'var(--foreground)',
-              border: '1px solid var(--border)',
-            },
-          }}
-        />
->>>>>>> priyansh-local-profile
       </AuthProvider>
     </QueryClientProvider>
   );
