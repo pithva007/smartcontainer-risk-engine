@@ -32,6 +32,7 @@ const jobRoutes = require('./routes/jobRoutes');
 const trackingRoutes = require('./routes/trackingRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const workflowRoutes = require('./routes/workflowRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 // Ensure upload directory exists (use /tmp on Vercel)
 const uploadDir = process.env.UPLOAD_DIR || './data/uploads';
@@ -152,6 +153,7 @@ app.use('/api', jobRoutes);
 app.use('/api', trackingRoutes);
 app.use('/api', reportRoutes);
 app.use('/api', workflowRoutes);
+app.use('/api', userRoutes);
 
 // ── 404 Handler ────────────────────────────────────────────────────────────────
 app.use((req, res) => {

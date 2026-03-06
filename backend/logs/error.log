@@ -194,3 +194,4 @@ Require stack:
     at next (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/node_modules/express/lib/router/route.js:149:13)
     at requireAuth (/Users/umangrabadiya/Documents/Hackmined Khush/smartcontainer-risk-engine/backend/src/middleware/auth.js:58:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-03-06 08:50:41 [error]: MongoDB connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017

@@ -17,7 +17,7 @@ const JWT_EXPIRY = process.env.JWT_EXPIRY || '7d';
 
 // ── Register (admin-only) ──────────────────────────────────────────────────────
 const register = async (req, res) => {
-  const { username, email, password, full_name, role } = req.body;
+  const { username, email, password, full_name, role, phone_number, department, profile_photo } = req.body;
 
   if (await User.exists({ username: username.toLowerCase() })) {
     return res.status(409).json({
@@ -35,6 +35,9 @@ const register = async (req, res) => {
     email,
     password_hash: password, // pre-save hook hashes it
     full_name,
+    phone_number,
+    department,
+    profile_photo,
     role: role || 'viewer',
     created_by: req.user?._id,
   });
@@ -77,7 +80,17 @@ const login = async (req, res) => {
 
   await User.updateOne({ _id: user._id }, { last_login: new Date() });
 
-  const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+  // create session record (used for active‑session tracking and logout-all)
+  const Session = require('../models/sessionModel');
+  const session = await Session.create({
+    user_id: user._id,
+    ip: req.ip,
+    user_agent: req.headers['user-agent'],
+    device: req.body.device || req.headers['user-agent'],
+  });
+
+  // include session id (sid) in token so we can validate and revoke
+  const token = jwt.sign({ id: user._id, role: user.role, sid: session._id }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
 
   await audit({ user, action: 'LOGIN', req, metadata: { ip: req.ip } });
 
@@ -91,6 +104,12 @@ const login = async (req, res) => {
 
 // ── Logout ─────────────────────────────────────────────────────────────────────
 const logout = async (req, res) => {
+  // remove current session if sid available
+  const Session = require('../models/sessionModel');
+  if (req.tokenSid) {
+    await Session.deleteOne({ _id: req.tokenSid, user_id: req.user._id }).catch(() => {});
+  }
+
   await audit({ user: req.user, action: 'LOGOUT', req });
   return res.status(200).json({ success: true, message: 'Logged out.' });
 };

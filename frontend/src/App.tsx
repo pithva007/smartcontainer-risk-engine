@@ -12,6 +12,8 @@ import MapPage from '@/pages/Map';
 import Tracking from '@/pages/Tracking';
 import Login from '@/pages/Login';
 import Profile from '@/pages/Profile';
+import AccountSettings from '@/pages/AccountSettings';
+import SystemAccess from '@/pages/SystemAccess';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +39,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -50,6 +53,8 @@ export default function App() {
               <Route path="/map" element={<MapPage />} />
               <Route path="/tracking" element={<Tracking />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/account-settings" element={<AccountSettings />} />
+              <Route path="/system-access" element={<SystemAccess />} />
             </Route>
           </Routes>
         </BrowserRouter>
@@ -67,3 +72,4 @@ export default function App() {
     </QueryClientProvider>
   );
 }
+
