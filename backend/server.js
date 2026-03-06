@@ -13,6 +13,9 @@ const jobQueueService = require('./src/services/jobQueueService');
 const { processUploadJob } = require('./src/services/uploadJobProcessor');
 const { refreshAllActiveTracks } = require('./src/services/trackingService');
 const logger = require('./src/utils/logger');
+const http = require('http');
+const { Server } = require('socket.io');
+const { registerChatSocket } = require('./src/sockets/chatSocket');
 
 const PORT = parseInt(process.env.PORT) || 3000;
 const TRACKING_INTERVAL_MINS = parseInt(process.env.TRACKING_UPDATE_MINS) || 10;
@@ -60,7 +63,33 @@ const start = async () => {
     // Seed default admin
     await seedAdminUser();
 
-    const server = app.listen(PORT, () => {
+    const httpServer = http.createServer(app);
+    const io = new Server(httpServer, {
+      cors: {
+        origin: (origin, callback) => {
+          // Allow requests with no origin (mobile, curl) and dev/prod dashboards.
+          if (!origin) return callback(null, true);
+          const allowed = (process.env.CORS_ORIGINS || [
+            'http://localhost:3000',
+            'http://localhost:5173',
+            'http://localhost:5174',
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:5174',
+            'https://smartcontainerrrr.vercel.app',
+            'https://smartcontainer-risk-engine-fwkw.vercel.app',
+          ].join(','))
+            .split(',')
+            .map((o) => o.trim())
+            .filter(Boolean);
+          if (allowed.includes(origin)) return callback(null, true);
+          return callback(new Error('CORS policy: origin not allowed'));
+        },
+        credentials: true,
+      },
+    });
+    registerChatSocket(io, { logger });
+
+    const server = httpServer.listen(PORT, () => {
       logger.info(`SmartContainer Risk Engine API v2 running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`Health check:  http://localhost:${PORT}/health`);

@@ -18,6 +18,8 @@ import {
 import { cn } from '@/lib/utils';
 import type { RiskLevel, RecentHighRisk, RiskDistribution } from '@/types/apiTypes';
 import { CardSkeleton } from '@/components/ui/Skeleton';
+import ContainerChatModal from '../components/chat/ContainerChatModal';
+import { openChatForContainer } from '@/components/chat/chatEvents';
 
 /* ───────── Risk badge ───────── */
 function RiskBadge({ level }: { level: RiskLevel }) {
@@ -91,6 +93,7 @@ function LiveAlertFeed({ data, readAlerts }: { data: RecentHighRisk[], readAlert
                                 'border-l-4 rounded-lg p-3 bg-foreground/5 hover:bg-foreground/10 transition-colors cursor-pointer',
                                 isSeen ? 'opacity-50 grayscale' : borderColor[item.risk_level]
                             )}
+                            onClick={() => openChatForContainer(item.container_id)}
                         >
                             <div className="flex items-center justify-between mb-1">
                                 <span className="text-xs font-mono font-semibold text-foreground">{item.container_id}</span>
@@ -114,7 +117,7 @@ function LiveAlertFeed({ data, readAlerts }: { data: RecentHighRisk[], readAlert
 }
 
 /* ───────── High-Risk Containers Table ───────── */
-function HighRiskTable({ data }: { data: RecentHighRisk[] }) {
+function HighRiskTable({ data, onChat }: { data: RecentHighRisk[]; onChat: (containerId: string, riskLevel: RiskLevel) => void }) {
     const explanations = [
         'High value-to-weight ratio with significant documentation...',
         'Exceptionally high value-to-weight ratio, shipper has limit...',
@@ -138,6 +141,7 @@ function HighRiskTable({ data }: { data: RecentHighRisk[] }) {
                             <th className="px-4 py-2.5 text-left font-medium bg-card">Risk Score</th>
                             <th className="px-4 py-2.5 text-left font-medium bg-card">Level</th>
                             <th className="px-4 py-2.5 text-left font-medium bg-card">Explanation</th>
+                            <th className="px-4 py-2.5 text-left font-medium bg-card">Chat</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -159,6 +163,18 @@ function HighRiskTable({ data }: { data: RecentHighRisk[] }) {
                                 </td>
                                 <td className="px-4 py-3 text-foreground/50 max-w-[200px] truncate">
                                     {explanations[i % explanations.length]}
+                                </td>
+                                <td className="px-4 py-3">
+                                    <button
+                                        type="button"
+                                        className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onChat(item.container_id, item.risk_level);
+                                        }}
+                                    >
+                                        Chat
+                                    </button>
                                 </td>
                             </tr>
                         ))}
@@ -257,6 +273,7 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const [listFilter, setListFilter] = useState<{ label: string; risk_level?: RiskLevel; anomaly?: boolean } | null>(null);
     const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
+    const [chatTarget, setChatTarget] = useState<{ containerId: string; exporterId: string; riskLevel: RiskLevel } | null>(null);
     const [readAlerts, setReadAlertsState] = useState<Set<string>>(() => {
         try {
             const stored = localStorage.getItem('smartcontainer-read-alerts');
@@ -387,7 +404,19 @@ export default function Dashboard() {
                             const row = target.closest('tr[data-container-id]');
                             if (row) setSelectedContainerId(row.getAttribute('data-container-id'));
                         }}>
-                            <HighRiskTable data={highRisk.data || []} />
+                            <HighRiskTable
+                                data={highRisk.data || []}
+                                onChat={async (containerId, riskLevel) => {
+                                    try {
+                                        const detail = await fetchContainerById(containerId);
+                                        const exporterId = detail?.exporter_id;
+                                        if (!exporterId) return;
+                                        setChatTarget({ containerId, exporterId, riskLevel });
+                                    } catch (err) {
+                                        console.error('Failed to load container detail for chat', err);
+                                    }
+                                }}
+                            />
                         </div>
                     </div>
                 </div>
@@ -409,6 +438,16 @@ export default function Dashboard() {
                 <ShipmentDetailModal
                     shipment={containerDetail.data || null}
                     onClose={() => setSelectedContainerId(null)}
+                />
+            )}
+
+            {chatTarget && (
+                <ContainerChatModal
+                    open
+                    containerId={chatTarget.containerId}
+                    exporterId={chatTarget.exporterId}
+                    riskLevel={chatTarget.riskLevel}
+                    onClose={() => setChatTarget(null)}
                 />
             )}
         </div>

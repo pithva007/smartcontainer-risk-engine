@@ -17,6 +17,7 @@ import type {
     AuthUser,
     ContainerLocation,
 } from '@/types/apiTypes';
+import type { ConversationListItem, StartConversationResponse, ChatMessage, ConversationStatus } from '@/types/chatTypes';
 
 // ─── Auth ──────────────────────────────────────────────────
 export const login = (username: string, password: string) =>
@@ -138,6 +139,44 @@ export const fetchContainerById = (id: string) =>
 
 export const fetchNotifications = (limit: number = 20) =>
     apiClient.get<{ success: boolean; data: any[] }>('/notifications', { params: { limit } }).then(r => r.data.data);
+
+// ─── Chat ───────────────────────────────────────────────────
+export const startChatConversation = (container_id: string, exporter_id: string) =>
+    apiClient.post<StartConversationResponse>('/chat/start', { container_id, exporter_id }).then(r => r.data);
+
+export const fetchChatConversations = (params?: { q?: string; status?: ConversationStatus; page?: number; limit?: number }) =>
+    apiClient.get<{ success: boolean; data: ConversationListItem[]; total: number; page: number; limit: number }>('/chat/conversations', { params })
+        .then(r => r.data);
+
+export const fetchChatMessages = (conversation_id: string, params?: { limit?: number; before?: string }) =>
+    apiClient.get<{ success: boolean; data: ChatMessage[]; next_before: string | null }>(`/chat/messages/${conversation_id}`, { params })
+        .then(r => r.data);
+
+export const sendChatMessage = (payload: { conversation_id: string; message_text?: string; attachment_url?: string; attachment_name?: string; attachment_mime?: string }) =>
+    apiClient.post('/chat/message', payload).then(r => r.data);
+
+export const updateChatStatus = (conversation_id: string, status: ConversationStatus) =>
+    apiClient.patch(`/chat/status/${conversation_id}`, { status }).then(r => r.data);
+
+export const uploadChatAttachment = (file: File, onProgress?: (pct: number) => void) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post<{ success: boolean; file: { url: string; name: string; mime: string; size: number } }>(
+        '/chat/upload',
+        formData,
+        {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (e) => {
+                if (e.total && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+            },
+        }
+    ).then(r => r.data);
+};
+
+// ─── Exporters ──────────────────────────────────────────────
+export const getExporterById = (exporter_id: string) =>
+    apiClient.get<{ success: boolean; exporter_id: string; exporter_name: string; email?: string; company?: string }>(`/exporters/${encodeURIComponent(exporter_id)}`)
+        .then(r => r.data);
 
 // ─── Reports ───────────────────────────────────────────────
 export const downloadCSV = () =>

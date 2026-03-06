@@ -11,6 +11,7 @@ import { useState, useMemo } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import type { RecentHighRisk } from '@/types/apiTypes';
 import { cn, riskRowClass, riskBgClass } from '@/lib/utils';
+import { openChatForContainer } from '@/components/chat/chatEvents';
 
 interface Props {
     data: RecentHighRisk[];
@@ -20,7 +21,21 @@ export default function ContainerTable({ data }: Props) {
     const [sorting, setSorting] = useState<SortingState>([]);
 
     const columns = useMemo<ColumnDef<RecentHighRisk>[]>(() => [
-        { accessorKey: 'container_id', header: 'Container ID', cell: (info) => <span className="font-medium">{info.getValue<string>()}</span> },
+        {
+            accessorKey: 'container_id',
+            header: 'Container ID',
+            cell: (info) => {
+                const id = info.getValue<string>();
+                return (
+                    <button
+                        className="font-medium text-primary hover:underline"
+                        onClick={() => openChatForContainer(id)}
+                    >
+                        {id}
+                    </button>
+                );
+            },
+        },
         {
             accessorKey: 'risk_score',
             header: 'Risk Score',
@@ -87,6 +102,7 @@ export default function ContainerTable({ data }: Props) {
                             <tr
                                 key={row.id}
                                 className={cn('border-b border-border transition-colors', riskRowClass[row.original.risk_level])}
+                                onClick={() => openChatForContainer(row.original.container_id)}
                             >
                                 {row.getVisibleCells().map((cell) => (
                                     <td key={cell.id} className="px-4 py-3">

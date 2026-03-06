@@ -48,12 +48,10 @@ export default function AccountSettings() {
         weeklySummary: true,
     });
 
-    const toggle = (key: keyof typeof notifications) => {
-        setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
-    };
+    // toggle function will be defined later once notificationMutation exists
 
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    const { logout, setUser } = useAuth();
 
     const { data: profileData, isLoading: profileLoading, isError: profileError, error } = useQuery<ProfileResp>({
         queryKey: ['profile'],
@@ -75,39 +73,103 @@ export default function AccountSettings() {
 
     const { data: sessionsData } = useQuery<SessionsResp>({
         queryKey: ['sessions'],
-        queryFn: () => fetch('/api/user/active-sessions').then((r) => r.json()),
+        queryFn: () => apiClient.get('/user/active-sessions').then((r) => r.data),
         enabled: !!profileData,
     });
 
     const { data: activityData } = useQuery<ActivityResp>({
         queryKey: ['activities'],
-        queryFn: () => fetch('/api/user/activity-logs').then((r) => r.json()),
+        queryFn: () => apiClient.get('/user/activity-logs').then((r) => r.data),
         enabled: !!profileData,
     });
 
+    // mutations will be declared after state hooks below
+
+    const [sessions, setSessions] = useState<SessionsResp['sessions']>([]);
+    const [activities, setActivities] = useState<Array<{ time: string; action: string }>>([]);
+
+    // form state for profile editing
+    const [profileForm, setProfileForm] = useState<Partial<ProfileResp['profile']>>({
+        full_name: '',
+        official_email: '',
+        department: '',
+        phone_number: '',
+        profile_photo: '',
+    });
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordForm, setPasswordForm] = useState({
+        current: '',
+        new: '',
+        confirm: '',
+    });
+
+    // notification query & mutation
+    interface NotificationResp {
+        settings: { highRisk: boolean; anomaly: boolean; weeklySummary: boolean };
+    }
+    const { data: notifData } = useQuery<NotificationResp>({
+        queryKey: ['notifications'],
+        queryFn: () => apiClient.get('/user/notification-settings').then((r) => r.data),
+        enabled: !!profileData,
+    });
+
+    const notificationMutation = useMutation<any, unknown, Partial<NotificationResp['settings']>>({
+        mutationFn: (vals) => apiClient.put('/user/notification-settings', vals).then((r) => r.data),
+        onSuccess: (data) => {
+            queryClient.setQueryData(['notifications'], data);
+            toast.success('Notification preferences updated');
+            queryClient.invalidateQueries({ queryKey: ['activities'] });
+        },
+        onError: (err: any) => {
+            toast.error(err?.response?.data?.error?.message || 'Failed to update notifications');
+        },
+    });
+
+    // now that notificationMutation exists, define toggle helper
+    const toggle = (key: keyof typeof notifications) => {
+        const newVal = !notifications[key];
+        setNotifications(prev => ({ ...prev, [key]: newVal }));
+        notificationMutation.mutate({ [key]: newVal });
+    };
+
+    // other mutations that depend on state hooks
     const updateMutation = useMutation<any, unknown, Partial<ProfileResp['profile']>>({
         mutationFn: (vals) =>
-            fetch('/api/user/update-profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(vals),
-            }).then((r) => r.json()),
-        onSuccess: () => {
+            apiClient.put('/user/update-profile', vals).then((r) => r.data),
+        onSuccess: (data) => {
             toast.success('Profile updated');
             queryClient.invalidateQueries({ queryKey: ['profile'] });
+            queryClient.invalidateQueries({ queryKey: ['activities'] });
+            if (data?.user) setUser(data.user);
+        },
+        onError: (err: any) => {
+            console.error('Profile update error', err);
+            const msg = err?.response?.data?.error?.message || err?.message || 'Failed to update profile';
+            toast.error(msg);
         },
     });
 
     const logoutAllMutation = useMutation<any>({
-        mutationFn: () => fetch('/api/user/logout-all', { method: 'POST' }).then((r) => r.json()),
+        mutationFn: () => apiClient.post('/user/logout-all').then((r) => r.data),
         onSuccess: () => {
             toast.success('Logged out from all devices');
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['activities'] });
         },
     });
 
-    const [sessions, setSessions] = useState<SessionsResp['sessions']>([]);
-    const [activities, setActivities] = useState<Array<{ time: string; action: string }>>([]);
+    const changePasswordMutation = useMutation<any, unknown, { current_password: string; new_password: string }>({
+        mutationFn: (vals) => apiClient.post('/user/change-password', vals).then((r) => r.data),
+        onSuccess: () => {
+            toast.success('Password changed');
+            setShowPasswordModal(false);
+            setPasswordForm({ current: '', new: '', confirm: '' });
+            queryClient.invalidateQueries({ queryKey: ['activities'] });
+        },
+        onError: (err: any) => {
+            toast.error(err?.response?.data?.error?.message || 'Failed to change password');
+        },
+    });
 
     // populate when queries return, using effects to avoid infinite rerenders
     useEffect(() => {
@@ -119,10 +181,28 @@ export default function AccountSettings() {
     useEffect(() => {
         if (activityData?.logs) {
             setActivities(
-                activityData.logs.map((l) => ({ time: new Date(l.timestamp).toLocaleTimeString(), action: l.action }))
+                activityData.logs.map((l) => ({ time: new Date(l.timestamp).toLocaleString(), action: l.action }))
             );
         }
     }, [activityData]);
+
+    useEffect(() => {
+        if (profileData?.profile) {
+            setProfileForm({
+                full_name: profileData.profile.full_name,
+                official_email: profileData.profile.official_email,
+                department: profileData.profile.department,
+                phone_number: profileData.profile.phone_number || '',
+                profile_photo: profileData.profile.profile_photo || '',
+            });
+        }
+    }, [profileData]);
+
+    useEffect(() => {
+        if (notifData?.settings) {
+            setNotifications(notifData.settings);
+        }
+    }, [notifData]);
 
     // show feedback while loading or error
     if (profileLoading) {
@@ -161,56 +241,71 @@ export default function AccountSettings() {
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
-                            updateMutation.mutate({
-                                full_name: profileData?.profile.full_name,
-                                department: profileData?.profile.department,
-                                phone_number: profileData?.profile.phone_number,
-                                profile_photo: profileData?.profile.profile_photo,
-                            });
+                            // strip out empty values so schema optional works
+                            const payload: Partial<ProfileResp['profile']> = { ...profileForm };
+                            if (payload.profile_photo === '') delete payload.profile_photo;
+                            if (payload.official_email === '') delete payload.official_email;
+                            if (payload.department === '') delete payload.department;
+                            if (payload.full_name === '') delete payload.full_name;
+                            if (payload.phone_number === '') delete payload.phone_number;
+                            updateMutation.mutate(payload);
                         }}
                         className="grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
                         <div className="space-y-1.5">
                             <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Full Name</label>
                             <input
-                                value={profileData?.profile.full_name || ''}
-                                onChange={(e) =>
-                                    updateMutation.mutate({
-                                        full_name: e.target.value,
-                                    })
-                                }
+                                value={profileForm.full_name || ''}
+                                onChange={(e) => setProfileForm((p) => ({ ...p, full_name: e.target.value }))}
                                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
                             />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Profile Photo</label>
-                            <button type="button" className="px-3 py-2 bg-primary/10 text-primary rounded-lg text-sm">
-                                Change
-                            </button>
+                            <input
+                                type="text"
+                                placeholder="Image URL"
+                                value={profileForm.profile_photo || ''}
+                                onChange={(e) => setProfileForm((p) => ({ ...p, profile_photo: e.target.value }))}
+                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                            />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Official Email</label>
                             <input
-                                value={profileData?.profile.official_email || ''}
-                                disabled
+                                type="email"
+                                value={profileForm.official_email || ''}
+                                onChange={(e) => setProfileForm((p) => ({ ...p, official_email: e.target.value }))}
+                                required
                                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
                             />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Department</label>
                             <input
-                                value={profileData?.profile.department || ''}
-                                onChange={(e) => updateMutation.mutate({ department: e.target.value })}
+                                value={profileForm.department || ''}
+                                onChange={(e) => setProfileForm((p) => ({ ...p, department: e.target.value }))}
                                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
                             />
                         </div>
                         <div className="space-y-1.5 md:col-span-2">
                             <label className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest">Contact Number</label>
                             <input
-                                value={profileData?.profile.phone_number || ''}
-                                onChange={(e) => updateMutation.mutate({ phone_number: e.target.value })}
+                                type="tel"
+                                pattern="[0-9]*"
+                                value={profileForm.phone_number || ''}
+                                onChange={(e) => setProfileForm((p) => ({ ...p, phone_number: e.target.value.replace(/\D/g,'') }))}
                                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
                             />
+                        </div>
+                        <div className="md:col-span-2 flex justify-end">
+                            <button
+                                type="submit"
+                                disabled={updateMutation.isPending}
+                                className="px-4 py-2 bg-primary rounded-lg text-sm text-background disabled:opacity-50"
+                            >
+                                {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
+                            </button>
                         </div>
                     </form>
                 </section>
@@ -224,7 +319,10 @@ export default function AccountSettings() {
                         <h2 className="text-lg font-bold">Security Settings</h2>
                     </div>
                     <div className="space-y-4">
-                        <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-foreground/5 transition-all">
+                        <button
+                            onClick={() => setShowPasswordModal(true)}
+                            className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-background hover:bg-foreground/5 transition-all"
+                        >
                             <span>Change Password</span>
                             <Key className="w-4 h-4" />
                         </button>
@@ -244,6 +342,76 @@ export default function AccountSettings() {
                 </section>
 
                 {/* notification preferences */}
+
+                {/* change password modal */}
+                {showPasswordModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+                        <div className="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
+                            <h3 className="text-lg font-bold mb-4">Change Password</h3>
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    if (passwordForm.new !== passwordForm.confirm) {
+                                        toast.error('New password and confirmation do not match');
+                                        return;
+                                    }
+                                    changePasswordMutation.mutate({
+                                        current_password: passwordForm.current,
+                                        new_password: passwordForm.new,
+                                    });
+                                }}
+                                className="space-y-4"
+                            >
+                                <div>
+                                    <label className="block text-sm text-foreground/70">Current Password</label>
+                                    <input
+                                        type="password"
+                                        value={passwordForm.current}
+                                        onChange={(e) => setPasswordForm((p) => ({ ...p, current: e.target.value }))}
+                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-foreground/70">New Password</label>
+                                    <input
+                                        type="password"
+                                        value={passwordForm.new}
+                                        onChange={(e) => setPasswordForm((p) => ({ ...p, new: e.target.value }))}
+                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-foreground/70">Confirm Password</label>
+                                    <input
+                                        type="password"
+                                        value={passwordForm.confirm}
+                                        onChange={(e) => setPasswordForm((p) => ({ ...p, confirm: e.target.value }))}
+                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                                        required
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPasswordModal(false)}
+                                        className="px-4 py-2 rounded-lg text-sm border border-border"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={changePasswordMutation.isPending}
+                                        className="px-4 py-2 bg-primary rounded-lg text-sm text-background disabled:opacity-50"
+                                    >
+                                        {changePasswordMutation.isPending ? 'Updating…' : 'Update Password'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
                 <section className="bg-card border border-border rounded-2xl p-8 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500">
@@ -277,6 +445,7 @@ export default function AccountSettings() {
                                     <li key={i} className="flex justify-between text-sm">
                                         <span>{s.device || 'unknown'}</span>
                                         <span>{new Date(s.login_time).toLocaleString()}</span>
+                                        {s.ip && <span className="ml-4 text-foreground/70">IP: {s.ip}</span>}
                                     </li>
                                 ))}
                                 {sessions.length === 0 && (
@@ -286,9 +455,10 @@ export default function AccountSettings() {
                         </div>
                         <button
                             onClick={() => logoutAllMutation.mutate()}
-                            className="px-4 py-2 rounded-lg bg-risk-critical/10 text-risk-critical text-sm"
+                            disabled={logoutAllMutation.isPending}
+                            className="px-4 py-2 rounded-lg bg-risk-critical/10 text-risk-critical text-sm disabled:opacity-50"
                         >
-                            Logout from all devices
+                            {logoutAllMutation.isPending ? 'Logging out…' : 'Logout from all devices'}
                         </button>
                     </div>
                 </section>

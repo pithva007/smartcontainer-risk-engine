@@ -8,6 +8,8 @@ const {
   getActiveSessions,
   logoutAll,
   getActivityLogs,
+  getNotificationSettings,
+  updateNotificationSettings,
   getSystemAccess,
 } = require('../controllers/userController');
 
@@ -56,6 +58,28 @@ router.post('/user/change-password', requireAuth, validate(schemas.changePasswor
  *     security: [{ bearerAuth: [] }]
  */
 router.get('/user/active-sessions', requireAuth, getActiveSessions);
+
+// PUT /api/user/notification-settings
+/**
+ * @swagger
+ * /api/user/notification-settings:
+ *   put:
+ *     tags: [User]
+ *     summary: Update notification preferences for current user
+ *     security: [{ bearerAuth: [] }]
+ */
+router.put('/user/notification-settings', requireAuth, validate(schemas.notificationSettings), updateNotificationSettings);
+
+// GET /api/user/notification-settings
+/**
+ * @swagger
+ * /api/user/notification-settings:
+ *   get:
+ *     tags: [User]
+ *     summary: Get current notification preferences
+ *     security: [{ bearerAuth: [] }]
+ */
+router.get('/user/notification-settings', requireAuth, getNotificationSettings);
 
 // POST /api/user/logout-all
 /**

@@ -5,7 +5,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { RiskLevel, ContainerLocation } from '@/types/apiTypes';
 import { cn, riskBgClass } from '@/lib/utils';
-import { Search, Loader2, X, MapPin, AlertTriangle, Shield, Navigation, Info } from 'lucide-react';
+import { Search, Loader2, X, MapPin, AlertTriangle, Shield, Navigation, Info, MessageSquare } from 'lucide-react';
+import { openChatForContainer } from '@/components/chat/chatEvents';
 
 // ─── Fix default marker icons ───────────────────────────────────────────────
 L.Icon.Default.mergeOptions({
@@ -221,6 +222,17 @@ function TrackedPanel({ loc, onClose, showRoute, onRouteToggle }: {
                     )}
                 </div>
                 <div className="flex items-center gap-1">
+                    {/* chat button added inside header */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            openChatForContainer(loc.container_id);
+                        }}
+                        className="p-1 hover:bg-foreground/10 rounded text-primary hover:text-primary/80 transition-colors"
+                        title="Chat about this container"
+                    >
+                        <MessageSquare className="w-4 h-4" />
+                    </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); setMinimized(m => !m); }}
                         className="p-1 hover:bg-foreground/10 rounded text-foreground/40 hover:text-foreground transition-colors"
