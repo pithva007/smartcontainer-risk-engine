@@ -46,6 +46,9 @@ export interface RecentHighRisk {
     risk_level: RiskLevel;
     processed_at: string;
     explanation?: string;
+    // optional location fields used by dashboard tables
+    origin_country?: string;
+    destination_country?: string;
 }
 
 // ─── Upload ────────────────────────────────────────────────
