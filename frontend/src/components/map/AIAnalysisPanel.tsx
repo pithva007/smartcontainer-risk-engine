@@ -176,6 +176,33 @@ export default function AIAnalysisPanel({ containerId, onClose }: Props) {
                                 </div>
                             )}
 
+                            {/* Recommended Action */}
+                            {data.inspection_recommendation && (
+                                <div className={cn(
+                                    'p-3 rounded-xl border text-sm',
+                                    data.risk_level === 'Critical' ? 'bg-red-500/10 border-red-500/30' :
+                                        data.risk_level === 'Low Risk' ? 'bg-amber-500/10 border-amber-500/30' :
+                                            'bg-green-500/10 border-green-500/30'
+                                )}>
+                                    <p className="font-bold text-foreground mb-1">
+                                        Action Path: {data.inspection_recommendation.recommendedAction}
+                                    </p>
+                                    <p className="text-foreground/70 text-[11px] leading-relaxed">
+                                        {data.inspection_recommendation.reason}
+                                    </p>
+                                    <div className="mt-2 flex items-center gap-1.5">
+                                        <span className={cn(
+                                            'text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-tighter',
+                                            data.inspection_recommendation.confidence === 'High' ? 'bg-red-500/20 text-red-500' :
+                                                data.inspection_recommendation.confidence === 'Medium' ? 'bg-amber-500/20 text-amber-600' :
+                                                    'bg-green-500/20 text-green-600'
+                                        )}>
+                                            {data.inspection_recommendation.confidence} Confidence
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Raw data grid */}
                             {data.raw && (
                                 <div>

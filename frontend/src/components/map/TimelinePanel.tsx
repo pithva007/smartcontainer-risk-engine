@@ -59,9 +59,16 @@ export default function TimelinePanel({ containerId, onClose }: Props) {
                     <div>
                         <p className="text-xs font-bold text-foreground">Shipment Timeline</p>
                         {data && (
-                            <p className="text-[10px] text-foreground/40">
-                                {data.origin} → {data.destination}
-                            </p>
+                            <div className="flex flex-col">
+                                <p className="text-[10px] text-foreground/40">
+                                    {data.origin} → {data.destination}
+                                </p>
+                                {data.dwell_time_hours != null && (
+                                    <p className="text-[10px] font-semibold text-amber-500 mt-0.5">
+                                        ⏱ Dwell Time: {data.dwell_time_hours.toFixed(1)}h
+                                    </p>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>

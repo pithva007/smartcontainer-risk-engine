@@ -9,6 +9,8 @@
  */
 const Container = require('../models/containerModel');
 const { audit } = require('../services/auditService');
+const { flushCache } = require('../config/redis');
+const { recommendInspection } = require('../utils/riskClassifier');
 const logger = require('../utils/logger');
 
 // ── Assign Container ───────────────────────────────────────────────────────────
@@ -44,6 +46,8 @@ const assignContainer = async (req, res) => {
     metadata: { assigned_to, notes },
   });
 
+  await flushCache();
+
   return res.status(200).json({ success: true, container_id: id, inspection_status: container.inspection_status, assigned_to });
 };
 
@@ -62,6 +66,7 @@ const updateStatus = async (req, res) => {
   container.inspection_status = inspection_status;
   if (inspection_status === 'CLEARED') {
     container.risk_level = 'Clear';
+    container.risk_score = 0.10; // Explicitly drop score to 10%
   }
   container.updated_at = new Date();
   if (notes) {
@@ -77,6 +82,8 @@ const updateStatus = async (req, res) => {
     req,
     metadata: { inspection_status, notes },
   });
+
+  await flushCache();
 
   return res.status(200).json({ success: true, container_id: id, inspection_status });
 };
@@ -105,6 +112,8 @@ const addNote = async (req, res) => {
     req,
     metadata: { note },
   });
+
+  await flushCache();
 
   return res.status(201).json({
     success: true,
@@ -163,7 +172,13 @@ const getContainer = async (req, res) => {
       error: { code: 'NOT_FOUND', message: `Container '${id}' not found.`, request_id: req.requestId },
     });
   }
-  return res.status(200).json({ success: true, data: container });
+  return res.status(200).json({
+    success: true,
+    data: {
+      ...container,
+      inspection_recommendation: recommendInspection(container.risk_score, container),
+    }
+  });
 };
 
 // ── Notifications (Activity Feed) ──────────────────────────────────────────────

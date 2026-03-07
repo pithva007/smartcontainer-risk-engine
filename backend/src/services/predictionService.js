@@ -7,6 +7,7 @@ const Container = require('../models/containerModel');
 const { engineerFeatures, engineerBatchFeatures, buildFrequencyMaps } = require('../utils/featureEngineering');
 const { classifyAndExplain } = require('../utils/riskClassifier');
 const { getImporterStats, getBatchImporterStats, applyAutoEscalation } = require('./importerHistoryService');
+const { getExporterShipmentCount, getBatchExporterShipmentCount, applyNewTraderEscalation } = require('./exporterHistoryService');
 const { getCache, setCache } = require('../config/redis');
 const logger = require('../utils/logger');
 
@@ -123,7 +124,11 @@ const predictSingle = async (rawRecord) => {
   };
 
   // Apply escalation rule — this sets final_risk_score/level and audit fields
-  const escalated = applyAutoEscalation(baseResult, importerStats);
+  const importerEscalated = applyAutoEscalation(baseResult, importerStats);
+
+  // ── Feature 8: New Trader Safeguard Auto-Escalation ──────────────────────
+  const exporterHistoryCount = await getExporterShipmentCount(rawRecord.exporter_id);
+  const finalEscalated = applyNewTraderEscalation(importerEscalated, exporterHistoryCount);
 
   // Persist with both raw model outputs and final business-adjusted values
   await Container.findOneAndUpdate(
@@ -132,30 +137,33 @@ const predictSingle = async (rawRecord) => {
       ...enriched,
       // Raw ML outputs
       model_risk_score: mlResult.risk_score,
-      model_risk_level: escalated.model_risk_level,
+      model_risk_level: finalEscalated.model_risk_level,
       // Final decision (may differ if auto-escalated)
-      risk_score: escalated.final_risk_score,
-      risk_level: escalated.final_risk_level,
-      final_risk_score: escalated.final_risk_score,
-      final_risk_level: escalated.final_risk_level,
+      risk_score: finalEscalated.final_risk_score,
+      risk_level: finalEscalated.final_risk_level,
+      final_risk_score: finalEscalated.final_risk_score,
+      final_risk_level: finalEscalated.final_risk_level,
       // Auto-escalation audit
-      auto_escalated_by_importer_history: escalated.auto_escalated_by_importer_history,
-      importer_critical_percentage: escalated.importer_critical_percentage,
-      override_reason: escalated.override_reason,
+      auto_escalated_by_importer_history: finalEscalated.auto_escalated_by_importer_history,
+      importer_critical_percentage: finalEscalated.importer_critical_percentage,
+      auto_escalated_by_new_trader_rule: finalEscalated.auto_escalated_by_new_trader_rule,
+      exporter_historical_shipment_count: finalEscalated.exporter_historical_shipment_count,
+      new_trader_threshold_used: finalEscalated.new_trader_threshold_used,
+      override_reason: finalEscalated.override_reason,
       // Other prediction fields
       anomaly_flag: mlResult.anomaly_flag,
       anomaly_score: mlResult.anomaly_score,
-      explanation: escalated.explanation,
-      explanation_summary: escalated.explanation_summary,
+      explanation: finalEscalated.explanation,
+      explanation_summary: finalEscalated.explanation_summary,
       prediction_source: 'single',
       processed_at: new Date(),
     },
     { upsert: true, new: true }
   );
 
-  // Return full result including importer stats for frontend display
+  // Return full result including stats for frontend display
   return {
-    ...escalated,
+    ...finalEscalated,
     importer_stats: {
       total_shipments: importerStats.totalShipments,
       critical_shipments: importerStats.criticalShipments,
@@ -188,9 +196,12 @@ const predictBatch = async (rawRecords, batchId) => {
     mlResults = enrichedRecords.map(computeHeuristicRisk);
   }
 
-  // ── Feature 7: Compute all importer stats in ONE aggregation ─────────────
+  // ── Feature 7 & 8: Compute all importer / exporter stats in ONE aggregation ─────────────
   const uniqueImporterIds = [...new Set(enrichedRecords.map((r) => r.importer_id).filter(Boolean))];
   const importerStatsMap = await getBatchImporterStats(uniqueImporterIds);
+
+  const uniqueExporterIds = [...new Set(enrichedRecords.map((r) => r.exporter_id).filter(Boolean))];
+  const exporterStatsMap = await getBatchExporterShipmentCount(uniqueExporterIds);
 
   const results = [];
   const bulkOps = [];
@@ -219,10 +230,18 @@ const predictBatch = async (rawRecords, batchId) => {
       top_factors: ml.top_factors || [],
     };
 
-    const escalated = applyAutoEscalation(baseResult, importerStats);
-    if (escalated.auto_escalated_by_importer_history) autoEscalatedCount++;
+    // Apply Feature 7: Importer History
+    const importerEscalated = applyAutoEscalation(baseResult, importerStats);
+    
+    // Apply Feature 8: Exporter History Safeguard
+    const exporterHistoryCount = exporterStatsMap.get(enriched.exporter_id) ?? 0;
+    const finalEscalated = applyNewTraderEscalation(importerEscalated, exporterHistoryCount);
 
-    results.push(escalated);
+    if (finalEscalated.auto_escalated_by_importer_history || finalEscalated.auto_escalated_by_new_trader_rule) {
+      autoEscalatedCount++;
+    }
+
+    results.push(finalEscalated);
 
     bulkOps.push({
       updateOne: {
@@ -232,21 +251,24 @@ const predictBatch = async (rawRecords, batchId) => {
             ...enriched,
             // Raw ML outputs
             model_risk_score: ml.risk_score,
-            model_risk_level: escalated.model_risk_level,
+            model_risk_level: finalEscalated.model_risk_level,
             // Final business-adjusted decision
-            risk_score: escalated.final_risk_score,
-            risk_level: escalated.final_risk_level,
-            final_risk_score: escalated.final_risk_score,
-            final_risk_level: escalated.final_risk_level,
+            risk_score: finalEscalated.final_risk_score,
+            risk_level: finalEscalated.final_risk_level,
+            final_risk_score: finalEscalated.final_risk_score,
+            final_risk_level: finalEscalated.final_risk_level,
             // Auto-escalation audit
-            auto_escalated_by_importer_history: escalated.auto_escalated_by_importer_history,
-            importer_critical_percentage: escalated.importer_critical_percentage,
-            override_reason: escalated.override_reason,
+            auto_escalated_by_importer_history: finalEscalated.auto_escalated_by_importer_history,
+            importer_critical_percentage: finalEscalated.importer_critical_percentage,
+            auto_escalated_by_new_trader_rule: finalEscalated.auto_escalated_by_new_trader_rule,
+            exporter_historical_shipment_count: finalEscalated.exporter_historical_shipment_count,
+            new_trader_threshold_used: finalEscalated.new_trader_threshold_used,
+            override_reason: finalEscalated.override_reason,
             // Other fields
             anomaly_flag: ml.anomaly_flag,
             anomaly_score: ml.anomaly_score,
-            explanation: escalated.explanation,
-            explanation_summary: escalated.explanation_summary,
+            explanation: finalEscalated.explanation,
+            explanation_summary: finalEscalated.explanation_summary,
             prediction_source: 'batch',
             upload_batch_id: batchId,
             batch_id: batchId,

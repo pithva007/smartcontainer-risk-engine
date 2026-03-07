@@ -528,7 +528,7 @@ const getRiskTrend = async (req, res) => {
  *  - min_pct (minimum critical percentage, default 0)
  */
 const getImporterRiskHistory = async (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+  const limit = Math.min(parseInt(req.query.limit) || 20, 2000);
   const minPct = parseFloat(req.query.min_pct) || 0;
   const cacheKey = `analytics:importer_risk_history:${limit}:${minPct}`;
 
@@ -570,7 +570,7 @@ const getImporterRiskHistory = async (req, res) => {
         },
       },
       { $match: { critical_percentage: { $gte: minPct } } },
-      { $sort: { critical_percentage: -1, critical_count: -1 } },
+      { $sort: { critical_count: -1, critical_percentage: -1 } },
       { $limit: limit },
     ]);
 
@@ -607,9 +607,10 @@ const getEscalationStats = async (req, res) => {
     const cached = await getCache(cacheKey);
     if (cached) return res.status(200).json({ success: true, data: cached, cached: true });
 
-    const [totalProcessed, totalEscalated, byImporter] = await Promise.all([
+    const [totalProcessed, totalEscalatedImporter, totalEscalatedNewTrader, byImporter] = await Promise.all([
       Container.countDocuments({ risk_level: { $ne: null } }),
       Container.countDocuments({ auto_escalated_by_importer_history: true }),
+      Container.countDocuments({ auto_escalated_by_new_trader_rule: true }),
       Container.aggregate([
         { $match: { auto_escalated_by_importer_history: true } },
         {
@@ -624,8 +625,12 @@ const getEscalationStats = async (req, res) => {
       ]),
     ]);
 
+    const totalEscalated = totalEscalatedImporter + totalEscalatedNewTrader;
+
     const data = {
       total_auto_escalated: totalEscalated,
+      total_escalated_importer: totalEscalatedImporter,
+      total_escalated_new_trader: totalEscalatedNewTrader,
       total_containers: totalProcessed,
       escalation_rate:
         totalProcessed > 0

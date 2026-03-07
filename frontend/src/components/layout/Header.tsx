@@ -64,7 +64,13 @@ export default function Header() {
 
     return (
         <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-40">
-            <div className="flex-1" />
+            <div className="flex-1 flex items-center">
+                <div className="flex items-center gap-1.5 opacity-80">
+                    <span className="text-xs font-bold tracking-[0.2em] uppercase text-primary">Smart</span>
+                    <span className="text-xs font-bold tracking-[0.2em] uppercase text-foreground">Container</span>
+                </div>
+            </div>
+
             <div className="flex items-center gap-4">
                 {/* Theme toggle */}
                 <button

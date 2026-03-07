@@ -2,11 +2,11 @@ import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard,
     UploadCloud,
-    Crosshair,
+    Edit3,
+    Zap,
     Map,
     Route,
-    BarChart2,
-    FlaskConical,
+    BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logo from '@/assets/logo.png';
@@ -14,19 +14,19 @@ import logo from '@/assets/logo.png';
 const links = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/upload', label: 'Upload Dataset', icon: UploadCloud },
-    { to: '/predict', label: 'Single Prediction', icon: Crosshair },
-    { to: '/simulator', label: 'Risk Simulator', icon: FlaskConical },
+    { to: '/predict', label: 'Manual Entry', icon: Edit3 },
+    { to: '/simulator', label: 'AI Risk Simulator', icon: Zap },
     { to: '/map', label: 'Map Monitoring', icon: Map },
     { to: '/tracking', label: 'Tracking', icon: Route },
-    { to: '/analytics', label: 'Insights', icon: BarChart2 },
+    { to: '/analytics', label: 'Risk Intelligence', icon: BarChart3 },
 ];
 
 export default function Sidebar() {
     return (
         <aside className="w-64 shrink-0 bg-sidebar border-r border-border flex flex-col h-screen sticky top-0 z-20">
-            {/* Logo */}
-            <div className="flex items-center h-16 px-5 border-b border-border">
-                <img src={logo} alt="SmartContainer" className="h-15 w-full w-auto object-contain" />
+            {/* Logo area */}
+            <div className="flex items-center justify-center h-16 border-b border-border">
+                <img src={logo} alt="SmartContainer" className="h-10 w-auto object-contain" />
             </div>
 
             {/* Navigation */}
@@ -53,7 +53,7 @@ export default function Sidebar() {
 
             {/* Footer */}
             <div className="p-4 border-t border-border">
-                <p className="text-xs text-muted text-center">Risk Engine v2.0</p>
+                <p className="text-xs text-muted text-center">SmartContainer AI Risk Engine v2.0</p>
             </div>
         </aside>
     );

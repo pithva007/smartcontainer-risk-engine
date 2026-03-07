@@ -27,6 +27,7 @@ import type {
     SuspiciousImporter,
     FraudPatterns,
     RiskTrendPoint,
+    AIAnalysisResult,
 } from '@/types/apiTypes';
 import type { ConversationListItem, StartConversationResponse, ChatMessage, ConversationStatus } from '@/types/chatTypes';
 
@@ -147,9 +148,29 @@ export const clearAllData = () =>
  * Returns the full enriched result including model vs final risk comparison
  * and importer auto-escalation audit fields.
  */
-export const predictContainer = (input: PredictionInput) =>
-    apiClient.post<{ success: boolean; prediction: SinglePredictionResult }>('/predict', input)
+export const predictContainer = (input: PredictionInput) => {
+    const payload = {
+        container_id: input.Container_ID,
+        declaration_date: input.Declaration_Date,
+        declaration_time: input.Declaration_Time,
+        trade_regime: input.Trade_Regime,
+        origin_country: input.Origin_Country,
+        destination_country: input.Destination_Country,
+        destination_port: input.Destination_Port,
+        hs_code: input.HS_Code,
+        importer_id: input.Importer_ID,
+        exporter_id: input.Exporter_ID,
+        declared_value: input.Declared_Value,
+        declared_weight: input.Declared_Weight,
+        measured_weight: input.Measured_Weight,
+        shipping_line: input.Shipping_Line,
+        dwell_time_hours: input.Dwell_Time_Hours,
+        clearance_status: input.Clearance_Status,
+    };
+
+    return apiClient.post<{ success: boolean; prediction: SinglePredictionResult }>('/predict', payload)
         .then(r => r.data.prediction);
+};
 
 export const fetchImporterRiskHistory = (limit = 20, minPct = 0) =>
     apiClient.get<{ success: boolean; data: ImporterRiskHistory[] }>(
@@ -186,8 +207,9 @@ export const fetchHeatmap = () =>
     apiClient.get<{ success: boolean; data: Array<{ lat: number; lng: number; intensity: number }> }>('/map/heatmap')
         .then(r => r.data.data ?? []);
 
+
 export const fetchContainerAnalysis = (containerId: string) =>
-    apiClient.get<{ success: boolean; data: any }>(`/container-analysis/${containerId.toUpperCase()}`)
+    apiClient.get<{ success: boolean; data: AIAnalysisResult }>(`/container-analysis/${containerId.toUpperCase()}`)
         .then(r => r.data.data);
 
 export const fetchContainerTimeline = (containerId: string) =>
@@ -258,7 +280,7 @@ export const updateChatStatus = (conversation_id: string, status: ConversationSt
  */
 export const exportPredictionsCSV = (filters?: { batch_id?: string; risk_level?: string }) => {
     const params = new URLSearchParams();
-    if (filters?.batch_id)   params.set('batch_id',   filters.batch_id);
+    if (filters?.batch_id) params.set('batch_id', filters.batch_id);
     if (filters?.risk_level) params.set('risk_level', filters.risk_level);
     const qs = params.toString();
     const date = new Date().toISOString().split('T')[0];
@@ -273,8 +295,8 @@ export const exportPredictionsCSV = (filters?: { batch_id?: string; risk_level?:
         })
         .then((res) => {
             const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
-            const a   = document.createElement('a');
-            a.href     = url;
+            const a = document.createElement('a');
+            a.href = url;
             a.download = filename;
             document.body.appendChild(a);
             a.click();
@@ -298,10 +320,10 @@ export const exportLivePredictionsCSV = (rows: import('@/types/apiTypes').Predic
             escapeCSV(r.explanation || 'No explanation available.'),
         ].join(',')
     );
-    const csv  = '\uFEFF' + [header, ...lines].join('\r\n');
-    const url  = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    const a    = document.createElement('a');
-    a.href     = url;
+    const csv = '\uFEFF' + [header, ...lines].join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url;
     a.download = filename;
     document.body.appendChild(a);
     a.click();

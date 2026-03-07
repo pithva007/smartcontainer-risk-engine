@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { streamUploadDataset, listJobs, deleteJob, clearAllData, exportLivePredictionsCSV, exportPredictionsCSV } from '@/api/routes';
+import { streamUploadDataset, listJobs, deleteJob, clearAllData, exportLivePredictionsCSV, exportPredictionsCSV, fetchSummary } from '@/api/routes';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { useLivePredictions } from '@/hooks/useLivePredictions';
@@ -91,6 +91,7 @@ export default function Upload() {
     }, [done, qc]);
 
     const jobs = useQuery({ queryKey: ['jobs'], queryFn: listJobs });
+    const summaryData = useQuery({ queryKey: ['summary'], queryFn: fetchSummary });
 
     const deleteMutation = useMutation({
         mutationFn: (jobId: string) => deleteJob(jobId),
@@ -172,12 +173,14 @@ export default function Upload() {
 
     const isUploading = mutation.isPending;
     const streaming = isStreaming || !!activeJobId;
+    // @ts-ignore - The API client might have loosely typed summary returns in some states
+    const hasData = (summaryData.data?.total_containers ?? 0) > 0 || (jobs.data && jobs.data.length > 0);
 
     return (
         <div className="space-y-8 pb-8 max-w-4xl mx-auto">
             <div>
                 <h1 className="text-2xl font-bold text-foreground">Upload Dataset</h1>
-                <p className="text-sm text-foreground/60 mt-1">Upload shipment data in CSV or XLSX format. Predictions stream live row-by-row as soon as each record is processed.</p>
+                <p className="text-sm text-foreground/60 mt-1">Upload shipment data in CSV or XLSX format.</p>
             </div>
 
             {/* Drop Zone */}
@@ -360,7 +363,7 @@ export default function Upload() {
                     </div>
                     <button
                         onClick={handleClearAll}
-                        disabled={clearAllMutation.isPending || streaming}
+                        disabled={clearAllMutation.isPending || streaming || !hasData || summaryData.isLoading}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition-colors"
                     >
                         {clearAllMutation.isPending

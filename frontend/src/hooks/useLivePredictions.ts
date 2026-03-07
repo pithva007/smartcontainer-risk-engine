@@ -26,6 +26,7 @@ export function useLivePredictions(filterJobId?: string): LivePredictionsState {
     const [progress, setProgress] = useState<PredictionProgress | null>(null);
     const [done, setDone] = useState<PredictionDone | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [liveCounts, setLiveCounts] = useState({ critical: 0, lowRisk: 0, clear: 0 });
     // Track whether any job is actively streaming
     const streamingRef = useRef(false);
     const [isStreaming, setIsStreaming] = useState(false);
@@ -35,6 +36,7 @@ export function useLivePredictions(filterJobId?: string): LivePredictionsState {
         setProgress(null);
         setDone(null);
         setError(null);
+        setLiveCounts({ critical: 0, lowRisk: 0, clear: 0 });
         streamingRef.current = false;
         setIsStreaming(false);
     }, []);
@@ -47,6 +49,14 @@ export function useLivePredictions(filterJobId?: string): LivePredictionsState {
                 streamingRef.current = true;
                 setIsStreaming(true);
             }
+
+            setLiveCounts((prev) => {
+                const next = { ...prev };
+                if (row.risk_level === 'Critical') next.critical++;
+                else if (row.risk_level === 'Low Risk') next.lowRisk++;
+                else next.clear++;
+                return next;
+            });
 
             setRows((prev) => {
                 const next = [row, ...prev];
@@ -86,16 +96,6 @@ export function useLivePredictions(filterJobId?: string): LivePredictionsState {
             socket.off('prediction:error', onError);
         };
     }, [socket, filterJobId]);
-
-    const liveCounts = rows.reduce(
-        (acc, r) => {
-            if (r.risk_level === 'Critical') acc.critical++;
-            else if (r.risk_level === 'Low Risk') acc.lowRisk++;
-            else acc.clear++;
-            return acc;
-        },
-        { critical: 0, lowRisk: 0, clear: 0 }
-    );
 
     return { rows, progress, done, error, liveCounts, isStreaming, clearRows };
 }

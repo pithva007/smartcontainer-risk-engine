@@ -406,7 +406,7 @@ export default function Dashboard() {
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Risk Operations Dashboard</h1>
+                    <h1 className="text-2xl font-bold text-foreground">SmartContainer Risk Operations</h1>
                     <p className="text-sm text-foreground/50 mt-1">Real-time prediction monitoring and high-risk container detection</p>
                 </div>
                 <div className="flex items-center gap-3 mt-1 shrink-0">

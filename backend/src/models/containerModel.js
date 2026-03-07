@@ -147,6 +147,20 @@ const containerSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // New Trader Safeguard (Feature 8)
+    auto_escalated_by_new_trader_rule: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    exporter_historical_shipment_count: {
+      type: Number,
+      default: 0,
+    },
+    new_trader_threshold_used: {
+      type: Number,
+      default: 0,
+    },
     override_reason: {
       type: String,
     },
@@ -225,5 +239,6 @@ containerSchema.index({ upload_batch_id: 1, risk_level: 1 });
 containerSchema.index({ inspection_status: 1, risk_score: -1 });
 containerSchema.index({ assigned_to: 1, inspection_status: 1 });
 containerSchema.index({ auto_escalated_by_importer_history: 1, final_risk_level: 1 });
+containerSchema.index({ auto_escalated_by_new_trader_rule: 1, final_risk_level: 1 });
 
 module.exports = mongoose.model('Container', containerSchema);

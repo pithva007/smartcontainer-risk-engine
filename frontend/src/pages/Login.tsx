@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Loader2, Lock, User, Eye, EyeOff } from 'lucide-react';
+import logo from '@/assets/logo.png';
 import toast from 'react-hot-toast';
 
 export default function Login() {
@@ -35,6 +36,7 @@ export default function Login() {
         <div className="min-h-screen flex items-center justify-center bg-background dark animate-in fade-in">
             <div className="w-full max-w-sm px-4">
                 <div className="text-center mb-8">
+                    <img src={logo} alt="SmartContainer" className="h-16 mx-auto mb-4 object-contain" />
                     <h1 className="text-2xl font-bold text-white">
                         <span className="text-primary">Smart</span>
                         <span className="text-white">Container</span>
@@ -99,7 +101,7 @@ export default function Login() {
                 </div>
 
                 <p className="text-center text-xs text-foreground/40 mt-6">
-                    SmartContainer Risk Engine v2.0
+                    SmartContainer AI Risk Engine v2.0
                 </p>
             </div>
         </div>

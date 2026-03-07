@@ -4,6 +4,7 @@
  */
 const Container = require('../models/containerModel');
 const { getContainerRoute, backfillGeoData } = require('../services/geoService');
+const { recommendInspection } = require('../utils/riskClassifier');
 const logger = require('../utils/logger');
 
 /**
@@ -409,6 +410,7 @@ const getContainerLocation = async (req, res) => {
         destination_port: container.destination_port,
         anomaly_flag: container.anomaly_flag,
         explanation: container.explanation,
+        inspection_recommendation: recommendInspection(container.risk_score, container),
         route,
         origin_coords: originCoords,
         dest_coords: destCoords,
@@ -782,6 +784,7 @@ const getContainerAIAnalysis = async (req, res) => {
         anomaly_flag: container.anomaly_flag ?? false,
         model_confidence: parseFloat(modelConfidence.toFixed(2)),
         features,
+        inspection_recommendation: recommendInspection(container.risk_score, container),
         explanation: container.explanation,
         explanation_bullets: explanationBullets,
         raw: {
@@ -920,6 +923,7 @@ const getContainerTimeline = async (req, res) => {
         destination: container.destination_port || container.destination_country,
         clearance_status: container.clearance_status,
         risk_level: container.risk_level,
+        dwell_time_hours: container.dwell_time_hours,
         events,
       },
     });

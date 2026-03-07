@@ -57,6 +57,10 @@ export default function ShipmentDetailModal({ shipment, onClose }: ShipmentDetai
             queryClient.invalidateQueries({ queryKey: ['queue'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard-containers'] });
             queryClient.invalidateQueries({ queryKey: ['tracking-list'] });
+            queryClient.invalidateQueries({ queryKey: ['containerDetail'] });
+            queryClient.invalidateQueries({ queryKey: ['heatmap'] });
+            queryClient.invalidateQueries({ queryKey: ['all-routes'] });
+            queryClient.invalidateQueries({ queryKey: ['all-tracks'] });
 
             setTimeout(() => {
                 onClose(); // Auto close after success
@@ -83,7 +87,19 @@ export default function ShipmentDetailModal({ shipment, onClose }: ShipmentDetai
                             <Shield className={cn("w-6 h-6", riskColor)} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-foreground font-mono">{shipment.container_id}</h2>
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-xl font-bold text-foreground font-mono">{shipment.container_id}</h2>
+                                {shipment.auto_escalated_by_new_trader_rule && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight bg-red-500/20 text-red-500 border border-red-500/30">
+                                        Auto-Escalated: New Trader
+                                    </span>
+                                )}
+                                {shipment.auto_escalated_by_importer_history && !shipment.auto_escalated_by_new_trader_rule && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight bg-red-500/20 text-red-500 border border-red-500/30">
+                                        Auto-Escalated: Importer History
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-sm text-foreground/50">Shipment Details & Risk Analysis</p>
                         </div>
                     </div>
@@ -184,11 +200,38 @@ export default function ShipmentDetailModal({ shipment, onClose }: ShipmentDetai
                     </div>
 
                     {/* AI Risk Analysis Section */}
-                    {(shipment.explanation || (shipment.risk_explanation && shipment.risk_explanation.length > 0)) && (
+                    {(shipment.explanation || (shipment.risk_explanation && shipment.risk_explanation.length > 0) || shipment.inspection_recommendation) && (
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-foreground/80 flex items-center gap-2">
                                 <AlertTriangle className="w-4 h-4 text-red-500" /> AI Risk Analysis & Explanation
                             </h3>
+
+                            {/* Recommended Action */}
+                            {shipment.inspection_recommendation && (
+                                <div className={cn(
+                                    'p-4 rounded-xl border text-sm',
+                                    shipment.risk_level === 'Critical' ? 'bg-red-500/10 border-red-500/30' :
+                                        shipment.risk_level === 'Low Risk' ? 'bg-amber-500/10 border-amber-500/30' :
+                                            'bg-green-500/10 border-green-500/30'
+                                )}>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="font-bold text-foreground">
+                                            Recommended: {shipment.inspection_recommendation.recommendedAction}
+                                        </p>
+                                        <span className={cn(
+                                            'text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight',
+                                            shipment.inspection_recommendation.confidence === 'High' ? 'bg-red-500/20 text-red-500' :
+                                                shipment.inspection_recommendation.confidence === 'Medium' ? 'bg-amber-500/20 text-amber-600' :
+                                                    'bg-green-500/20 text-green-600'
+                                        )}>
+                                            {shipment.inspection_recommendation.confidence} Confidence
+                                        </span>
+                                    </div>
+                                    <p className="text-foreground/70 text-xs leading-relaxed">
+                                        {shipment.inspection_recommendation.reason}
+                                    </p>
+                                </div>
+                            )}
 
                             {/* High-level Summary Explanation */}
                             {shipment.explanation && (
@@ -295,30 +338,31 @@ export default function ShipmentDetailModal({ shipment, onClose }: ShipmentDetai
                     )}
 
                     {shipment.inspection_status === 'ASSIGNED' && (
-                        <>
-                            <button
-                                onClick={() => handleActionClick('hold')}
-                                disabled={isProcessing || !!successAction}
-                                className={cn(
-                                    "px-6 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2",
-                                    actionType === 'hold' ? "bg-red-500 text-white hover:bg-red-600" : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                                )}
-                            >
-                                {isProcessing && actionType === 'hold' && <Loader2 className="w-4 h-4 animate-spin" />}
-                                {successAction === 'hold' ? 'Held' : 'Hold Shipment'}
-                            </button>
-                            <button
-                                onClick={() => handleActionClick('clear')}
-                                disabled={isProcessing || !!successAction}
-                                className={cn(
-                                    "px-6 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2",
-                                    actionType === 'clear' ? "bg-emerald-500 text-white hover:bg-emerald-600" : "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
-                                )}
-                            >
-                                {isProcessing && actionType === 'clear' && <Loader2 className="w-4 h-4 animate-spin" />}
-                                {successAction === 'clear' ? 'Cleared' : 'Clear Shipment'}
-                            </button>
-                        </>
+                        <button
+                            onClick={() => handleActionClick('hold')}
+                            disabled={isProcessing || !!successAction}
+                            className={cn(
+                                "px-6 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2",
+                                actionType === 'hold' ? "bg-red-500 text-white hover:bg-red-600" : "bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                            )}
+                        >
+                            {isProcessing && actionType === 'hold' && <Loader2 className="w-4 h-4 animate-spin" />}
+                            {successAction === 'hold' ? 'Held' : 'Hold Shipment'}
+                        </button>
+                    )}
+
+                    {shipment.inspection_status !== 'CLEARED' && (
+                        <button
+                            onClick={() => handleActionClick('clear')}
+                            disabled={isProcessing || !!successAction}
+                            className={cn(
+                                "px-6 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2",
+                                actionType === 'clear' ? "bg-emerald-500 text-white hover:bg-emerald-600" : "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
+                            )}
+                        >
+                            {isProcessing && actionType === 'clear' && <Loader2 className="w-4 h-4 animate-spin" />}
+                            {successAction === 'clear' ? 'Cleared' : 'Clear Shipment'}
+                        </button>
                     )}
                 </div>
             </div>

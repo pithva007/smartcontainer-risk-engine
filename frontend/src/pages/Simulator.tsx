@@ -72,17 +72,17 @@ export default function Simulator() {
             <div>
                 <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                     <Crosshair className="w-6 h-6 text-primary" />
-                    Container Risk Simulator
+                    AI Risk Scenario Simulator
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                    Evaluate hypothetical shipment scenarios against the live ML model without persisting to the database.
+                    Experiment with different shipment conditions and observe how the AI risk engine responds in real time
                 </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* ── Input Form ──────────────────────────────────────────── */}
                 <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-5 space-y-4">
-                    <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Shipment Parameters</h2>
+                    <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Scenario Parameters</h2>
 
                     {/* Container ID */}
                     <div>
@@ -244,7 +244,7 @@ export default function Simulator() {
                         <div className="bg-card border border-border rounded-xl p-8 flex flex-col items-center justify-center text-center h-full">
                             <Crosshair className="w-12 h-12 text-muted-foreground/30 mb-3" />
                             <p className="text-sm text-muted-foreground">
-                                Fill in shipment parameters and click <strong>Run Simulation</strong> to see the ML risk assessment.
+                                Configure a shipment scenario and evaluate its risk profile using the SmartContainer AI engine.
                             </p>
                         </div>
                     )}

@@ -183,7 +183,14 @@ export interface ShipmentDetail {
     risk_score: number;
     risk_level: RiskLevel;
     anomaly_flag: boolean;
+    auto_escalated_by_importer_history?: boolean;
+    auto_escalated_by_new_trader_rule?: boolean;
+    importer_critical_percentage?: number;
+    exporter_historical_shipment_count?: number;
+    new_trader_threshold_used?: number;
+    override_reason?: string | null;
     explanation?: string;
+    inspection_recommendation?: InspectionRecommendation;
     inspection_status: string;
     assigned_to?: string;
     notes: Array<{ text: string; added_by: string; timestamp: string }>;
@@ -206,6 +213,7 @@ export interface ContainerLocation {
     destination_port?: string;
     anomaly_flag: boolean;
     explanation?: string;
+    inspection_recommendation?: InspectionRecommendation;
     route: Array<[number, number]>;
     origin_coords?: { lat: number; lng: number };
     dest_coords?: { lat: number; lng: number };
@@ -359,6 +367,25 @@ export interface SimulateRiskResponse {
     simulation: SimulationResult;
 }
 
+export interface AIAnalysisResult {
+    container_id: string;
+    risk_score: number;
+    risk_level: RiskLevel;
+    anomaly_flag: boolean;
+    model_confidence: number;
+    features: Array<{
+        name: string;
+        value: number;
+        detail: string;
+        icon: string;
+        category: string;
+    }>;
+    inspection_recommendation: InspectionRecommendation;
+    explanation?: string;
+    explanation_bullets: string[];
+    raw: Record<string, any>;
+}
+
 // ─── Analytics ─────────────────────────────────────────────
 export interface RouteRisk {
     origin: string;
@@ -435,7 +462,10 @@ export interface SinglePredictionResult {
 
     // ── Escalation audit ────────────────────────────────────
     auto_escalated_by_importer_history: boolean;
+    auto_escalated_by_new_trader_rule: boolean;
     importer_critical_percentage: number;
+    exporter_historical_shipment_count: number;
+    new_trader_threshold_used: number;
     override_reason: string | null;
     prediction_source: 'single' | 'batch';
 
@@ -466,6 +496,8 @@ export interface ImporterRiskHistory {
 /** GET /api/analytics/escalation-stats */
 export interface EscalationStats {
     total_auto_escalated: number;
+    total_escalated_importer?: number;
+    total_escalated_new_trader?: number;
     total_containers: number;
     escalation_rate: number;
     by_importer: Array<{

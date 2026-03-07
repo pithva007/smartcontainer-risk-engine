@@ -88,7 +88,7 @@ const predictBatchFromFile = async (req, res) => {
       Model_Risk_Level: predictions[i]?.model_risk_level ?? '',
       Final_Risk_Score: predictions[i]?.final_risk_score ?? predictions[i]?.risk_score ?? '',
       Final_Risk_Level: predictions[i]?.final_risk_level ?? predictions[i]?.risk_level ?? '',
-      Auto_Escalated: predictions[i]?.auto_escalated_by_importer_history ? 'Yes' : 'No',
+      Auto_Escalated: (predictions[i]?.auto_escalated_by_importer_history || predictions[i]?.auto_escalated_by_new_trader_rule) ? 'Yes' : 'No',
       Anomaly_Flag: predictions[i]?.anomaly_flag ?? '',
       Explanation: predictions[i]?.explanation ?? '',
     }));

@@ -336,6 +336,20 @@ function TrackedPanel({ loc, onClose, showRoute, onRouteToggle }: {
                             <p className="text-xs text-foreground/60">{loc.explanation}</p>
                         </div>
                     )}
+
+                    {loc.inspection_recommendation && (
+                        <div className={cn(
+                            'p-3 rounded-lg border text-xs',
+                            loc.risk_level === 'Critical' ? 'bg-red-500/10 border-red-500/30' :
+                                loc.risk_level === 'Low Risk' ? 'bg-amber-500/10 border-amber-500/30' :
+                                    'bg-green-500/10 border-green-500/30'
+                        )}>
+                            <p className="font-bold text-foreground mb-1">
+                                Recommended: {loc.inspection_recommendation.recommendedAction}
+                            </p>
+                            <p className="text-foreground/70 text-[10px] leading-tight">{loc.inspection_recommendation.reason}</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div >
