@@ -2,10 +2,14 @@
 
 > Production-deployed full-stack AI platform for customs container risk screening. Classifies inbound shipments into Critical / Low Risk / Clear tiers using an ensemble ML model, surfaces importer fraud patterns, and enables officers to prioritize physical inspections with objective, explainable risk scores.
 
-**Live Demo:** https://smartcontainerrrr.vercel.app/ 
-**Backend API:** https://smartcontainer-risk-engine-fwkw.vercel.app/ 
-**API Documentation:** https://smartcontainerrrr.vercel.app/api/docs
+Live Demo:
+https://smartcontainerrrr.vercel.app/
 
+Backend API:
+https://smartcontainer-risk-engine-fwkw.vercel.app/
+
+API Documentation:
+https://smartcontainerrrr.vercel.app/api/docs
 ---
 
 ## Table of Contents
