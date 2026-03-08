@@ -7,12 +7,11 @@ https://smartcontainerrrr.vercel.app/
 
 Backend API:
 https://smartcontainer-risk-engine-fwkw.vercel.app/
-
-API Documentation:
-https://smartcontainerrrr.vercel.app/api/docs
 ---
-ID : admin
-Password : Admin@12345
+ID : 
+admin
+Password : 
+Admin@12345
 
 In workign demo there quict not working cause of websocket problem in vercel
 ## Table of Contents
