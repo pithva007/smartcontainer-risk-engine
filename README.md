@@ -26,10 +26,11 @@ In workign demo there quict not working cause of websocket problem in vercel
 8. [Database Schema](#8-database-schema)
 9. [Deployment](#9-deployment)
 10. [Local Development Setup](#10-local-development-setup)
-11. [Environment Variables](#11-environment-variables)
-12. [Project Structure](#12-project-structure)
-13. [Model Performance](#13-model-performance)
-14. [Security](#14-security)
+11. [Developer Tooling & AI Setup](#11-developer-tooling--ai-setup-vs-code--copilot-pro)
+12. [Environment Variables](#12-environment-variables)
+13. [Project Structure](#13-project-structure)
+14. [Model Performance](#14-model-performance)
+15. [Security](#15-security)
 
 ---
 
@@ -629,7 +630,102 @@ This creates default admin and officer accounts for local testing.
 
 ---
 
-## 11. Environment Variables
+## 11. Developer Tooling & AI Setup (VS Code + Copilot Pro)
+
+### How the `.vscode` workspace config works
+
+The `.vscode/` folder is committed to this repository. It contains:
+
+| File | What it does |
+|---|---|
+| `settings.json` | Enables Copilot agent mode, sets **Claude 3.5 Sonnet** as the default Copilot Chat model |
+| `extensions.json` | Lists recommended VS Code extensions (Copilot, ESLint, Prettier, etc.) |
+
+**No Anthropic API key is required.** Claude is provided through your GitHub Copilot Pro subscription. Once you open this project in VS Code and sign in with your GitHub account, Claude is immediately available in Copilot Chat.
+
+These settings live in the repository root, so they apply to **every branch and every developer** who clones the repo — they are not branch-specific.
+
+---
+
+### Step 1 — Install the GitHub CLI (`gh`) on macOS
+
+If you see `zsh: command not found: gh`, the GitHub CLI is not installed. Install it with Homebrew:
+
+```bash
+# Install Homebrew (skip if already installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install the GitHub CLI
+brew install gh
+
+# Authenticate (opens a browser window — sign in with your GitHub account)
+gh auth login
+```
+
+After authentication you can use `gh pr checkout`, `gh repo clone`, `gh pr list`, and so on.
+
+---
+
+### Step 2 — Checkout a branch (three options)
+
+#### Option A — GitHub CLI (recommended after installing `gh`)
+
+```bash
+gh pr checkout copilot/fix-clause-agent-visibility
+```
+
+#### Option B — Plain Git (no `gh` required)
+
+```bash
+git fetch origin
+git checkout copilot/fix-clause-agent-visibility
+```
+
+To always pull the latest changes from that branch afterwards:
+
+```bash
+git pull origin copilot/fix-clause-agent-visibility
+```
+
+#### Option C — VS Code Source Control UI (no terminal required)
+
+1. Open VS Code in your project folder.
+2. Click the **branch name** in the bottom-left status bar (e.g., `main`).
+3. A quick-pick menu appears — type `copilot/fix` to filter.
+4. Select `origin/copilot/fix-clause-agent-visibility` → VS Code checks it out automatically.
+
+---
+
+### Step 3 — Get the settings on every branch (merge to `main`)
+
+The `.vscode/` workspace config is on the `copilot/fix-clause-agent-visibility` branch. Once that pull request is **merged into `main`**, all branches will inherit the settings the next time they are rebased or the settings will be present whenever `main` is pulled.
+
+To update your local `main` after the PR is merged:
+
+```bash
+git checkout main
+git pull origin main
+```
+
+Every developer who clones the repo afterwards will get the Copilot + Claude setup automatically.
+
+---
+
+### Step 4 — Use Claude inside VS Code (no API key needed)
+
+1. Open VS Code with this project.
+2. When prompted, install the two recommended extensions:  
+   `GitHub.copilot` and `GitHub.copilot-chat`.
+3. Click **Sign in to GitHub** in the Copilot status bar and log in with your Copilot Pro account.
+4. Open Copilot Chat: **⌥⌘I** (macOS) / **Ctrl+Alt+I** (Windows/Linux).
+5. Claude 3.5 Sonnet is already set as the default model in `settings.json`.  
+   To switch models, click the **model name** at the bottom of the chat input and choose from the picker (Claude 3.5 Sonnet, Claude 3.7 Sonnet, GPT-4o, o3-mini, etc.).
+
+> **Tip:** In Agent Mode (`@workspace` or the ⚙️ dropdown) Copilot can read your entire codebase, run terminal commands, and iterate on code — all through the Claude model built into your Copilot Pro subscription.
+
+---
+
+## 12. Environment Variables
 
 ### Backend (`backend/.env`)
 
@@ -674,7 +770,7 @@ VITE_BACKEND_URL=http://localhost:3000
 
 ---
 
-## 12. Project Structure
+## 13. Project Structure
 
 ```
 smartcontainer-risk-engine/
@@ -742,7 +838,7 @@ smartcontainer-risk-engine/
 
 ---
 
-## 13. Model Performance
+## 14. Model Performance
 
 Metrics computed on a held-out validation set (600 samples, 20% of 3,000 total records).
 
@@ -772,7 +868,7 @@ Metrics computed on a held-out validation set (600 samples, 20% of 3,000 total r
 
 ---
 
-## 14. Security
+## 15. Security
 
 ### Authentication and Authorization
 
