@@ -1,0 +1,20 @@
+{
+  "servers": {
+    "claude": {
+      "command": "npx",
+      "args": ["@anthropic-ai/claude-code", "mcp"],
+      "env": {
+        "ANTHROPIC_API_KEY": "${env:ANTHROPIC_API_KEY}"
+      },
+      "description": "Claude AI agent via Anthropic MCP server"
+    }
+  },
+  "inputs": [
+    {
+      "id": "ANTHROPIC_API_KEY",
+      "type": "promptString",
+      "description": "Anthropic API Key for Claude agents",
+      "password": true
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "recommendations": [
+    // ── AI / Copilot ─────────────────────────────────────────────────────────
+    "GitHub.copilot",
+    "GitHub.copilot-chat",
+    "anthropics.claude-code",
+
+    // ── JavaScript / TypeScript ──────────────────────────────────────────────
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+
+    // ── React ────────────────────────────────────────────────────────────────
+    "dsznajder.es7-react-js-snippets",
+
+    // ── Python ───────────────────────────────────────────────────────────────
+    "ms-python.python",
+    "ms-python.black-formatter",
+    "ms-python.pylint",
+
+    // ── Docker ───────────────────────────────────────────────────────────────
+    "ms-azuretools.vscode-docker",
+
+    // ── MongoDB ──────────────────────────────────────────────────────────────
+    "mongodb.mongodb-vscode",
+
+    // ── General ──────────────────────────────────────────────────────────────
+    "eamodio.gitlens",
+    "ms-vscode.vscode-json",
+    "christian-kohler.path-intellisense",
+    "mikestead.dotenv"
+  ]
+}

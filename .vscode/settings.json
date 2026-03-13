@@ -1,0 +1,49 @@
+{
+  // ── GitHub Copilot ──────────────────────────────────────────────────────────
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": true,
+    "markdown": true,
+    "scminput": false
+  },
+  "github.copilot.editor.enableAutoCompletions": true,
+
+  // ── Copilot Chat / Agent Mode ───────────────────────────────────────────────
+  "github.copilot.chat.agent.enabled": true,
+  "github.copilot.chat.codesearch.enabled": true,
+  "chat.agent.enabled": true,
+  "chat.mcp.enabled": true,
+  "github.copilot.chat.editor.temporalContext.enabled": true,
+
+  // ── Status Bar ─────────────────────────────────────────────────────────────
+  "github.copilot.advanced": {
+    "debug.showScore": false,
+    "showEditorCompletions": true
+  },
+
+  // ── MCP (Model Context Protocol) ───────────────────────────────────────────
+  "mcp.enabled": true,
+
+  // ── Editor ─────────────────────────────────────────────────────────────────
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+
+  // ── TypeScript ─────────────────────────────────────────────────────────────
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.updateImportsOnFileMove.enabled": "always"
+}
