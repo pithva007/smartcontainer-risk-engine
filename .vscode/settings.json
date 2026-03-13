@@ -9,10 +9,12 @@
   "github.copilot.editor.enableAutoCompletions": true,
 
   // ── Copilot Chat / Agent Mode ───────────────────────────────────────────────
+  // Claude is built into GitHub Copilot Pro — no Anthropic API key required.
+  // Use the model picker in Copilot Chat (or the default below) to switch to Claude.
+  "github.copilot.chat.defaultModel": "claude-3.5-sonnet",
   "github.copilot.chat.agent.enabled": true,
   "github.copilot.chat.codesearch.enabled": true,
   "chat.agent.enabled": true,
-  "chat.mcp.enabled": true,
   "github.copilot.chat.editor.temporalContext.enabled": true,
 
   // ── Status Bar ─────────────────────────────────────────────────────────────
@@ -20,9 +22,6 @@
     "debug.showScore": false,
     "showEditorCompletions": true
   },
-
-  // ── MCP (Model Context Protocol) ───────────────────────────────────────────
-  "mcp.enabled": true,
 
   // ── Editor ─────────────────────────────────────────────────────────────────
   "editor.formatOnSave": true,

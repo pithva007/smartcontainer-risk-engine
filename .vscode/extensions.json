@@ -1,9 +1,12 @@
 {
   "recommendations": [
     // ── AI / Copilot ─────────────────────────────────────────────────────────
+    // GitHub Copilot Pro includes Claude models natively — no Anthropic API key needed.
+    // After installing these two extensions and signing in with your GitHub account,
+    // open Copilot Chat and use the model picker (or set defaultModel in settings.json)
+    // to select Claude 3.5 Sonnet or any other built-in model.
     "GitHub.copilot",
     "GitHub.copilot-chat",
-    "anthropics.claude-code",
 
     // ── JavaScript / TypeScript ──────────────────────────────────────────────
     "dbaeumer.vscode-eslint",
