@@ -1,0 +1,39 @@
+{
+  "github.copilot.chat.localeOverride": "auto",
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.models": [
+    {
+      "id": "gpt-4o",
+      "name": "GPT-4o"
+    },
+    {
+      "id": "gpt-4o-mini",
+      "name": "GPT-4o Mini"
+    },
+    {
+      "id": "claude-3-5-sonnet",
+      "name": "Claude 3.5 Sonnet"
+    },
+    {
+      "id": "claude-3-7-sonnet",
+      "name": "Claude 3.7 Sonnet"
+    },
+    {
+      "id": "claude-3-opus",
+      "name": "Claude 3 Opus"
+    },
+    {
+      "id": "o1",
+      "name": "o1"
+    },
+    {
+      "id": "o1-mini",
+      "name": "o1-mini"
+    },
+    {
+      "id": "o3-mini",
+      "name": "o3-mini"
+    }
+  ]
+}
