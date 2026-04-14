@@ -25,7 +25,12 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5,     // 5 min — serve from cache without refetch
       gcTime: 1000 * 60 * 15,       // 15 min — keep data in memory
       placeholderData: keepPreviousData, // show stale data instantly, no loading flash
-      retry: 1,
+      retry: (failureCount, error: any) => {
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) return false;
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * (2 ** attemptIndex), 10000),
       refetchOnWindowFocus: false,
     },
   },
