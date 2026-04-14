@@ -4,8 +4,8 @@
  * POST /api/upload/stream
  *
  * Accepts a CSV/XLSX file upload and processes it row-by-row in the background.
- * Each predicted row is immediately broadcast to all connected Socket.IO clients
- * via the `prediction:row` event so the dashboard updates in real time.
+ * Each predicted row is persisted immediately, then exposed to clients via
+ * polling endpoints.
  *
  * Flow:
  *   1. Parse entire file into an array of raw records (fast, pure I/O)
@@ -14,10 +14,10 @@
  *      a. Engineer features for ALL records in one CPU pass
  *      b. Process rows in chunks of CHUNK_SIZE
  *      c. For each chunk — call ML microservice (falls back to heuristic)
- *      d. Emit `prediction:row` for each result immediately
+ *      d. Persist each result row immediately
  *      e. Flush chunk to MongoDB via bulkWrite
- *      f. Emit `prediction:progress` after each chunk
- *   4. Emit `prediction:done` when finished
+ *      f. Persist job progress after each chunk
+ *   4. Mark job completed when finished
  */
 const path = require('path');
 const fs = require('fs');
@@ -77,7 +77,7 @@ const callMLBatch = async (enrichedChunk) => {
 /**
  * POST /api/upload/stream
  *
- * Responds with 202 immediately and begins streaming predictions via Socket.IO.
+ * Responds with 202 immediately and begins processing asynchronously.
  */
 const streamUpload = async (req, res) => {
   if (!req.file) {
@@ -198,15 +198,28 @@ const streamUpload = async (req, res) => {
           });
         }
 
-        // Broadcast progress after each chunk
+        // Persist job progress after each chunk so clients can poll it.
+        const currentPercent = Math.round((processed / total) * 100);
+        await Job.updateOne(
+          { job_id: jobId },
+          {
+            status: 'active',
+            progress: currentPercent,
+            'metadata.total_records': total,
+            'metadata.processed_records': processed,
+            'metadata.failed_records': failed,
+          }
+        );
+
+        // Backward-compatible no-op broadcast shim.
         broadcastProgress({
           job_id: jobId,
           processed,
           total,
-          percent: Math.round((processed / total) * 100),
+          percent: currentPercent,
         });
 
-        // Yield to event loop so Socket.IO frames are flushed
+        // Yield to event loop between chunks.
         await new Promise((resolve) => setImmediate(resolve));
       }
 

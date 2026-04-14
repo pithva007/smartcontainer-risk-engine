@@ -299,7 +299,7 @@ export interface TrackingData {
     };
 }
 
-// ─── Socket.IO Live Prediction Events ─────────────────────
+// ─── Live Prediction Polling Payloads ─────────────────────
 export interface PredictionRow {
     job_id: string;
     batch_id: string;
@@ -336,6 +336,17 @@ export interface StreamUploadResponse {
     job_id: string;
     batch_id: string;
     message: string;
+}
+
+export interface JobLiveUpdatesResponse {
+    success: boolean;
+    job_id: string;
+    status: JobStatus;
+    progress: PredictionProgress;
+    done: PredictionDone | null;
+    error: string | null;
+    rows: PredictionRow[];
+    next_since: string | null;
 }
 
 // ─── Explainable AI ────────────────────────────────────────

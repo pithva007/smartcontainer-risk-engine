@@ -5,7 +5,6 @@ import { Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { NotificationProvider } from '@/context/NotificationContext';
-import { SocketProvider } from '@/context/SocketContext';
 import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
 import Upload from '@/pages/Upload';
@@ -50,7 +49,6 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SocketProvider>
         <NotificationProvider>
           <BrowserRouter>
             <Routes>
@@ -81,7 +79,6 @@ export default function App() {
             }}
           />
         </NotificationProvider>
-        </SocketProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

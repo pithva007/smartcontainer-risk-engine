@@ -8,7 +8,14 @@
  */
 const router = require('express').Router();
 const { requireAuth, requireRole } = require('../middleware/auth');
-const { getJobStatus, getJobLogs, getJobResult, listJobs, deleteJob } = require('../controllers/jobController');
+const {
+	getJobStatus,
+	getJobLiveUpdates,
+	getJobLogs,
+	getJobResult,
+	listJobs,
+	deleteJob,
+} = require('../controllers/jobController');
 
 /**
  * @swagger
@@ -47,6 +54,27 @@ router.get('/jobs', requireAuth, requireRole('officer'), listJobs);
  *         schema: { type: string }
  */
 router.get('/jobs/:job_id', requireAuth, getJobStatus);
+
+/**
+ * @swagger
+ * /api/jobs/{job_id}/live:
+ *   get:
+ *     tags: [Jobs]
+ *     summary: Poll incremental live rows and progress for a running job
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: job_id
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: since
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 200 }
+ */
+router.get('/jobs/:job_id/live', requireAuth, getJobLiveUpdates);
 
 /**
  * @swagger

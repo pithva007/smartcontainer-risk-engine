@@ -23,7 +23,7 @@ export default function ContainerChatModal({
   onClose: () => void;
 }) {
   const { user } = useAuth();
-  const socket = useChatSocket();
+  const realtime = useChatSocket();
 
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -37,9 +37,9 @@ export default function ContainerChatModal({
   const canRender = open && !!containerId && !!exporterId;
 
   const joinAndSubscribe = async (convId: string) => {
-    socket.joinConversation(convId);
+    realtime.joinConversation(convId);
     unsubRef.current?.();
-    unsubRef.current = socket.onNewMessage((cid, message) => {
+    unsubRef.current = realtime.onNewMessage((cid, message) => {
       if (cid !== convId) return;
       setMessages((prev) => [...prev, message]);
     });
@@ -71,21 +71,21 @@ export default function ContainerChatModal({
   }, [canRender, containerId, exporterId]);
 
   useEffect(() => {
-    if (!socket.typing || !conversationId) return;
-    if (socket.typing.conversation_id !== conversationId) return;
-    setTypingName(socket.typing.name);
-  }, [socket.typing, conversationId]);
+    if (!realtime.typing || !conversationId) return;
+    if (realtime.typing.conversation_id !== conversationId) return;
+    setTypingName(realtime.typing.name);
+  }, [realtime.typing, conversationId]);
 
   const onSend = (text: string) => {
     if (!conversationId) return;
-    socket.sendMessageRealtime({ conversation_id: conversationId, message_text: text });
+    realtime.sendMessageRealtime({ conversation_id: conversationId, message_text: text });
   };
 
   const onUpload = async (file: File) => {
     if (!conversationId) return;
     const up = await uploadChatAttachment(file);
     if (!up.success) return;
-    socket.sendMessageRealtime({
+    realtime.sendMessageRealtime({
       conversation_id: conversationId,
       attachment_url: up.file.url,
       attachment_name: up.file.name,
@@ -108,9 +108,9 @@ export default function ContainerChatModal({
   };
 
   const typingFns = useMemo(() => ({
-    onTyping: () => conversationId && socket.emitTyping(conversationId),
-    onStopTyping: () => conversationId && socket.emitStopTyping(conversationId),
-  }), [conversationId, socket]);
+    onTyping: () => conversationId && realtime.emitTyping(conversationId),
+    onStopTyping: () => conversationId && realtime.emitStopTyping(conversationId),
+  }), [conversationId, realtime]);
 
   if (!open) return null;
 

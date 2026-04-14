@@ -28,7 +28,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         queryKey: ['activity-notifications'],
         queryFn: () => fetchNotifications(20),
         enabled: isAuthenticated,
-        refetchInterval: 30000,
+        staleTime: 15000,
+        refetchInterval: () => {
+            if (!isAuthenticated) return false;
+            if (document.hidden) return 60000;
+            return isPopupOpen ? 20000 : 30000;
+        },
         refetchIntervalInBackground: false,
     });
 

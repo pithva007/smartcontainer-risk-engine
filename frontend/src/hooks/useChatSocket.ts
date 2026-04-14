@@ -1,94 +1,119 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { io, type Socket } from 'socket.io-client';
+import { fetchChatMessages, sendChatMessage } from '@/api/routes';
 import type { ChatMessage } from '@/types/chatTypes';
 
 type TypingState = { conversation_id: string; user_id: string; name: string; role: string; stopped?: boolean };
-
-const getSocketBaseUrl = () => {
-  // Vite dev proxy can forward `/socket.io` if configured.
-  return import.meta.env.VITE_SOCKET_URL || window.location.origin;
-};
+const ACTIVE_POLL_MS = 2500;
+const HIDDEN_POLL_MS = 8000;
+const MAX_SEEN_PER_CONVERSATION = 300;
 
 export function useChatSocket() {
-  const socketRef = useRef<Socket | null>(null);
-  const [connected, setConnected] = useState(false);
-  const [typing, setTyping] = useState<TypingState | null>(null);
+  const conversationIdsRef = useRef<Set<string>>(new Set());
+  const handlersRef = useRef<Set<(conversation_id: string, message: ChatMessage) => void>>(new Set());
+  const seenByConversationRef = useRef<Map<string, string[]>>(new Map());
+  const timerRef = useRef<number | null>(null);
 
-  const connect = useCallback(() => {
-    const token = localStorage.getItem('sce_token');
-    if (!token) return null;
+  const [connected, setConnected] = useState(true);
+  const [typing] = useState<TypingState | null>(null);
 
-    if (socketRef.current) return socketRef.current;
-    const s = io(getSocketBaseUrl(), {
-      transports: ['websocket', 'polling'],
-      auth: { token },
-      reconnection: true,
-      reconnectionAttempts: 8,
-      reconnectionDelay: 500,
-      reconnectionDelayMax: 4000,
-      timeout: 10000,
-    });
+  const emitToListeners = useCallback((conversationId: string, message: ChatMessage) => {
+    handlersRef.current.forEach((handler) => handler(conversationId, message));
+  }, []);
 
-    s.on('connect', () => setConnected(true));
-    s.on('disconnect', () => setConnected(false));
-    s.on('user_typing', (payload: TypingState) => {
-      if (payload?.stopped) {
-        setTyping((prev) => (prev?.conversation_id === payload.conversation_id ? null : prev));
-        return;
+  const rememberSeen = useCallback((conversationId: string, messageId: string) => {
+    const existing = seenByConversationRef.current.get(conversationId) || [];
+    if (existing.includes(messageId)) return;
+    const next = [...existing, messageId];
+    if (next.length > MAX_SEEN_PER_CONVERSATION) next.splice(0, next.length - MAX_SEEN_PER_CONVERSATION);
+    seenByConversationRef.current.set(conversationId, next);
+  }, []);
+
+  const pollMessages = useCallback(async () => {
+    const conversationIds = Array.from(conversationIdsRef.current);
+    if (!conversationIds.length) {
+      setConnected(true);
+      return;
+    }
+
+    await Promise.all(conversationIds.map(async (conversationId) => {
+      try {
+        const res = await fetchChatMessages(conversationId, { limit: 30 });
+        const messages = res.data || [];
+        const seen = new Set(seenByConversationRef.current.get(conversationId) || []);
+
+        // First sync primes local cache without replaying historical messages.
+        if (seen.size === 0) {
+          messages.forEach((m) => rememberSeen(conversationId, m.message_id));
+          return;
+        }
+
+        const newMessages = messages.filter((m) => !seen.has(m.message_id));
+        newMessages.forEach((m) => {
+          rememberSeen(conversationId, m.message_id);
+          emitToListeners(conversationId, m);
+        });
+      } catch {
+        // Ignore per-conversation failures and keep polling others.
       }
-      setTyping(payload);
-    });
+    }));
 
-    socketRef.current = s;
-    return s;
-  }, []);
-
-  const disconnect = useCallback(() => {
-    if (!socketRef.current) return;
-    socketRef.current.removeAllListeners();
-    socketRef.current.disconnect();
-    socketRef.current = null;
-    setConnected(false);
-    setTyping(null);
-  }, []);
+    setConnected(true);
+  }, [emitToListeners, rememberSeen]);
 
   useEffect(() => {
-    const token = localStorage.getItem('sce_token');
-    if (token) connect();
-    return () => disconnect();
-  }, [connect, disconnect]);
+    let cancelled = false;
+
+    const run = async () => {
+      if (cancelled) return;
+      try {
+        await pollMessages();
+      } catch {
+        if (!cancelled) setConnected(false);
+      } finally {
+        if (cancelled) return;
+        const delay = document.hidden ? HIDDEN_POLL_MS : ACTIVE_POLL_MS;
+        timerRef.current = window.setTimeout(run, delay);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [pollMessages]);
 
   const joinConversation = useCallback((conversation_id: string) => {
-    const s = connect();
-    s?.emit('join_conversation', { conversation_id });
-  }, [connect]);
+    conversationIdsRef.current.add(conversation_id);
+  }, []);
 
   const sendMessageRealtime = useCallback((payload: { conversation_id: string; message_text?: string; attachment_url?: string; attachment_name?: string; attachment_mime?: string }) => {
-    const s = connect();
-    s?.emit('send_message', payload);
-  }, [connect]);
+    sendChatMessage(payload)
+      .then((res: { success?: boolean; message?: ChatMessage }) => {
+        if (!res?.success || !res.message) return;
+        rememberSeen(payload.conversation_id, res.message.message_id);
+        emitToListeners(payload.conversation_id, res.message);
+      })
+      .catch(() => {
+        // Caller UI already handles server errors via fetch status/toasts.
+      });
+  }, [emitToListeners, rememberSeen]);
 
-  const emitTyping = useCallback((conversation_id: string) => {
-    const s = connect();
-    s?.emit('typing', { conversation_id });
-  }, [connect]);
+  const emitTyping = useCallback((_conversation_id: string) => {}, []);
 
-  const emitStopTyping = useCallback((conversation_id: string) => {
-    const s = connect();
-    s?.emit('stop_typing', { conversation_id });
-  }, [connect]);
+  const emitStopTyping = useCallback((_conversation_id: string) => {}, []);
 
-  const markSeen = useCallback((conversation_id: string) => {
-    const s = connect();
-    s?.emit('message_seen', { conversation_id });
-  }, [connect]);
+  const markSeen = useCallback((_conversation_id: string) => {}, []);
 
   const onNewMessage = useCallback((handler: (conversation_id: string, message: ChatMessage) => void) => {
-    const s = connect();
-    const fn = (payload: { conversation_id: string; message: ChatMessage }) => handler(payload.conversation_id, payload.message);
-    s?.on('new_message', fn);
-    return () => s?.off('new_message', fn);
-  }, [connect]);
+    handlersRef.current.add(handler);
+    return () => {
+      handlersRef.current.delete(handler);
+    };
+  }, []);
 
   const api = useMemo(() => ({
     connected,

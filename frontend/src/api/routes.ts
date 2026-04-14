@@ -28,6 +28,7 @@ import type {
     FraudPatterns,
     RiskTrendPoint,
     AIAnalysisResult,
+    JobLiveUpdatesResponse,
 } from '@/types/apiTypes';
 import type { ConversationListItem, StartConversationResponse, ChatMessage, ConversationStatus } from '@/types/chatTypes';
 
@@ -112,8 +113,8 @@ export const uploadDataset = (formData: FormData, onProgress?: (pct: number) => 
     }).then(r => r.data);
 
 /**
- * Stream upload — responds with 202 immediately then pushes prediction rows
- * via Socket.IO `prediction:row` events.  Returns { job_id, batch_id }.
+ * Stream upload — responds with 202 immediately. Clients can then poll
+ * /jobs/:job_id/live for near real-time updates.
  */
 export const streamUploadDataset = (formData: FormData, onProgress?: (pct: number) => void) =>
     apiClient.post<StreamUploadResponse>('/upload/stream', formData, {
@@ -124,9 +125,12 @@ export const streamUploadDataset = (formData: FormData, onProgress?: (pct: numbe
     }).then(r => r.data);
 
 // ─── Jobs ──────────────────────────────────────────────────
-export const listJobs = () =>
-    apiClient.get<{ success: boolean; jobs: JobRecord[]; total: number }>('/jobs')
+export const listJobs = (params?: { status?: string; type?: string; page?: number; limit?: number }) =>
+    apiClient.get<{ success: boolean; jobs: JobRecord[]; total: number }>('/jobs', { params })
         .then(r => r.data.jobs ?? []);
+
+export const getJobLiveUpdates = (jobId: string, params?: { since?: string; limit?: number }) =>
+    apiClient.get<JobLiveUpdatesResponse>(`/jobs/${jobId}/live`, { params }).then(r => r.data);
 
 export const getJob = (jobId: string) =>
     apiClient.get<{ success: boolean; job: JobRecord }>(`/jobs/${jobId}`)

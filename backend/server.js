@@ -16,7 +16,6 @@ const { processUploadJob } = require('./src/services/uploadJobProcessor');
 const { refreshAllActiveTracks } = require('./src/services/trackingService');
 const mlProcessService = require('./src/services/mlProcessService');
 const { reprocessAll } = require('./src/services/mlBulkService');
-const socketService = require('./src/services/socketService');
 const logger = require('./src/utils/logger');
 
 const PORT = parseInt(process.env.PORT) || 3000;
@@ -107,9 +106,8 @@ const start = async () => {
     );
     logger.info(`ML microservice starting at ${mlProcessService.serviceUrl()} (async)`);
 
-    // Create raw HTTP server and attach Socket.IO before listening
+    // Create raw HTTP server and start listening
     const httpServer = http.createServer(app);
-    socketService.init(httpServer);
 
     httpServer.listen(PORT, () => {
       logger.info(`SmartContainer Risk Engine API v2 running on port ${PORT}`);

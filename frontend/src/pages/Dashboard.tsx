@@ -9,7 +9,6 @@ import {
     exportPredictionsCSV,
 } from '@/api/routes';
 import { useLivePredictions } from '@/hooks/useLivePredictions';
-import { useSocket } from '@/context/SocketContext';
 import ShipmentListModal from '@/components/dashboard/ShipmentListModal';
 import ShipmentDetailModal from '@/components/dashboard/ShipmentDetailModal';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
@@ -297,7 +296,6 @@ function RiskDonut({ data, liveExtra }: { data: RiskDistribution[]; liveExtra: {
 export default function Dashboard() {
     const navigate = useNavigate();
     const qc = useQueryClient();
-    const { connected } = useSocket();
 
     const [listFilter, setListFilter] = useState<{ label: string; risk_level?: RiskLevel; anomaly?: boolean } | null>(null);
     const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
@@ -329,7 +327,7 @@ export default function Dashboard() {
     });
 
     /* Live socket stream — listens to ALL jobs */
-    const { rows: liveRows, progress, done, error: streamError, liveCounts, isStreaming } = useLivePredictions();
+    const { rows: liveRows, progress, done, error: streamError, liveCounts, isStreaming, connected } = useLivePredictions();
 
     /* Refresh API data after stream finishes */
     useEffect(() => {

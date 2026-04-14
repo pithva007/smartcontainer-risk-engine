@@ -1,41 +1,30 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { Socket } from 'socket.io-client';
-import { getSocket } from '@/lib/socket';
 
 interface SocketContextType {
-    socket: Socket;
     connected: boolean;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
-    const socket = getSocket();
-    const [connected, setConnected] = useState(socket.connected);
+    const [connected, setConnected] = useState(true);
 
     useEffect(() => {
-        // Connect on mount
-        if (!socket.connected) socket.connect();
+        const onOnline = () => setConnected(true);
+        const onOffline = () => setConnected(false);
 
-        const onConnect = () => setConnected(true);
-        const onDisconnect = () => setConnected(false);
-        const onConnectError = (err: Error) =>
-            console.warn('[Socket] Connection error:', err.message);
-
-        socket.on('connect', onConnect);
-        socket.on('disconnect', onDisconnect);
-        socket.on('connect_error', onConnectError);
+        window.addEventListener('online', onOnline);
+        window.addEventListener('offline', onOffline);
+        setConnected(navigator.onLine);
 
         return () => {
-            socket.off('connect', onConnect);
-            socket.off('disconnect', onDisconnect);
-            socket.off('connect_error', onConnectError);
-            // Do NOT disconnect — socket is a singleton meant to live for the whole session
+            window.removeEventListener('online', onOnline);
+            window.removeEventListener('offline', onOffline);
         };
-    }, [socket]);
+    }, []);
 
     return (
-        <SocketContext.Provider value={{ socket, connected }}>
+        <SocketContext.Provider value={{ connected }}>
             {children}
         </SocketContext.Provider>
     );

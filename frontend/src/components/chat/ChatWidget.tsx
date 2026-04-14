@@ -34,7 +34,7 @@ const playNotification = () => {
 export default function ChatWidget() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const socket = useChatSocket();
+  const realtime = useChatSocket();
 
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -56,16 +56,16 @@ export default function ChatWidget() {
 
 
   const typingName = useMemo(() => {
-    if (!socket.typing || !selected) return null;
-    if (socket.typing.conversation_id !== selected.conversation_id) return null;
-    return socket.typing.name;
-  }, [socket.typing, selected]);
+    if (!realtime.typing || !selected) return null;
+    if (realtime.typing.conversation_id !== selected.conversation_id) return null;
+    return realtime.typing.name;
+  }, [realtime.typing, selected]);
 
   const markSelectedSeen = useCallback(() => {
     if (!selected) return;
-    socket.markSeen(selected.conversation_id);
+    realtime.markSeen(selected.conversation_id);
     queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
-  }, [selected, socket, queryClient]);
+  }, [selected, realtime, queryClient]);
 
   const loadMessages = async (conversation_id: string) => {
     const res = await fetchChatMessages(conversation_id, { limit: 30 });
@@ -78,7 +78,7 @@ export default function ChatWidget() {
   const onSelectConversation = async (c: ConversationListItem) => {
     setSelected(c);
     setOpen(true);
-    socket.joinConversation(c.conversation_id);
+    realtime.joinConversation(c.conversation_id);
     await loadMessages(c.conversation_id);
   };
 
@@ -119,7 +119,7 @@ export default function ChatWidget() {
   const unsubRef = useRef<null | (() => void)>(null);
   useEffect(() => {
     unsubRef.current?.();
-    unsubRef.current = socket.onNewMessage((conversation_id, message) => {
+    unsubRef.current = realtime.onNewMessage((conversation_id, message) => {
       if (selected?.conversation_id === conversation_id) {
         setMessages((prev) => [...prev, message]);
         markSelectedSeen();
@@ -129,18 +129,18 @@ export default function ChatWidget() {
       }
     });
     return () => unsubRef.current?.();
-  }, [socket, selected, queryClient, markSelectedSeen]);
+  }, [realtime, selected, queryClient, markSelectedSeen]);
 
   const onSend = async (text: string) => {
     if (!selected) return;
-    socket.sendMessageRealtime({ conversation_id: selected.conversation_id, message_text: text });
+    realtime.sendMessageRealtime({ conversation_id: selected.conversation_id, message_text: text });
   };
 
   const onUpload = async (file: File) => {
     if (!selected) return;
     const up = await uploadChatAttachment(file);
     if (!up.success) return;
-    socket.sendMessageRealtime({
+    realtime.sendMessageRealtime({
       conversation_id: selected.conversation_id,
       attachment_url: up.file.url,
       attachment_name: up.file.name,
@@ -171,9 +171,9 @@ export default function ChatWidget() {
   };
 
   const typingFns = useMemo(() => ({
-    onTyping: () => selected && socket.emitTyping(selected.conversation_id),
-    onStopTyping: () => selected && socket.emitStopTyping(selected.conversation_id),
-  }), [selected, socket]);
+    onTyping: () => selected && realtime.emitTyping(selected.conversation_id),
+    onStopTyping: () => selected && realtime.emitStopTyping(selected.conversation_id),
+  }), [selected, realtime]);
 
   return (
     <>

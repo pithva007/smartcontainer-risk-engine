@@ -27,6 +27,104 @@ const getJobStatus = async (req, res) => {
   return res.status(200).json({ success: true, job });
 };
 
+// ── GET Live Job Updates (polling) ───────────────────────────────────────────
+const getJobLiveUpdates = async (req, res) => {
+  const { job_id } = req.params;
+  const limitRaw = Number(req.query.limit || 200);
+  const limit = Number.isFinite(limitRaw)
+    ? Math.max(1, Math.min(limitRaw, 300))
+    : 200;
+
+  const job = await Job.findOne({ job_id })
+    .select('job_id status progress error created_by metadata')
+    .lean();
+
+  if (!job) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Job not found.', request_id: req.requestId },
+    });
+  }
+
+  if (req.user.role !== 'admin' && String(job.created_by) !== String(req.user._id)) {
+    return res.status(403).json({
+      error: { code: 'FORBIDDEN', message: 'You can only access your own jobs.', request_id: req.requestId },
+    });
+  }
+
+  const sinceRaw = String(req.query.since || '').trim();
+  const sinceDate = sinceRaw ? new Date(sinceRaw) : null;
+  const hasValidSince = sinceDate && !Number.isNaN(sinceDate.getTime());
+  const batchId = job.metadata?.batch_id;
+
+  let rows = [];
+
+  if (batchId) {
+    const query = { upload_batch_id: batchId };
+    if (hasValidSince) query.processed_at = { $gt: sinceDate };
+
+    const docs = await Container.find(query)
+      .select('container_id risk_score risk_level anomaly_flag anomaly_score explanation origin_country destination_country declared_value declared_weight processed_at')
+      .sort({ processed_at: 1 })
+      .limit(limit)
+      .lean();
+
+    rows = docs.map((d) => ({
+      job_id: job.job_id,
+      batch_id: batchId,
+      container_id: d.container_id,
+      risk_score: d.risk_score ?? 0,
+      risk_level: d.risk_level || 'Clear',
+      anomaly_flag: !!d.anomaly_flag,
+      anomaly_score: d.anomaly_score ?? 0,
+      explanation: d.explanation || '',
+      origin_country: d.origin_country || '',
+      destination_country: d.destination_country || '',
+      declared_value: d.declared_value ?? 0,
+      declared_weight: d.declared_weight ?? 0,
+      processed_at: d.processed_at ? new Date(d.processed_at).toISOString() : new Date().toISOString(),
+    }));
+  }
+
+  const total = Number(job.metadata?.total_records || 0);
+  const processed = Number(job.metadata?.processed_records || 0);
+  const failed = Number(job.metadata?.failed_records || 0);
+  const percent = total > 0
+    ? Math.round((processed / total) * 100)
+    : Number(job.progress || 0);
+
+  const progress = {
+    job_id: job.job_id,
+    processed,
+    total,
+    percent,
+  };
+
+  const done = job.status === 'completed'
+    ? {
+      job_id: job.job_id,
+      batch_id: batchId,
+      total,
+      processed,
+      failed,
+    }
+    : null;
+
+  const nextSince = rows.length > 0
+    ? rows[rows.length - 1].processed_at
+    : (hasValidSince ? sinceDate.toISOString() : null);
+
+  return res.status(200).json({
+    success: true,
+    job_id: job.job_id,
+    status: job.status,
+    progress,
+    done,
+    error: job.status === 'failed' ? (job.error || 'Job failed.') : null,
+    rows,
+    next_since: nextSince,
+  });
+};
+
 // ── GET Job Logs ───────────────────────────────────────────────────────────────
 const getJobLogs = async (req, res) => {
   const job = await Job.findOne({ job_id: req.params.job_id }).select('job_id logs status');
@@ -178,4 +276,11 @@ const listJobs = async (req, res) => {
   });
 };
 
-module.exports = { getJobStatus, getJobLogs, getJobResult, listJobs, deleteJob };
+module.exports = {
+  getJobStatus,
+  getJobLiveUpdates,
+  getJobLogs,
+  getJobResult,
+  listJobs,
+  deleteJob,
+};

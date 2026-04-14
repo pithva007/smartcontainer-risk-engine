@@ -90,7 +90,7 @@ export default function Upload() {
         }
     }, [done, qc]);
 
-    const jobs = useQuery({ queryKey: ['jobs'], queryFn: listJobs });
+    const jobs = useQuery({ queryKey: ['jobs'], queryFn: () => listJobs() });
     const summaryData = useQuery({ queryKey: ['summary'], queryFn: fetchSummary });
 
     const deleteMutation = useMutation({
