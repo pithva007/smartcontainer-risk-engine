@@ -3,8 +3,8 @@ import { fetchChatMessages, sendChatMessage } from '@/api/routes';
 import type { ChatMessage } from '@/types/chatTypes';
 
 type TypingState = { conversation_id: string; user_id: string; name: string; role: string; stopped?: boolean };
-const ACTIVE_POLL_MS = 2500;
-const HIDDEN_POLL_MS = 8000;
+const ACTIVE_POLL_MS = 5000;
+const HIDDEN_POLL_MS = 20000;
 const MAX_SEEN_PER_CONVERSATION = 300;
 
 export function useChatSocket() {
@@ -12,6 +12,7 @@ export function useChatSocket() {
   const handlersRef = useRef<Set<(conversation_id: string, message: ChatMessage) => void>>(new Set());
   const seenByConversationRef = useRef<Map<string, string[]>>(new Map());
   const timerRef = useRef<number | null>(null);
+  const errorStreakRef = useRef(0);
 
   const [connected, setConnected] = useState(true);
   const [typing] = useState<TypingState | null>(null);
@@ -54,10 +55,12 @@ export function useChatSocket() {
         });
       } catch {
         // Ignore per-conversation failures and keep polling others.
+        errorStreakRef.current += 1;
       }
     }));
 
     setConnected(true);
+    errorStreakRef.current = 0;
   }, [emitToListeners, rememberSeen]);
 
   useEffect(() => {
@@ -71,7 +74,9 @@ export function useChatSocket() {
         if (!cancelled) setConnected(false);
       } finally {
         if (cancelled) return;
-        const delay = document.hidden ? HIDDEN_POLL_MS : ACTIVE_POLL_MS;
+        const base = document.hidden ? HIDDEN_POLL_MS : ACTIVE_POLL_MS;
+        const factor = Math.min(2 ** errorStreakRef.current, 8);
+        const delay = base * factor;
         timerRef.current = window.setTimeout(run, delay);
       }
     };

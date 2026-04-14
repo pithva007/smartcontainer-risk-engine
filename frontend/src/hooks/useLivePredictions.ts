@@ -3,9 +3,9 @@ import { getJobLiveUpdates, listJobs } from '@/api/routes';
 import type { PredictionRow, PredictionProgress, PredictionDone } from '@/types/apiTypes';
 
 const MAX_ROWS = 150;
-const ACTIVE_POLL_MS = 2500;
-const IDLE_POLL_MS = 8000;
-const HIDDEN_POLL_MS = 15000;
+const ACTIVE_POLL_MS = 6000;
+const IDLE_POLL_MS = 15000;
+const HIDDEN_POLL_MS = 45000;
 
 export interface LivePredictionsState {
     rows: PredictionRow[];
@@ -33,6 +33,7 @@ export function useLivePredictions(filterJobId?: string): LivePredictionsState {
     const [liveCounts, setLiveCounts] = useState({ critical: 0, lowRisk: 0, clear: 0 });
     const [isStreaming, setIsStreaming] = useState(false);
     const isStreamingRef = useRef(false);
+    const errorStreakRef = useRef(0);
     const cursorRef = useRef<string | null>(null);
     const activeJobIdRef = useRef<string | null>(filterJobId || null);
     const seenRef = useRef<Set<string>>(new Set());
@@ -76,6 +77,7 @@ export function useLivePredictions(filterJobId?: string): LivePredictionsState {
         setLiveCounts({ critical: 0, lowRisk: 0, clear: 0 });
         seenRef.current.clear();
         cursorRef.current = null;
+        errorStreakRef.current = 0;
         isStreamingRef.current = false;
         setIsStreaming(false);
     }, []);
@@ -98,8 +100,11 @@ export function useLivePredictions(filterJobId?: string): LivePredictionsState {
         let cancelled = false;
 
         const getPollDelay = () => {
-            if (document.hidden) return HIDDEN_POLL_MS;
-            return isStreamingRef.current ? ACTIVE_POLL_MS : IDLE_POLL_MS;
+            const base = document.hidden
+                ? HIDDEN_POLL_MS
+                : (isStreamingRef.current ? ACTIVE_POLL_MS : IDLE_POLL_MS);
+            const factor = Math.min(2 ** errorStreakRef.current, 8);
+            return base * factor;
         };
 
         const schedule = (delay: number) => {
@@ -134,6 +139,7 @@ export function useLivePredictions(filterJobId?: string): LivePredictionsState {
                 if (cancelled) return;
 
                 setConnected(true);
+                errorStreakRef.current = 0;
                 setError(data.error || null);
                 setProgress(data.progress || null);
                 appendRows(data.rows || []);
@@ -152,6 +158,7 @@ export function useLivePredictions(filterJobId?: string): LivePredictionsState {
             } catch (err) {
                 if (cancelled) return;
                 setConnected(false);
+                errorStreakRef.current += 1;
                 setError((err as Error).message || 'Live polling failed');
                 isStreamingRef.current = false;
                 setIsStreaming(false);
