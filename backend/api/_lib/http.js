@@ -33,12 +33,16 @@ const applyCors = (req, res) => {
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Request-ID');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type,Authorization,X-Request-ID,Accept,Origin,X-Requested-With'
+  );
+  res.setHeader('Access-Control-Max-Age', '86400');
 };
 
 const handlePreflight = (req, res) => {
   if (req.method !== 'OPTIONS') return false;
-  res.status(204).end();
+  res.status(200).end();
   return true;
 };
 
