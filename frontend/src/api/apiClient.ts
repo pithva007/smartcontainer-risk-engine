@@ -1,11 +1,19 @@
 import axios from 'axios';
 
+const configuredBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+const defaultProdBase = 'https://smartcontainer-risk-engine-fwkw.vercel.app/api';
+const baseURL = configuredBase || (import.meta.env.PROD ? defaultProdBase : '/api');
+
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+    baseURL,
     headers: {
         'Content-Type': 'application/json',
     },
 });
+
+if (import.meta.env.PROD && !configuredBase) {
+    console.warn('[API] VITE_API_BASE_URL not set; falling back to default backend URL.');
+}
 
 // Inject JWT Bearer token on every request
 apiClient.interceptors.request.use((config) => {

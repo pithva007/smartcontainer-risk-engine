@@ -4,13 +4,13 @@
     "VERCEL": "1"
   },
   "functions": {
-    "vercel-entry.js": {
+    "api/index.js": {
       "maxDuration": 60
     }
   },
   "builds": [
     {
-      "src": "vercel-entry.js",
+      "src": "api/index.js",
       "use": "@vercel/node"
     }
   ],
@@ -41,7 +41,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "vercel-entry.js"
+      "dest": "api/index.js"
     }
   ]
 }

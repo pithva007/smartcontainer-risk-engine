@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://smartcontainer-risk-engine-fwkw.vercel.app/api/$1"
+    }
+  ]
+}
